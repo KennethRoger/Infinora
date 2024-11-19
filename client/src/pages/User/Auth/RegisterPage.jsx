@@ -1,29 +1,12 @@
-import Button from "../../../components/Form/Button";
-import InputBox from "../../../components/Form/InputBox";
-
-import useFormHandler from "../../../hooks/useFormHandler";
+import GenericForm from "../../../components/Form/GenericForm";
 import { registerFields } from "../../../constants/Form/registerFields";
+import { registerUser } from "../../../api/auth";
 
 function RegisterPage() {
-    // const USERS_API = import.meta.env.VITE_USERS_API_BASE_URL;
-  const { inputData, handleChange, handleSubmit } = useFormHandler(registerFields);
+  // const USERS_API = import.meta.env.VITE_USERS_API_BASE_URL;
   return (
     <>
-      <form onSubmit={handleSubmit} method="post">
-        {registerFields.map((field, index) => (
-          <InputBox
-            key={index}
-            label={field.label}
-            name={field.name}
-            type={field.type}
-            onChange={handleChange}
-            value={inputData[field.name]}
-            styles={"border-gray-400"}
-          />
-        ))}
-        <p>{JSON.stringify(inputData)}</p>
-        <Button type={"submit"} buttonName={"submit"} />
-      </form>
+      <GenericForm inputFields={registerFields} apiFunction={registerUser} />
     </>
   );
 }
