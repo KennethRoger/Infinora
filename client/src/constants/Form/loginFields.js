@@ -11,5 +11,10 @@ export const loginFields = [
       },
     },
   },
-  { label: "Enter Your Password", name: "password", type: "password" },
+  {
+    label: "Enter Your Password",
+    name: "password",
+    type: "password",
+    validations: { required: "Password is required" },
+  },
 ];
