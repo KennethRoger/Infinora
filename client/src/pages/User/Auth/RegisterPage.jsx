@@ -3,13 +3,22 @@ import { registerFields } from "../../../constants/Form/registerFields";
 import { registerUser } from "../../../api/auth";
 import Modal from "../../../components/Modal/Modal";
 import { useState } from "react";
+import AuthPage from "../../../components/Auth/AuthPage";
+import LeftBox from "../../../components/Form/LeftBox";
 
 function RegisterPage() {
   // const USERS_API = import.meta.env.VITE_USERS_API_BASE_URL;
-  const [modalStatus, setModalStatus] = useState(false)
+  const [modalStatus, setModalStatus] = useState(false);
   return (
     <>
-      <GenericForm inputFields={registerFields} apiFunction={registerUser} />
+      <AuthPage>
+        <LeftBox heading={"Sign Up"} description={"Sign up and explore more"}>
+          <GenericForm
+            inputFields={registerFields}
+            apiFunction={registerUser}
+          />
+        </LeftBox>
+      </AuthPage>
       {/* <button onClick={() => setModalStatus(true)}>open model</button>
       <Modal isOpen={modalStatus} onClose={() => setModalStatus(false)}>
       <p>This is the modal content.</p>
