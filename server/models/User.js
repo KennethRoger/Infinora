@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     isBlocked: {
       type: Boolean,
       required: function () {
-        return this.role === "user" && this.role === "vendor"
+        return this.role === "user" || this.role === "vendor"
       },
       default: false
     },

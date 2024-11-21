@@ -1,14 +1,18 @@
 const crypto = require("crypto");
+const bcryptjs = require("bcryptjs");
 const { sendEmail } = require("../utils/emailService");
-
-const otpStore = new Map();
+const TempUser = require("../models/TempUser");
 
 const generateOTP = async (req, res) => {
-  console.log("Request received at /generate-otp"); // Log when endpoint is hit
-  console.log("Request body:", req.body); // Log the incoming request body
-  const { email } = req.body;
+  const { email, phoneNumber, password } = req.body;
+  const hashPassword = await bcryptjs.hash(password, 10);
   const otp = crypto.randomInt(100000, 999999).toString();
-  otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+  await TempUser.create({
+    email,
+    phoneNumber,
+    password: hashPassword,
+    otp,
+  });
 
   try {
     await sendEmail(
@@ -25,6 +29,7 @@ const generateOTP = async (req, res) => {
 };
 
 const verifyOTP = (req, res) => {
+  console.log(req.body);
   const { otp } = req.body;
   console.log(otp);
   res.status(200).json({ message: "OTP successfully verified" });

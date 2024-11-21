@@ -12,6 +12,18 @@ export const registerFields = [
     },
   },
   {
+    label: "Enter Your Phone Number",
+    name: "phoneNumber",
+    type: "text",
+    validations: {
+      required: "Phone number is required",
+      pattern: {
+        value: /^[6-9]\d{9}$/,
+        message: "Enter a valid phone number",
+      },
+    },
+  },
+  {
     label: "Enter Your Password",
     name: "password",
     type: "password",

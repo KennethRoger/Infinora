@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useState } from "react";
 
 const useFormHandler = (inititalFields) => {
@@ -9,12 +8,11 @@ const useFormHandler = (inititalFields) => {
       return acc;
     }, {})
   );
-
   // Error state
   const [errors, setErrors] = useState({});
 
   // Validate field function: Provides error validation based on the active error on a field
-  const validateField = (value, validations) => {
+  const validateField = (value, validations, fieldName) => {
     if (!validations) return;
 
     if (validations.required && !value) {
@@ -29,6 +27,10 @@ const useFormHandler = (inititalFields) => {
       return validations.length.message;
     }
 
+    if (fieldName === "confirmPassword" && value != inputData.password ) {
+      return "Password do not match"
+    }
+
     return null;
   };
 
@@ -38,7 +40,7 @@ const useFormHandler = (inititalFields) => {
     setInputData((prev) => ({ ...prev, [name]: value }));
 
     const field = inititalFields.find((field) => field.name === name);
-    const errMessage = validateField(value, field.validations);
+    const errMessage = validateField(value, field.validations, name);
     console.log(errMessage);
     setErrors((prev) => ({ ...prev, [name]: errMessage }));
   };
@@ -66,6 +68,7 @@ const useFormHandler = (inititalFields) => {
     if (hasErrorOrEmptyFields()) {
       return;
     }
+    
     console.log("Form Data:", inputData);
     callback(inputData);
   };

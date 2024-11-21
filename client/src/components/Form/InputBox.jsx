@@ -9,7 +9,7 @@ function InputBox({
   return (
     <>
       <div className="flex flex-col">
-        <label>{label}</label>
+        <label className="text-black text-xl text-opacity-50">{label}</label>
         <input
           name={name}
           type={type}
