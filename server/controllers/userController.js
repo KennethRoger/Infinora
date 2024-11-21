@@ -2,37 +2,75 @@ const crypto = require("crypto");
 const bcryptjs = require("bcryptjs");
 const { sendEmail } = require("../utils/emailService");
 const TempUser = require("../models/TempUser");
+const User = require("../models/User");
 
 const generateOTP = async (req, res) => {
-  const { email, phoneNumber, password } = req.body;
-  const hashPassword = await bcryptjs.hash(password, 10);
-  const otp = crypto.randomInt(100000, 999999).toString();
-  await TempUser.create({
-    email,
-    phoneNumber,
-    password: hashPassword,
-    otp,
-  });
-
   try {
+    const { email, phoneNumber, password } = req.body;
+    const hashPassword = await bcryptjs.hash(password, 10);
+    // const userExists = await User.findOne({ email });
+    // if (userExists)
+    //   return res
+    //     .status(400)
+    //     .json({ success: false, message: "Email is already in use" });
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const tempUser = await TempUser.create({
+      email,
+      phoneNumber,
+      password: hashPassword,
+      otp,
+    });
     await sendEmail(
       email,
       "Your OTP verification code for Infinora",
       `Your OTP is ${otp}`
     );
-    console.log(`OTP sent to email: ${email}`);
-    res.status(200).json({ message: "OTP sent successfully" });
+    console.log(`OTP sent to email: ${email}, otp: ${otp}`);
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully",
+      tempUserId: tempUser._id,
+    });
   } catch (error) {
     console.error("Error sending OTP: ", error);
-    res.status(500).json({ message: "Failed to send OTP to email" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send OTP to email" });
   }
 };
 
-const verifyOTP = (req, res) => {
-  console.log(req.body);
-  const { otp } = req.body;
-  console.log(otp);
-  res.status(200).json({ message: "OTP successfully verified" });
+const verifyOTP = async (req, res) => {
+  try {
+    const { tempUserId, otp } = req.body;
+    console.log(otp);
+    const tempUser = await TempUser.findById(tempUserId);
+
+    if (!tempUser) {
+      return res.status(400).json({ success: false, message: "" });
+    }
+
+    if (tempUser.otp !== otp) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
+    }
+
+    const newUser = await User.create({
+      email: tempUser.email,
+      phoneNumber: tempUser.phoneNumber,
+      password: tempUser.password,
+    });
+
+    await TempUser.findByIdAndDelete(tempUserId);
+    res.status(201).json({
+      success: true,
+      message: "OTP verified and user created successfully",
+      data: { userId: newUser._id },
+    });
+  } catch (error) {
+    console.error("OTP verification failed:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "OTP verification failed" });
+  }
 };
 
 module.exports = { generateOTP, verifyOTP };

@@ -2,7 +2,7 @@ export const otpFields = [
   {
     label: "Enter OTP",
     name: "otp",
-    type: "number",
+    type: "text",
     validations: {
       required: "Enter the OTP send to your email",
       length: {
