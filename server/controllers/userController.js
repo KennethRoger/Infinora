@@ -4,6 +4,8 @@ const { sendEmail } = require("../utils/emailService");
 const otpStore = new Map();
 
 const generateOTP = async (req, res) => {
+  console.log("Request received at /generate-otp"); // Log when endpoint is hit
+  console.log("Request body:", req.body); // Log the incoming request body
   const { email } = req.body;
   const otp = crypto.randomInt(100000, 999999).toString();
   otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
@@ -22,4 +24,10 @@ const generateOTP = async (req, res) => {
   }
 };
 
-module.exports = { generateOTP };
+const verifyOTP = (req, res) => {
+  const { otp } = req.body;
+  console.log(otp);
+  res.status(200).json({ message: "OTP successfully verified" });
+};
+
+module.exports = { generateOTP, verifyOTP };

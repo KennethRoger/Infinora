@@ -2,8 +2,10 @@ const nodemailer = require("nodemailer");
 
 const tranporter = nodemailer.createTransport({
   service: "Gmail",
-  auth: process.env.EMAIL_USERNAME,
-  pass: process.env.EMAIL_PASSWORD,
+  auth: {
+    user: process.env.EMAIL_USERNAME,
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 async function sendEmail(to, subject, text) {
@@ -15,7 +17,7 @@ async function sendEmail(to, subject, text) {
       text,
     };
 
-    const info = tranporter.sendMail(mailOptions);
+    const info = await tranporter.sendMail(mailOptions);
     console.log("Email sent: " + info.response);
   } catch (error) {
     console.error("Error sending email:", error);
