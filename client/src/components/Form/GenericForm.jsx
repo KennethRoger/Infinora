@@ -1,10 +1,12 @@
+import { useState } from "react";
 import useFormHandler from "../../hooks/useFormHandler";
 import Button from "./Button";
 import InputBox from "./InputBox";
 
-function GenericForm({ inputFields, apiFunction, buttonName, onClick }) {
+function GenericForm({ inputFields, apiFunction, buttonName }) {
   const { inputData, errors, handleChange, handleSubmit } =
     useFormHandler(inputFields);
+  const [password, setPassword] = useState("");
   return (
     <>
       <form onSubmit={(e) => handleSubmit(e, apiFunction)}>
@@ -17,11 +19,13 @@ function GenericForm({ inputFields, apiFunction, buttonName, onClick }) {
               onChange={handleChange}
               value={inputData[field.name]}
             />
-            {errors[field.name] && <p className="text-red-600">{errors[field.name]}</p>}
+            {errors[field.name] && (
+              <p className="text-red-600">{errors[field.name]}</p>
+            )}
           </div>
         ))}
         <p>{JSON.stringify(inputData)}</p>
-        <Button type={"submit"} buttonName={buttonName} onClick={onClick} />
+        <Button type={"submit"} styles={"mt-5"} buttonName={buttonName} />
       </form>
     </>
   );

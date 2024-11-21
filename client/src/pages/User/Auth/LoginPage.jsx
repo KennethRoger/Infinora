@@ -15,7 +15,7 @@ function LoginPage() {
           <GenericForm
             inputFields={loginFields}
             apiFunction={registerUser}
-            buttonName={login}
+            buttonName={"login"}
           />
         </LeftBox>
       </AuthPage>

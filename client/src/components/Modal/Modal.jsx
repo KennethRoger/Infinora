@@ -18,14 +18,14 @@ const Modal = ({ isOpen, onClose, children }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg w-[90%] max-w-lg p-6">
-        <div className="flex justify-end items-center pb-2 mb-4">
+        {/* <div className="flex justify-end items-center pb-2 mb-4">
           <button
             className="text-gray-400 hover:text-gray-800"
             onClick={onClose}
           >
             &#x2715;
           </button>
-        </div>
+        </div> */}
 
         <div>{children}</div>
 
