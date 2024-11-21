@@ -46,7 +46,6 @@ const userSchema = new mongoose.Schema(
       required: function () {
         return this.role === "vendor" || this.role === "admin";
       },
-      unique: true,
       default: null,
     },
     gender: {

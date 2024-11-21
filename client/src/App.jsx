@@ -8,7 +8,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/register/verify" element={<OTPVerificationPage />} />
+      <Route path="/verify-otp" element={<OTPVerificationPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<h1>Routes: /register, /login</h1>} />
     </Routes>
