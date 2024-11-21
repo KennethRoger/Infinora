@@ -25,7 +25,7 @@ const useFormHandler = (inititalFields) => {
       return validations.pattern.message;
     }
 
-    if (validations.length && value.length < validations.length.value) {
+    if (validations.length && value.length != validations.length.value) {
       return validations.length.message;
     }
 

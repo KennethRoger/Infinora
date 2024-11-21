@@ -2,7 +2,7 @@ import useFormHandler from "../../hooks/useFormHandler";
 import Button from "./Button";
 import InputBox from "./InputBox";
 
-function GenericForm({ inputFields, apiFunction }) {
+function GenericForm({ inputFields, apiFunction, buttonName, onClick }) {
   const { inputData, errors, handleChange, handleSubmit } =
     useFormHandler(inputFields);
   return (
@@ -21,7 +21,7 @@ function GenericForm({ inputFields, apiFunction }) {
           </div>
         ))}
         <p>{JSON.stringify(inputData)}</p>
-        <Button type={"submit"} buttonName={"submit"} />
+        <Button type={"submit"} buttonName={buttonName} onClick={onClick} />
       </form>
     </>
   );

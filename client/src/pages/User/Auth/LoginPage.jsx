@@ -7,15 +7,18 @@ import AuthPage from "../../../components/Auth/AuthPage";
 function LoginPage() {
   return (
     <>
-    <AuthPage>
-
-      <LeftBox
-        heading={"Login"}
-        description={"Login to our endless possibility"}
-      >
-        <GenericForm inputFields={loginFields} apiFunction={registerUser} />
-      </LeftBox>
-    </AuthPage>
+      <AuthPage>
+        <LeftBox
+          heading={"Login"}
+          description={"Login to our endless possibility"}
+        >
+          <GenericForm
+            inputFields={loginFields}
+            apiFunction={registerUser}
+            buttonName={login}
+          />
+        </LeftBox>
+      </AuthPage>
     </>
   );
 }

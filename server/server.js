@@ -1,16 +1,22 @@
 const express = require("express");
+const cors = require("cors");
 const app = express();
 
 const dotenv = require("dotenv");
+dotenv.config();
+const corsOptions = {
+  credentials: true,
+};
+app.use(cors(corsOptions));
 const connectDB = require("./config/db");
 
 const userRoutes = require("./routes/userRoutes");
 
-dotenv.config();
 connectDB();
 
 const port = process.env.PORT;
 
+app.use(express.json());
 app.get("/", (req, res) => {
   res.send("hello");
 });
