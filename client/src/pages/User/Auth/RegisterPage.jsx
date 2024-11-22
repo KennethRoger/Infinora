@@ -1,6 +1,6 @@
 import GenericForm from "../../../components/Form/GenericForm";
 import { registerFields } from "../../../constants/Form/registerFields";
-import { generateOTP } from "../../../api/auth";
+import { generateOTP, googleSignIn } from "../../../api/auth";
 import AuthPage from "../../../components/Auth/AuthPage";
 import LeftBox from "../../../components/Form/LeftBox";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +33,11 @@ function RegisterPage() {
             apiFunction={otpData}
             buttonName={"register"}
           />
+          <p>or</p>
+          <button
+            onClick={googleSignIn}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >Google</button>
         </LeftBox>
       </AuthPage>
     </>
