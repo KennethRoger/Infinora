@@ -1,4 +1,5 @@
 import axios from "axios";
+import { auth, provider, signInWithPopup } from "../firebaseConfig";
 
 export const generateOTP = async (data) => {
   try {
@@ -27,6 +28,17 @@ export const verifyOTP = async (data) => {
       .then((response) => console.log(response.data.message));
   } catch (error) {
     console.error("Error on verification: ", error.response?.data);
+  }
+};
+
+export const googleSignIn = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    console.log("User Info:", user);
+    await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/google-signin`);
+  } catch (error) {
+    console.error("Google Sign-In Error:", error);
   }
 };
 

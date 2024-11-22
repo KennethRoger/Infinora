@@ -10,9 +10,9 @@ const userSchema = new mongoose.Schema(
     isBlocked: {
       type: Boolean,
       required: function () {
-        return this.role === "user" || this.role === "vendor"
+        return this.role === "user" || this.role === "vendor";
       },
-      default: false
+      default: false,
     },
     email: {
       type: String,
@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
         return this.role === "user" || this.role === "vendor";
       },
       unique: true,
-      default: null,
+      sparse: true,
     },
     phoneNumber: {
       type: String,
@@ -28,11 +28,19 @@ const userSchema = new mongoose.Schema(
         return this.role === "user" || this.role === "vendor";
       },
       unique: true,
-      default: null,
+      sparse: true,
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
+    },
+    googelId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
     },
     profileImagePath: {
       type: String,
@@ -58,19 +66,8 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     speciality: {
-      type: String,
-      enum: [
-        "fashion",
-        "home decor",
-        "jewelry",
-        "footwear",
-        "accessories",
-        "pet products",
-        "models",
-        "artwork",
-        "custom craft",
-        "others",
-      ],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
       required: function () {
         return this.role === "vendor";
       },
@@ -90,6 +87,14 @@ const userSchema = new mongoose.Schema(
         return this.role === "vendor";
       },
       default: null,
+    },
+    googlePicture: {
+      type: String,
+      default: null,
+    },
+    googleVerified: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

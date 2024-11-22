@@ -73,4 +73,34 @@ const verifyOTP = async (req, res) => {
   }
 };
 
-module.exports = { generateOTP, verifyOTP };
+const googleSignIn = async (req, res) => {
+  const { googleId, email, name, picture, verifiedEmail } = req.body;
+  try {
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        googleId,
+        googlePicture: picture,
+        googleVerified: verifiedEmail,
+      });
+      await user.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        googlePicture: user.googlePicture,
+      },
+    });
+  } catch (error) {
+    console.error("Google Sign-In Error:", error);
+    res.status(500).json({ success: false, message: "Authentication failed." });
+  }
+};
+
+module.exports = { generateOTP, verifyOTP, googleSignIn };
