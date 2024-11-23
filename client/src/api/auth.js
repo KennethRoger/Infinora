@@ -1,10 +1,10 @@
 import axios from "axios";
 import { auth, provider, signInWithPopup } from "../firebaseConfig";
 
-export const generateOTP = async (data) => {
+export const register = async (data) => {
   try {
     const response = await axios.post(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/generate-otp`,
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/register`,
       data
     );
     console.log(response.data);
@@ -31,19 +31,22 @@ export const verifyOTP = async (data) => {
   }
 };
 
-export const googleSignIn = async () => {
+export const login = async (data) => {
   try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    console.log("User Info:", user);
-    await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/google-signin`);
+    const response = await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/signin`, data);
+    console.log(response.data)
   } catch (error) {
     console.error("Google Sign-In Error:", error);
   }
 };
 
-export const registerUser = async (data) => {
-  await axios
-    .post("https://jsonplaceholder.typicode.com/posts", data)
-    .then((response) => console.log(response));
+export const googleSignIn = async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    const response = await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/google-signin`, user);
+    console.log(response)
+  } catch (error) {
+    console.error("Google Sign-In Error:", error);
+  }
 };

@@ -1,6 +1,6 @@
 import GenericForm from "../../../components/Form/GenericForm";
-import { loginFields } from "../../../constants/Form/loginFields";
-import { registerUser } from "../../../api/auth";
+import { loginFields } from "../../../constants/user/Form/loginFields";
+import { login } from "../../../api/auth";
 import LeftBox from "../../../components/Form/LeftBox";
 import AuthPage from "../../../components/Auth/AuthPage";
 
@@ -14,7 +14,7 @@ function LoginPage() {
         >
           <GenericForm
             inputFields={loginFields}
-            apiFunction={registerUser}
+            apiFunction={login}
             buttonName={"login"}
           />
         </LeftBox>

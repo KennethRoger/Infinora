@@ -1,10 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
-const { generateOTP, verifyOTP } = require("../controllers/userController");
+const {
+  generateOTP,
+  verifyOTP,
+  login,
+  googleSignIn,
+} = require("../controllers/userController");
 
-router.post("/generate-otp", generateOTP);
+router.post("/register", generateOTP);
 router.post("/verify-otp", verifyOTP);
-router.post("/google-singin", )
+router.post("/login", login)
+router.post("/google-signin", googleSignIn);
 
 module.exports = router;

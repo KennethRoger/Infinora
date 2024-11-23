@@ -1,6 +1,6 @@
 import GenericForm from "../../../components/Form/GenericForm";
-import { registerFields } from "../../../constants/Form/registerFields";
-import { generateOTP, googleSignIn } from "../../../api/auth";
+import { registerFields } from "../../../constants/user/Form/registerFields";
+import { register, googleSignIn } from "../../../api/auth";
 import AuthPage from "../../../components/Auth/AuthPage";
 import LeftBox from "../../../components/Form/LeftBox";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,7 @@ function RegisterPage() {
 
   const otpData = async (data) => {
     try {
-      const response = await generateOTP(data);
+      const response = await register(data);
       // console.log(response);
       if (response.success) {
         const tempUserId = response.tempUserId;
@@ -37,7 +37,9 @@ function RegisterPage() {
           <button
             onClick={googleSignIn}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >Google</button>
+          >
+            Google
+          </button>
         </LeftBox>
       </AuthPage>
     </>

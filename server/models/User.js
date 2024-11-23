@@ -25,22 +25,22 @@ const userSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       required: function () {
-        return this.role === "user" || this.role === "vendor";
+        return this.role === "vendor";
       },
       unique: true,
       sparse: true,
     },
-    password: {
-      type: String,
-      required: function () {
-        return !this.googleId;
-      },
-    },
-    googelId: {
+    googleId: {
       type: String,
       unique: true,
       sparse: true,
       default: null,
+    },
+    password: {
+      type: String,
+      required: function () {
+        return !this.googleId && !this.googlePicture;
+      },
     },
     profileImagePath: {
       type: String,

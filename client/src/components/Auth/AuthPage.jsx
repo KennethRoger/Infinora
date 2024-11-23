@@ -6,7 +6,7 @@ function AuthPage({ children }) {
       <div className="flex justify-center mt-3">
         <img className="w-[250px] flex justify-center" src={infinoraBlackLogo} alt="Infinora Logo"></img>
       </div>
-      <div className="h-full flex justify-center mt-[80px]">{children}</div>
+      <div className="flex justify-center mt-[80px]">{children}</div>
     </main>
   );
 }
