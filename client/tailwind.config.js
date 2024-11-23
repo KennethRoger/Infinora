@@ -2,8 +2,16 @@
 export default {
   content: ["./src/**/*.{html,jsx,js}"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        "dancing-script": ['"Dancing Script"', "cursive"],
+      },
+      fontWeight: {
+        "dancing-light": 400,
+        "dancing-medium": 500,
+        "dancing-bold": 700,
+      },
+    },
   },
   plugins: [],
-}
-
+};
