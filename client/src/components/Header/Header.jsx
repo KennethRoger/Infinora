@@ -64,7 +64,9 @@ export default function Header() {
             </li>
             <li className="h-full bg-[#F7F23B] flex items-center p-5">
               <Link>
-                <p className="text-black font-dancing-script font-dancing-medium">Creator</p>
+                <p className="text-black font-dancing-script font-dancing-medium">
+                  Creator
+                </p>
               </Link>
             </li>
           </ul>

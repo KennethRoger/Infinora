@@ -1,7 +1,7 @@
-import { login } from "../../api/auth";
-import AuthPage from "../../components/Auth/AuthPage";
-import GenericForm from "../../components/Form/GenericForm";
-import { loginFields } from "../../constants/admin/form/loginFieldAdmin";
+import { login } from "../../../api/auth";
+import AuthPage from "../../../components/Auth/AuthPage";
+import GenericForm from "../../../components/Form/GenericForm";
+import { loginFields } from "../../../constants/admin/form/loginFieldAdmin";
 
 export default function LoginPageAdmin() {
   return (

@@ -1,9 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { verifyOTP } from "../../../api/auth";
 import AuthPage from "../../../components/Auth/AuthPage";
-import GenericForm from "../../../components/Form/GenericForm";
 import LeftBox from "../../../components/Form/LeftBox";
-import { otpFields } from "../../../constants/user/Form/otpFields";
 import { useState } from "react";
 
 export default function OTPVerificationPage() {
@@ -27,11 +25,16 @@ export default function OTPVerificationPage() {
           heading={"Sign Up"}
           description={"Verify OTP send to your email"}
         >
-          <GenericForm
-            inputFields={otpFields}
-            apiFunction={handleVerifyOTP}
-            buttonName={"verify"}
-          />
+          <InputOTP maxLength={6} pattern={REGEXP_ONLY_DIGITS_AND_CHARS}>
+      <InputOTPGroup>
+        <InputOTPSlot index={0} />
+        <InputOTPSlot index={1} />
+        <InputOTPSlot index={2} />
+        <InputOTPSlot index={3} />
+        <InputOTPSlot index={4} />
+        <InputOTPSlot index={5} />
+      </InputOTPGroup>
+    </InputOTP>
           {countDown === 0 ? (
             <p>Resend OTP in {countDown}</p>
           ) : (
