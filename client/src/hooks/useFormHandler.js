@@ -27,10 +27,6 @@ const useFormHandler = (inititalFields) => {
       return validations.length.message;
     }
 
-    if (fieldName === "confirmPassword" && value != inputData.password ) {
-      return "Password do not match"
-    }
-
     return null;
   };
 
