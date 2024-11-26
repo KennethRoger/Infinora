@@ -115,9 +115,9 @@ const login = async (req, res) => {
 
 const googleSignIn = async (req, res) => {
   const { googleId, email, name, picture, verifiedEmail } = req.body;
-
   try {
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
     if (!user) {
       const newUser = new User({
         name,
@@ -127,21 +127,48 @@ const googleSignIn = async (req, res) => {
         googleVerified: verifiedEmail,
       });
       await newUser.save();
-    }
 
-    res.status(200).json({
-      success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        googlePicture: user.googlePicture,
-      },
-    });
+      return res.status(200).json({
+        success: true,
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          googlePicture: newUser.googlePicture,
+        },
+        message: "New user created.",
+      });
+      
+    } else {
+
+      let isUpdated = false;
+
+      if (user.googleId === googleId && user.email !== email) {
+        user.email = email;
+        user.googleVerified = verifiedEmail;
+        isUpdated = true;
+      }
+
+      if (isUpdated) {
+        await user.save();
+      }
+
+      return res.status(200).json({
+        success: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          googlePicture: user.googlePicture,
+        },
+        message: isUpdated ? "User information updated." : "User already exists.",
+      });
+    }
   } catch (error) {
     console.error("Google Sign-In Error:", error);
     res.status(500).json({ success: false, message: "Authentication failed." });
   }
 };
+
 
 module.exports = { generateOTP, verifyOTP, login, googleSignIn };

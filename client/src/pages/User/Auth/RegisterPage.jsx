@@ -8,10 +8,12 @@ import { FcGoogle } from "react-icons/fc";
 import Button from "@/components/Form/Button";
 import Spinner from "@/components/Spinner/Spinner";
 import { useState } from "react";
+import { setPersistence } from "firebase/auth";
 
 function RegisterPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState("")
 
   const otpData = async (data) => {
     try {
@@ -22,6 +24,7 @@ function RegisterPage() {
         const tempUserId = response.tempUserId;
         navigate("/verify-otp", { state: { tempUserId } });
       } else {
+        setServerError(response.message)
         alert("Error generating OTP. Please try again.");
       }
     } catch (error) {
@@ -46,6 +49,7 @@ function RegisterPage() {
                 loading ? "bg-[#006dcc] cursor-not-allowed" : "bg-[#33A0FF]"
               }`}
               buttonAttributes={loading ? "disabled" : ""}
+              serrverErrors={serverError}
             />
             <div className="flex items-center justify-center my-4">
               <div className="h-px bg-gray-300 flex-1"></div>
@@ -65,7 +69,7 @@ function RegisterPage() {
           </div>
           <div className="text-center mt-10">
             <span>Already a user? </span>
-            <Link to={loading ? "/login" : "#"}>
+            <Link to={loading ? "#" : "/login"}>
               <span className="text-[#FF9500]">Sign in</span>
             </Link>
           </div>

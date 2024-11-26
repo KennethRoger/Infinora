@@ -2,12 +2,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA0J_pVcS3fdRj4IN7cr4LW28rEwR-7Wb4",
-  authDomain: "infinora-5fc66.firebaseapp.com",
-  projectId: "infinora-5fc66",
-  storageBucket: "infinora-5fc66.firebasestorage.app",
-  messagingSenderId: "319687640360",
-  appId: "1:319687640360:web:d22542246b660e7211bc1d",
+  apiKey: import.meta.env.VITE_USERS_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_USERS_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_USERS_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_USERS_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_USERS_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_USERS_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
