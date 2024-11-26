@@ -10,7 +10,7 @@ function LeftBox({ heading, description, children }) {
           </div>
           <img className="w-full" src={authImage} alt="A login pic"></img>
         </div>
-        <div className="text-xl w-[300px] mb-6">{children}</div>
+        <div className="text-xl w-[300px] ">{children}</div>
       </div>
   );
 }

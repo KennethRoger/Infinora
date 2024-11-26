@@ -2,7 +2,7 @@ import useFormHandler from "../../hooks/useFormHandler";
 import Button from "./Button";
 import InputBox from "./InputBox";
 
-function GenericForm({ inputFields, apiFunction, buttonName, buttonStyle, buttonAttributes }) {
+function GenericForm({ inputFields, apiFunction, serrverErrors, buttonName, buttonStyle, buttonAttributes }) {
   const { inputData, errors, handleChange, handleSubmit } =
     useFormHandler(inputFields);
   return (
@@ -22,7 +22,7 @@ function GenericForm({ inputFields, apiFunction, buttonName, buttonStyle, button
             )}
           </div>
         ))}
-        {/* <p>{JSON.stringify(inputData)}</p> */}
+        <p className="text-red-600">{serrverErrors}</p>
         <Button
           type={"submit"}
           styles={`mt-8 ${buttonStyle}`}

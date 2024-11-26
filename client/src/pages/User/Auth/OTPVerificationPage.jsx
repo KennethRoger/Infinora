@@ -17,11 +17,7 @@ export default function OTPVerificationPage() {
   const navigate = useNavigate();
   const tempUserId = location.state?.tempUserId;
 
-  useEffect(() => {
-    if (!tempUserId) {
-      navigate("/register", { replace: true }); 
-    }
-  }, []);
+  //
 
   const [otp, setOtp] = useState("");
 
@@ -39,8 +35,8 @@ export default function OTPVerificationPage() {
     console.log(response.data);
   };
 
-  if (!tempUserId) return null;
-  
+  // if (!tempUserId) return null;
+
   return (
     <AuthPage>
       <LeftBox
@@ -48,6 +44,7 @@ export default function OTPVerificationPage() {
         description={"Verify OTP sent to your email"}
       >
         <form onSubmit={handleVerifyOTP}>
+          <label className="text-black text-xl mb-5">Enter OTP</label>
           <InputOTP
             maxLength={6}
             pattern={REGEXP_ONLY_DIGITS}
@@ -62,7 +59,12 @@ export default function OTPVerificationPage() {
               <InputOTPSlot index={5} />
             </InputOTPGroup>
           </InputOTP>
-          <Button buttonType={"submit"}>Verify</Button>
+          <Button
+            buttonType={"submit"}
+            styles={`w-[80%] mt-14 bg-[#33A0FF] text-white`}
+          >
+            Verify
+          </Button>
         </form>
       </LeftBox>
     </AuthPage>
