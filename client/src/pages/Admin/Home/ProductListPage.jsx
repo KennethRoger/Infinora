@@ -1,6 +1,4 @@
 import { FaSearch } from "react-icons/fa";
-
-import { ButtonGroup, Button } from "@material-tailwind/react";
 import HeadAndSideAdmin from "../../../components/Section/HeadAndSideAdmin";
 
 export default function ProductListPage() {
@@ -57,11 +55,6 @@ export default function ProductListPage() {
   return (
     <>
       <HeadAndSideAdmin>
-        <ButtonGroup>
-          <Button>One</Button>
-          <Button>Two</Button>
-          <Button>Three</Button>
-        </ButtonGroup>
         <div className="flex w-[500px] mt-5 items-center">
           <input
             type="text"

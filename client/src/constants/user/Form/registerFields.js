@@ -37,10 +37,4 @@ export const registerFields = [
       },
     },
   },
-  {
-    label: "Confirm Your Password",
-    name: "confirmPassword",
-    type: "password",
-    validations: { required: "Confirm the password" },
-  },
 ];

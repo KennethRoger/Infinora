@@ -1,9 +1,8 @@
-import { useState } from "react";
 import useFormHandler from "../../hooks/useFormHandler";
 import Button from "./Button";
 import InputBox from "./InputBox";
 
-function GenericForm({ inputFields, apiFunction, buttonName, buttonStyle }) {
+function GenericForm({ inputFields, apiFunction, buttonName, buttonStyle, buttonAttributes }) {
   const { inputData, errors, handleChange, handleSubmit } =
     useFormHandler(inputFields);
   return (
@@ -23,8 +22,14 @@ function GenericForm({ inputFields, apiFunction, buttonName, buttonStyle }) {
             )}
           </div>
         ))}
-        <p>{JSON.stringify(inputData)}</p>
-        <Button type={"submit"} styles={`mt-5 ${buttonStyle}`} buttonName={buttonName} />
+        {/* <p>{JSON.stringify(inputData)}</p> */}
+        <Button
+          type={"submit"}
+          styles={`mt-8 ${buttonStyle}`}
+          attributes={buttonAttributes}
+        >
+          {buttonName}
+        </Button>
       </form>
     </>
   );
