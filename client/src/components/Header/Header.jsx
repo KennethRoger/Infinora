@@ -1,11 +1,11 @@
 import infinoraWhiteLogo from "../../assets/images/logo/Infinora-white-transparent.png";
 import { Link } from "react-router-dom";
 import { RiArrowDropDownLine } from "react-icons/ri";
-import { FaSearch } from "react-icons/fa";
-import { FaRegUser } from "react-icons/fa";
+import { FaRegUser, FaSearch } from "react-icons/fa";
 import { BsCart3 } from "react-icons/bs";
 import { FiPackage } from "react-icons/fi";
 import { GrFavorite } from "react-icons/gr";
+import SearchBar from "../Form/SearchBar";
 
 export default function Header() {
   return (
@@ -27,16 +27,7 @@ export default function Header() {
               </Link>
             </li>
             <li className="flex-1">
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  placeholder="Search for your desired product"
-                  className="rounded-full p-2 flex flex-1"
-                />
-                <div className="absolute right-1 bg-black rounded-full p-2">
-                  <FaSearch />
-                </div>
-              </div>
+              <SearchBar />
             </li>
             <li>
               <Link className="flex items-center gap-1">
