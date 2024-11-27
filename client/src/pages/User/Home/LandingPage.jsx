@@ -11,6 +11,8 @@ import {
 import Button from "@/components/Form/Button";
 import SearchBar from "@/components/Form/SearchBar";
 import ProductCard from "@/components/Product/ProductCard";
+import CreatorBanner from "@/components/Section/CreatorBanner";
+import CraftIdeaSection from "@/components/Section/CraftIdeaSection";
 
 const LandingPage = () => {
   return (
@@ -22,7 +24,7 @@ const LandingPage = () => {
           alt="Infinora Logo"
         ></img>
       </header>
-      <main className="px-10">
+      <main>
         <section className="flex justify-center items-center py-12 bg-white">
           <div className="w-[60%] h-[300px] flex justify-between items-center gap-16">
             <Carousel className="w-[400px] h-full">
@@ -69,7 +71,7 @@ const LandingPage = () => {
           </div>
         </section>
 
-        <section className="py-12">
+        <section className="py-12 px-10">
           <div className="flex justify-center">
             <div className="w-[50%]">
               <SearchBar placeholder={"Search for your desired product"} />
@@ -78,7 +80,7 @@ const LandingPage = () => {
           <div className="my-14 flex justify-between items-center">
             <div>
               <h2 className="text-3xl font-bold">Bringing Ideas to Life</h2>
-              <p className="text-gray-600">
+              <p className="text-black mt-3 text-xl">
                 Empowering creators to bring dreams to reality, one design at a
                 time
               </p>
@@ -89,83 +91,26 @@ const LandingPage = () => {
               </Button>
             </div>
           </div>
-          <div className="flex space-x-4 overflow-scroll">
-            {Array(4)
+          <div className="flex space-x-4 overflow-x-scroll whitespace-nowrap py-3 no-scrollbar w-full">
+            {Array(10)
               .fill()
               .map((_, i) => (
                 <ProductCard />
               ))}
           </div>
         </section>
-
-        <section className="py-12 bg-blue-100 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Unleash Your <span className="text-yellow-400">Creativity</span>
-          </h2>
-          <p className="mb-4">
-            Got unique creations? Join our creator community and showcase your
-            talent to the world
-          </p>
-          <button className="bg-yellow-400 text-black px-4 py-2 rounded">
-            Take me to Creator
-          </button>
-          <div className="mt-8">
-            <img
-              src="https://placehold.co/600x300"
-              alt="Creative items"
-              className="mx-auto rounded-lg shadow-lg"
-            />
-          </div>
-        </section>
-
-        <section className="py-12">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold">
-              Crafted to Perfection:{" "}
-              <span className="text-orange-500">
-                Stories of Customer Creations
-              </span>
-            </h2>
-          </div>
-          <div className="flex justify-center items-center">
-            <img
-              src="https://placehold.co/300x300"
-              alt="Customer creation"
-              className="w-1/3 rounded-lg shadow-lg"
-            />
-            <div className="ml-8">
-              <h3 className="text-2xl font-bold mb-4">
-                Bring Your Vision to Life
-              </h3>
-              <p className="mb-4">
-                Creativity sparks innovation. Whether skill or vision, every
-                idea deserves a chance. Let us help make your creative vision a
-                reality
-              </p>
-              <button className="bg-orange-500 text-white px-4 py-2 rounded">
-                Craft My Idea
-              </button>
+        <CreatorBanner />
+        <section className="py-12 px-10">
+          <div className="text-4xl my-14 font-extrabold">
+            <p>Crafted to Perfection:</p>
+            <div className="text-3xl">
+              <span>Stories of </span>
+              <span className="text-[#FF5722]">Customer Creations</span>
             </div>
           </div>
+          <CraftIdeaSection />
         </section>
       </main>
-
-      <footer className="bg-black text-white py-6">
-        <div className="flex justify-center space-x-4">
-          <a href="#" className="text-white">
-            <i className="fab fa-twitter"></i>
-          </a>
-          <a href="#" className="text-white">
-            <i className="fab fa-instagram"></i>
-          </a>
-          <a href="#" className="text-white">
-            <i className="fab fa-facebook"></i>
-          </a>
-          <a href="#" className="text-white">
-            <i className="fab fa-linkedin"></i>
-          </a>
-        </div>
-      </footer>
     </>
   );
 };

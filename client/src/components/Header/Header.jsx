@@ -63,7 +63,6 @@ export default function Header() {
           </ul>
         </nav>
       </header>
-      <main className="h-screen">boom</main>
     </>
   );
 }

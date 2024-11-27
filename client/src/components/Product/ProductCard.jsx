@@ -9,7 +9,7 @@ export default function ProductCard() {
   };
   return (
     <>
-      <div className="w-[250px] border shadow-lg">
+      <div className="w-[350px] border shadow-lg">
         <div>
           <img
             src="https://placehold.co/200x200"
@@ -22,10 +22,10 @@ export default function ProductCard() {
           <h3 className="font-bold">Product name ajjhak assd sk...</h3>
           <StarRating rating={rating} onChange={ratingChanged} />
           <div className="flex items-center gap-2">
-            <p className="font-bold text-xl text-green-600">₹553</p>
+            <p className="font-bold text-xl text-black">₹553</p>
             <div className="flex gap-2 text-sm">
-              <s>₹700</s>
-              <p>(79% off)</p>
+              <s className="text-gray-600">₹700</s>
+              <p className="text-green-600">(79% off)</p>
             </div>
           </div>
         </div>
