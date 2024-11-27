@@ -4,6 +4,9 @@ export default {
   content: ["./src/**/*.{html,jsx,js}"],
   theme: {
     extend: {
+      backgroundImage: {
+        'custom-gradient': 'linear-gradient(to left, rgba(144, 224, 239, 1) 0%, rgba(0, 180, 216, 0.5) 50%, rgba(26, 115, 232, 0.1) 100%)',
+      },
       keyframes: {
         "caret-blink": {
           "0%,70%,100%": { opacity: "1" },
