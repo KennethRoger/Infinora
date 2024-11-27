@@ -8,6 +8,7 @@ import ProductListPage from "./pages/Admin/Home/ProductListPage";
 import ProfilePage from "./pages/User/Home/ProfilePage";
 import LandingPage from "./pages/User/Home/LandingPage";
 import MainPage from "./pages/User/Home/MainPage";
+import CreatorPage from "./pages/User/Creator/CreatorPage";
 
 // const USERS_API = import.meta.env.VITE_USERS_API_BASE_URL;
 export function App() {
@@ -22,6 +23,7 @@ export function App() {
       <Route path="/admin/product-list" element={<ProductListPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/home" element={<MainPage />} />
+      <Route path="/home/creator" element={<CreatorPage />} />
     </Routes>
   );
 }
