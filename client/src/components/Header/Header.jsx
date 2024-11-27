@@ -27,7 +27,7 @@ export default function Header() {
               </Link>
             </li>
             <li className="flex-1">
-              <SearchBar />
+              <SearchBar placeholder={"Search for your desired product"}/>
             </li>
             <li>
               <Link className="flex items-center gap-1">
