@@ -1,6 +1,6 @@
 export const creatorTableHead = [
   { heading: "Creator ID", field: "userId", styles: "" },
-  { heading: "Profile Image", field: "profilePic", styles: "" },
+  { heading: "Profile Image", field: "image", styles: "" },
   { heading: "Name", field: "name", styles: "" },
   { heading: "Email", field: "email", styles: "" },
   { heading: "Phone Number", field: "phoneNumber", styles: "" },
@@ -13,7 +13,7 @@ export const creatorTableHead = [
 export const creators = [
     {
       userId: "CRE001",
-      profilePic: "https://placehold.co/100x100?text=John+Doe",
+      image: "https://placehold.co/100x100?text=John+Doe",
       name: "John Doe",
       email: "johndoe@example.com",
       phoneNumber: "+1 234 567 8901",
@@ -22,7 +22,7 @@ export const creators = [
     },
     {
       userId: "CRE002",
-      profilePic: "https://placehold.co/100x100?text=Jane+Smith",
+      image: "https://placehold.co/100x100?text=Jane+Smith",
       name: "Jane Smith",
       email: "janesmith@example.com",
       phoneNumber: "+1 234 567 8902",
@@ -31,7 +31,7 @@ export const creators = [
     },
     {
       userId: "CRE003",
-      profilePic: "https://placehold.co/100x100?text=Michael+J",
+      image: "https://placehold.co/100x100?text=Michael+J",
       name: "Michael Johnson",
       email: "michaelj@example.com",
       phoneNumber: "+1 234 567 8903",
@@ -40,7 +40,7 @@ export const creators = [
     },
     {
       userId: "CRE004",
-      profilePic: "https://placehold.co/100x100?text=Emily+Davis",
+      image: "https://placehold.co/100x100?text=Emily+Davis",
       name: "Emily Davis",
       email: "emilyd@example.com",
       phoneNumber: "+1 234 567 8904",
@@ -49,7 +49,7 @@ export const creators = [
     },
     {
       userId: "CRE005",
-      profilePic: "https://placehold.co/100x100?text=William+Brown",
+      image: "https://placehold.co/100x100?text=William+Brown",
       name: "William Brown",
       email: "williamb@example.com",
       phoneNumber: "+1 234 567 8905",
@@ -58,7 +58,7 @@ export const creators = [
     },
     {
       userId: "CRE006",
-      profilePic: "https://placehold.co/100x100?text=Sophia+Wilson",
+      image: "https://placehold.co/100x100?text=Sophia+Wilson",
       name: "Sophia Wilson",
       email: "sophiaw@example.com",
       phoneNumber: "+1 234 567 8906",
@@ -67,7 +67,7 @@ export const creators = [
     },
     {
       userId: "CRE007",
-      profilePic: "https://placehold.co/100x100?text=James+Taylor",
+      image: "https://placehold.co/100x100?text=James+Taylor",
       name: "James Taylor",
       email: "jamest@example.com",
       phoneNumber: "+1 234 567 8907",
@@ -76,7 +76,7 @@ export const creators = [
     },
     {
       userId: "CRE008",
-      profilePic: "https://placehold.co/100x100?text=Olivia+Anderson",
+      image: "https://placehold.co/100x100?text=Olivia+Anderson",
       name: "Olivia Anderson",
       email: "oliviaa@example.com",
       phoneNumber: "+1 234 567 8908",
