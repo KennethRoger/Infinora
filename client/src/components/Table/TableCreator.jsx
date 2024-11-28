@@ -19,8 +19,8 @@ export default function TableCreator({
     <div className="pt-10">
       <Table className="bg-white rounded-3xl">
         {/* <TableCaption>A list of your data.</TableCaption> */}
-        <TableHeader className="text-2xl bg-black">
-          <TableRow>
+        <TableHeader className="text-xl bg-black">
+          <TableRow className="hover:bg-black">
             {tableHead.map((head, index) => (
               <TableHead key={index} className={`${head.styles} text-white`}>
                 {head.heading}

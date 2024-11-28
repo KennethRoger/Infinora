@@ -1,59 +1,11 @@
 import { Link } from "react-router-dom";
 import infinoraLogoWhite from "../../assets/images/logo/Infinora-black-transparent.png";
-import {
-  AiOutlineDashboard,
-  AiOutlineProduct,
-  AiOutlineLogout,
-} from "react-icons/ai";
-import { BiCategory } from "react-icons/bi";
-import { FaListCheck } from "react-icons/fa6";
-import { RiUserLine, RiUserStarLine, RiCoupon2Line } from "react-icons/ri";
 import { IoIosArrowDropdown } from "react-icons/io";
 import { useState } from "react";
+import { sideMenuItems } from "@/constants/admin/menu/sideMenuItems";
 
 export default function HeadAndSideAdmin({ children }) {
   const [activeIndex, setActiveIndex] = useState(null);
-
-  const menuItems = [
-    {
-      id: 1,
-      label: "Dashboard",
-      icon: <AiOutlineDashboard />,
-      path: "/dashboard",
-    },
-    {
-      id: 2,
-      label: "Products",
-      icon: <AiOutlineProduct />,
-      path: "/admin/product-list",
-    },
-    {
-      id: 3,
-      label: "Categories",
-      icon: <BiCategory />,
-      path: "admin/category-list",
-    },
-    {
-      id: 4,
-      label: "Order List",
-      icon: <FaListCheck />,
-      path: "admin/order-list",
-    },
-    {
-      id: 5,
-      label: "Customers",
-      icon: <RiUserLine />,
-      path: "/admin/user-list",
-    },
-    {
-      id: 6,
-      label: "Creators",
-      icon: <RiUserStarLine />,
-      path: "admin/creator-list",
-    },
-    { id: 7, label: "Coupons", icon: <RiCoupon2Line />, path: "admin/coupons" },
-    { id: 8, label: "Logout", icon: <AiOutlineLogout />, path: "admin/logout" },
-  ];
 
   return (
     <>
@@ -83,7 +35,7 @@ export default function HeadAndSideAdmin({ children }) {
         <aside className="w-[250px] pt-[20px] fixed bg-white">
           <nav>
             <ul className="flex flex-col items-center text-xl">
-              {menuItems.map((item, index) => (
+              {sideMenuItems.map((item, index) => (
                 <li
                   key={item.id}
                   className={`flex p-3 pl-14 w-full cursor-pointer ${

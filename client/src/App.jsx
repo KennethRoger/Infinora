@@ -3,7 +3,6 @@ import LoginPage from "./pages/User/Auth/LoginPage";
 import LoginPageAdmin from "./pages/Admin/Auth/LoginPageAdmin";
 import { Routes, Route, Navigate } from "react-router-dom";
 import OTPVerificationPage from "./pages/User/Auth/OTPVerificationPage";
-import Header from "./components/Header/Header";
 import ProductListPage from "./pages/Admin/Home/ProductListPage";
 import ProfilePage from "./pages/User/Home/ProfilePage";
 import LandingPage from "./pages/User/Home/LandingPage";
@@ -15,6 +14,7 @@ import AdminLayout from "./Layouts/Admin/AdminLayout";
 import DashboardPage from "./pages/Admin/Home/DashboardPage";
 import AuthLayout from "./Layouts/User/AuthLayout";
 import HomeLayout from "./Layouts/User/HomeLayout";
+import ProfileLayout from "./Layouts/User/ProfileLayout";
 
 // const USERS_API = import.meta.env.VITE_USERS_API_BASE_URL;
 export function App() {
@@ -31,7 +31,9 @@ export function App() {
       
       <Route path="/home" element={<HomeLayout />}>
         <Route index element={<MainPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+        <Route path="profile" element={<ProfileLayout />}>
+          <Route index element={<ProfilePage />}></Route>
+        </Route>
         <Route path="creator" element={<CreatorPage />} />
       </Route>
 

@@ -2,7 +2,7 @@ import { FaSearch } from "react-icons/fa";
 
 export default function SearchBarAdmin() {
   return (
-    <div className="flex w-[500px] items-center">
+    <div className="flex w-[500px] pt-5 items-center">
       <input
         type="text"
         placeholder="Search product"
