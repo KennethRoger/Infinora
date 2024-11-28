@@ -5,7 +5,6 @@ import CreatorBanner from "@/components/Section/CreatorBanner";
 function MainPage() {
   return (
     <>
-      <Header />
       <main className="pt-[75px]">
         <CreatorBanner />
         <h1>Shop by Category</h1>

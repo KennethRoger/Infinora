@@ -25,7 +25,7 @@ export default function HeadAndSideAdmin({ children }) {
       id: 2,
       label: "Products",
       icon: <AiOutlineProduct />,
-      path: "admin/product-list",
+      path: "/admin/product-list",
     },
     {
       id: 3,
@@ -43,7 +43,7 @@ export default function HeadAndSideAdmin({ children }) {
       id: 5,
       label: "Customers",
       icon: <RiUserLine />,
-      path: "admin/customer-list",
+      path: "/admin/user-list",
     },
     {
       id: 6,
