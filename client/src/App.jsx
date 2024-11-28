@@ -23,8 +23,7 @@ export function App() {
       {/* User Routes */}
       <Route path="/" element={<LandingPage />} />
       
-      <Route path="/auth" element={<AuthLayout />}>
-        <Route index element={<Navigate to="/auth/login" replace />} />
+      <Route element={<AuthLayout />}>
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="verify-otp" element={<OTPVerificationPage />} />
