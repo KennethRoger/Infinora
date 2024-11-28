@@ -1,57 +1,23 @@
 import { FaSearch } from "react-icons/fa";
 import HeadAndSideAdmin from "../../../components/Section/HeadAndSideAdmin";
+import TableCreator from "@/components/Table/TableCreator";
+import {
+  productTableHead,
+  products,
+} from "@/constants/admin/product/productList";
+import { CloudCog } from "lucide-react";
 
 export default function ProductListPage() {
-  const products = [
-    {
-      image: "https://placehold.co/100x100?text=Image",
-      name: "Lungarian Hoodied Tshirt",
-      category: "Fashion",
-      price: "₹352.80",
-      creator: "Kevin Hart",
-      rating: "3.9",
-    },
-    {
-      image: "https://placehold.co/100x100?text=Artwork",
-      name: "The wonder castle",
-      category: "Artwork",
-      price: "₹1900.00",
-      creator: "Sage Emerson",
-      rating: "4.1",
-    },
-    {
-      image: "https://placehold.co/100x100?text=Fashion",
-      name: "Women's Dress",
-      category: "Fashion",
-      price: "₹6400.00",
-      creator: "Ezra Wilder",
-      rating: "4.0",
-    },
-    {
-      image: "https://placehold.co/100x100?text=Artwork",
-      name: "The wonder castle",
-      category: "Artwork",
-      price: "₹1900.00",
-      creator: "Sage Emerson",
-      rating: "4.1",
-    },
-    {
-      image: "https://placehold.co/100x100?text=Fashion",
-      name: "Women's Dress",
-      category: "Fashion",
-      price: "₹6400.00",
-      creator: "Ezra Wilder",
-      rating: "4.0",
-    },
-    {
-      image: "https://placehold.co/100x100?text=Accessories",
-      name: "Apple watch custom colored",
-      category: "Accessories",
-      price: "₹2000.00",
-      creator: "Luna Harper",
-      rating: "4.0",
-    },
-  ];
+  const tableActions = (product) => (
+    <div className="flex justify-center gap-2">
+      <button className="bg-green-500 text-white px-3 py-1 rounded" onClick={() => console.log("clicked: ", product)}>
+        Approve
+      </button>
+      <button className="bg-yellow-500 text-white px-3 py-1 rounded">
+        Reject
+      </button>
+    </div>
+  );
   return (
     <>
       <HeadAndSideAdmin>
@@ -66,46 +32,11 @@ export default function ProductListPage() {
           </div>
         </div>
         <div className="container mx-auto pt-4">
-          <table className="min-w-full bg-white border border-gray-200 ">
-            <thead>
-              <tr>
-                <th className="py-2 border-b">Image</th>
-                <th className="py-2 border-b">Product Name</th>
-                <th className="py-2 border-b">Category</th>
-                <th className="py-2 border-b">Price</th>
-                <th className="py-2 border-b">Creator</th>
-                <th className="py-2 border-b">Rating</th>
-                <th className="py-2 border-b">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product, index) => (
-                <tr key={index}>
-                  <td className="py-2 px-4 border-b">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-16 h-16 object-cover"
-                    />
-                  </td>
-                  <td className="py-2 px-10 border-b">{product.name}</td>
-                  <td className="py-2 px-10 border-b">{product.category}</td>
-                  <td className="py-2 px-10 border-b">{product.price}</td>
-                  <td className="py-2 px-10 border-b">{product.creator}</td>
-                  <td className="py-2 px-10 border-b">{product.rating}</td>
-                  <td className="py-2 px-10 border-b">
-                    <button className="text-blue-500 hover:text-blue-700 mx-2">
-                      <i className="fas fa-eye"></i>
-                    </button>
-                    <button className="text-red-500 hover:text-red-700 mx-2">
-                      <i className="fas fa-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              <div className="w-full h-[50px]"></div>
-            </tbody>
-          </table>
+          <TableCreator
+            tableHead={productTableHead}
+            tableBody={products}
+            actionsRenderer={tableActions}
+          />
         </div>
       </HeadAndSideAdmin>
     </>
