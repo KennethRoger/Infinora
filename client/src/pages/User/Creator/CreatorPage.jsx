@@ -4,7 +4,6 @@ import Header from "@/components/Header/Header";
 export default function CreatorPage() {
   return (
     <>
-      <Header />
       <main className="pt-[75px] flex">
         <div className="relative w-[50%] bg-gradient-to-b from-[#FF6B6B] to-[#FFC75F] pb-24 pt-5">
           <img
@@ -64,7 +63,6 @@ export default function CreatorPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

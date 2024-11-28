@@ -5,7 +5,7 @@ export const productTableHead = [
     { heading: "Price", field: "price", styles: "" },
     { heading: "Creator", field: "creator", styles: "" },
     { heading: "Rating", field: "rating", styles: "" },
-    {heading: "Actions", field: "actions", styles: "text-center text-black"}
+    {heading: "Actions", field: "actions", styles: "text-center"}
 ];
 export const products = [
   {

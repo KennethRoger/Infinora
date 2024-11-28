@@ -13,7 +13,7 @@ import { setPersistence } from "firebase/auth";
 function RegisterPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [serverError, setServerError] = useState("")
+  const [serverError, setServerError] = useState("");
 
   const otpData = async (data) => {
     try {
@@ -24,7 +24,7 @@ function RegisterPage() {
         const tempUserId = response.tempUserId;
         navigate("/verify-otp", { state: { tempUserId } });
       } else {
-        setServerError(response.message)
+        setServerError(response.message);
         alert("Error generating OTP. Please try again.");
       }
     } catch (error) {
@@ -37,44 +37,42 @@ function RegisterPage() {
 
   return (
     <>
-      <AuthPage>
-        <LeftBox heading={"Sign Up"} description={"Sign up and explore more"}>
-          <div>
-            <Spinner />
-            <GenericForm
-              inputFields={registerFields}
-              apiFunction={otpData}
-              buttonName={loading ? <Spinner /> : "Register"}
-              buttonStyle={`w-full text-white ${
-                loading ? "bg-[#006dcc] cursor-not-allowed" : "bg-[#33A0FF]"
-              }`}
-              buttonAttributes={loading ? "disabled" : ""}
-              serrverErrors={serverError}
-            />
-            <div className="flex items-center justify-center my-4">
-              <div className="h-px bg-gray-300 flex-1"></div>
-              <span className="px-3 text-sm text-gray-500 font-medium">OR</span>
-              <div className="h-px bg-gray-300 flex-1"></div>
-            </div>
-            <Button
-              onClick={googleSignIn}
-              styles={
-                "text-black flex justify-center items-center gap-2 w-full hover:bg-gray-100"
-              }
-              attributes={loading ? "disabled" : ""}
-            >
-              <FcGoogle />
-              <p>Sign in with Google</p>
-            </Button>
+      <LeftBox heading={"Sign Up"} description={"Sign up and explore more"}>
+        <div>
+          <Spinner />
+          <GenericForm
+            inputFields={registerFields}
+            apiFunction={otpData}
+            buttonName={loading ? <Spinner /> : "Register"}
+            buttonStyle={`w-full text-white ${
+              loading ? "bg-[#006dcc] cursor-not-allowed" : "bg-[#33A0FF]"
+            }`}
+            buttonAttributes={loading ? "disabled" : ""}
+            serrverErrors={serverError}
+          />
+          <div className="flex items-center justify-center my-4">
+            <div className="h-px bg-gray-300 flex-1"></div>
+            <span className="px-3 text-sm text-gray-500 font-medium">OR</span>
+            <div className="h-px bg-gray-300 flex-1"></div>
           </div>
-          <div className="text-center mt-10">
-            <span>Already a user? </span>
-            <Link to={loading ? "#" : "/login"}>
-              <span className="text-[#FF9500]">Sign in</span>
-            </Link>
-          </div>
-        </LeftBox>
-      </AuthPage>
+          <Button
+            onClick={googleSignIn}
+            styles={
+              "text-black flex justify-center items-center gap-2 w-full hover:bg-gray-100"
+            }
+            attributes={loading ? "disabled" : ""}
+          >
+            <FcGoogle />
+            <p>Sign in with Google</p>
+          </Button>
+        </div>
+        <div className="text-center mt-10">
+          <span>Already a user? </span>
+          <Link to={loading ? "#" : "/login"}>
+            <span className="text-[#FF9500]">Sign in</span>
+          </Link>
+        </div>
+      </LeftBox>
     </>
   );
 }

@@ -38,35 +38,30 @@ export default function OTPVerificationPage() {
   // if (!tempUserId) return null;
 
   return (
-    <AuthPage>
-      <LeftBox
-        heading={"Sign Up"}
-        description={"Verify OTP sent to your email"}
-      >
-        <form onSubmit={handleVerifyOTP}>
-          <label className="text-black text-xl mb-5">Enter OTP</label>
-          <InputOTP
-            maxLength={6}
-            pattern={REGEXP_ONLY_DIGITS}
-            onChange={(value) => setOtp(value)}
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
-          <Button
-            buttonType={"submit"}
-            styles={`w-[80%] mt-14 bg-[#33A0FF] text-white`}
-          >
-            Verify
-          </Button>
-        </form>
-      </LeftBox>
-    </AuthPage>
+    <LeftBox heading={"Sign Up"} description={"Verify OTP sent to your email"}>
+      <form onSubmit={handleVerifyOTP}>
+        <label className="text-black text-xl mb-5">Enter OTP</label>
+        <InputOTP
+          maxLength={6}
+          pattern={REGEXP_ONLY_DIGITS}
+          onChange={(value) => setOtp(value)}
+        >
+          <InputOTPGroup>
+            <InputOTPSlot index={0} />
+            <InputOTPSlot index={1} />
+            <InputOTPSlot index={2} />
+            <InputOTPSlot index={3} />
+            <InputOTPSlot index={4} />
+            <InputOTPSlot index={5} />
+          </InputOTPGroup>
+        </InputOTP>
+        <Button
+          buttonType={"submit"}
+          styles={`w-[80%] mt-14 bg-[#33A0FF] text-white`}
+        >
+          Verify
+        </Button>
+      </form>
+    </LeftBox>
   );
 }
