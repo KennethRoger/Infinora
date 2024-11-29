@@ -13,8 +13,10 @@ import SearchBar from "@/components/Form/SearchBar";
 import ProductCard from "@/components/Product/ProductCard";
 import CreatorBanner from "@/components/Section/CreatorBanner";
 import CraftIdeaSection from "@/components/Section/CraftIdeaSection";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
+  const navigate = useNavigate()
   return (
     <>
       <header className="flex justify-center items-center p-6 bg-white">
@@ -62,10 +64,10 @@ const LandingPage = () => {
                 </p>
               </div>
               <div className="flex justify-center gap-8">
-                <Button styles={"bg-[#F7F23B] text-black"}>
+                <button className="bg-[#F7F23B] text-black border px-5 min-w-[130px] rounded h-12 shadow-md text-lg" onClick={() => navigate("/home")} >
                   Browse creations
-                </Button>
-                <Button styles={"bg-black text-white"}>Sign in</Button>
+                </button>
+                <button className="bg-black text-white border px-5 min-w-[130px] rounded h-12 shadow-md text-lg" onClick={() => navigate("/login")}>Sign in</button>
               </div>
             </div>
           </div>
