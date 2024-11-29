@@ -114,17 +114,17 @@ const login = async (req, res) => {
 };
 
 const googleSignIn = async (req, res) => {
-  const { googleId, email, name, picture, verifiedEmail } = req.body;
+  const { uid, email, displayName, photoURL, emailVerified } = req.body;
   try {
-    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+    let user = await User.findOne({ $or: [{ googleId: uid }, { email }] });
 
     if (!user) {
       const newUser = new User({
-        name,
+        name: displayName,
         email,
-        googleId,
-        googlePicture: picture,
-        googleVerified: verifiedEmail,
+        googleId: uid,
+        googlePicture: photoURL,
+        googleVerified: emailVerified,
       });
       await newUser.save();
 
@@ -138,14 +138,13 @@ const googleSignIn = async (req, res) => {
         },
         message: "New user created.",
       });
-      
     } else {
-
       let isUpdated = false;
 
-      if (user.googleId === googleId && user.email !== email) {
+      // For what if user gonna have a new email, the uid remains the same
+      if (user.googleId === uid && user.email !== email) {
         user.email = email;
-        user.googleVerified = verifiedEmail;
+        user.googleVerified = emailVerified;
         isUpdated = true;
       }
 
@@ -161,7 +160,9 @@ const googleSignIn = async (req, res) => {
           email: user.email,
           googlePicture: user.googlePicture,
         },
-        message: isUpdated ? "User information updated." : "User already exists.",
+        message: isUpdated
+          ? "User information updated."
+          : "User already exists.",
       });
     }
   } catch (error) {
@@ -169,6 +170,5 @@ const googleSignIn = async (req, res) => {
     res.status(500).json({ success: false, message: "Authentication failed." });
   }
 };
-
 
 module.exports = { generateOTP, verifyOTP, login, googleSignIn };

@@ -97,7 +97,7 @@ const LandingPage = () => {
             {Array(10)
               .fill()
               .map((_, i) => (
-                <ProductCard />
+                <ProductCard key={i} />
               ))}
           </div>
         </section>

@@ -18,7 +18,7 @@ function GenericForm({ inputFields, apiFunction, serrverErrors, buttonName, butt
               value={inputData[field.name]}
             />
             {errors[field.name] && (
-              <p className="text-red-600">{errors[field.name]}</p>
+              <p className="text-red-600 text-lg">{errors[field.name]}</p>
             )}
           </div>
         ))}
