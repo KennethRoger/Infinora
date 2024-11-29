@@ -4,7 +4,7 @@ import LoginPageAdmin from "./pages/Admin/Auth/LoginPageAdmin";
 import { Routes, Route, Navigate } from "react-router-dom";
 import OTPVerificationPage from "./pages/User/Auth/OTPVerificationPage";
 import ProductListPage from "./pages/Admin/Home/ProductListPage";
-import ProfilePage from "./pages/User/Home/ProfilePage";
+import ProfilePage from "./Layouts/User/ProfilePage";
 import LandingPage from "./pages/User/Home/LandingPage";
 import MainPage from "./pages/User/Home/MainPage";
 import CreatorPage from "./pages/User/Creator/CreatorPage";
@@ -15,6 +15,8 @@ import DashboardPage from "./pages/Admin/Home/DashboardPage";
 import AuthLayout from "./Layouts/User/AuthLayout";
 import HomeLayout from "./Layouts/User/HomeLayout";
 import ProfileLayout from "./Layouts/User/ProfileLayout";
+import ProfileInfo from "./pages/User/Home/ProfileInfo";
+import CreatorProfile from "./pages/User/Creator/CreatorProfile";
 
 // const USERS_API = import.meta.env.VITE_USERS_API_BASE_URL;
 export function App() {
@@ -22,17 +24,28 @@ export function App() {
     <Routes>
       {/* User Routes */}
       <Route path="/" element={<LandingPage />} />
-      
+
       <Route element={<AuthLayout />}>
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="verify-otp" element={<OTPVerificationPage />} />
       </Route>
-      
+
       <Route path="/home" element={<HomeLayout />}>
         <Route index element={<MainPage />} />
         <Route path="profile" element={<ProfileLayout />}>
-          <Route index element={<ProfilePage />}></Route>
+          <Route index element={<Navigate to="profile-info" replace />} />
+          <Route path="profile-info" element={<ProfilePage />}>
+            <Route index element={<ProfileInfo />} />
+          </Route>
+          {/* <Route path="address" element={<ProfilePage />}>
+            <Route index element={<Address />} />
+          </Route>
+
+          <Route path="wallet" element={<ProfilePage />}>
+            <Route index element={<Wallet />} />
+          </Route> */}
+          <Route path="creator-info" element={<CreatorProfile />} />
         </Route>
         <Route path="creator" element={<CreatorPage />} />
       </Route>
