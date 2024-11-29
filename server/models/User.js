@@ -25,10 +25,11 @@ const userSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       required: function () {
-        return this.role === "vendor";
+        this.role === "vendor";
       },
       unique: true,
       sparse: true,
+      default: null,
     },
     googleId: {
       type: String,
@@ -38,8 +39,9 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: function () {
-        return !this.googleId && !this.googlePicture;
+        return !this.googleId || !this.googlePicture;
       },
+      default: null
     },
     profileImagePath: {
       type: String,

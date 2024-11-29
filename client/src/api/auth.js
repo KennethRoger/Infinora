@@ -44,6 +44,7 @@ export const googleSignIn = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
+    console.log(user)
     const response = await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/google-signin`, user);
     console.log(response)
   } catch (error) {

@@ -32,23 +32,23 @@ export default function OTPVerificationPage() {
     console.log(response?.data);
   };
 
-  useEffect(() => {
-    if (!tempUserId) {
-      navigate("/register");
-    }
-
-    return () => null;
-  }, []);
+  // useEffect(() => {
+  //   if (!tempUserId) {
+  //     navigate("/register");
+  //   }
+  //   return () => null;
+  // }, []);
 
   return (
     <LeftBox heading={"Sign Up"} description={"Verify OTP sent to your email"}>
       <form onSubmit={handleVerifyOTP}>
-        <label className="text-black text-xl mb-5">Enter OTP</label>
-        <p className="sm">Enter OTP sent to the number</p>
+        <label className="text-black text-2xl font-semibold mb-5">Enter OTP</label>
+        <p className="text-lg py-2">Enter OTP sent to the number</p>
         <InputOTP
           maxLength={6}
           pattern={REGEXP_ONLY_DIGITS}
           onChange={(value) => setOtp(value)}
+          className="bg-gray-400"
         >
           <InputOTPGroup>
             <InputOTPSlot index={0} />
