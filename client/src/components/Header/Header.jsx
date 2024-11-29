@@ -1,5 +1,5 @@
 import infinoraWhiteLogo from "../../assets/images/logo/Infinora-white-transparent.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { FaRegUser, FaSearch } from "react-icons/fa";
 import { BsCart3 } from "react-icons/bs";
@@ -8,12 +8,13 @@ import { GrFavorite } from "react-icons/gr";
 import SearchBar from "../Form/SearchBar";
 
 export default function Header() {
+  const navigate = useNavigate()
   return (
     <>
       <header className="bg-black fixed w-full z-50">
         <nav className="text-white text-xl">
           <ul className="flex h-[75px] items-center pl-4 gap-5">
-            <li>
+            <li onClick={() => navigate("/home")}>
               <img
                 className="w-44"
                 src={infinoraWhiteLogo}

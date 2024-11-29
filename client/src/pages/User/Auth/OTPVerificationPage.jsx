@@ -13,11 +13,9 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import Button from "@/components/Form/Button";
 
 export default function OTPVerificationPage() {
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const tempUserId = location.state?.tempUserId;
-
-  //
 
   const [otp, setOtp] = useState("");
 
@@ -28,19 +26,25 @@ export default function OTPVerificationPage() {
       otp,
       tempUserId,
     };
-
     console.log("Request Data:", requestData);
 
     const response = await verifyOTP(requestData);
-    console.log(response.data);
+    console.log(response?.data);
   };
 
-  // if (!tempUserId) return null;
+  useEffect(() => {
+    if (!tempUserId) {
+      navigate("/register");
+    }
+
+    return () => null;
+  }, []);
 
   return (
     <LeftBox heading={"Sign Up"} description={"Verify OTP sent to your email"}>
       <form onSubmit={handleVerifyOTP}>
         <label className="text-black text-xl mb-5">Enter OTP</label>
+        <p className="sm">Enter OTP sent to the number</p>
         <InputOTP
           maxLength={6}
           pattern={REGEXP_ONLY_DIGITS}
