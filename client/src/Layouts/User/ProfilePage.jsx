@@ -13,7 +13,7 @@ export default function ProfilePage() {
           </div>
           <SidebarMenu menuItems={profileSideMenu} />
         </aside>
-        <div className="w-full border-black/50">
+        <div className="w-full border-black/50 p-5">
           <Outlet />
         </div>
       </div>

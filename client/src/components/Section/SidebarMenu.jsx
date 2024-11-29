@@ -9,7 +9,10 @@ import { NavLink } from "react-router-dom";
 export default function SidebarMenu({ menuItems }) {
   return (
     <nav>
-      <ul className="text-black border-r-2 ">
+      <ul
+        className="text-black border-r-2 whitespace-nowrap no-scrollbar
+                   overflow-y-auto h-[calc(100vh-80px)]" // Adjust height as needed
+      >
         {menuItems.map((item) =>
           item?.collapse ? (
             <li key={item.id}>
