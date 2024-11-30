@@ -16,7 +16,7 @@ import OtpTimer from "@/components/OTPTimer/OtpTimer";
 export default function OTPVerificationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { tempUserId, email } = location.state;
+  const { tempUserId, email } = location?.state || {};
 
   const [otp, setOtp] = useState("");
 
@@ -38,18 +38,19 @@ export default function OTPVerificationPage() {
       email,
       tempUserId,
     };
-    console.log(resendReqData);
-
     const response = await resendOTP(resendReqData);
     console.log(response?.data);
+    if (!response?.data.success) {
+      navigate("/register")
+    }
   };
 
-  // useEffect(() => {
-  //   if (!tempUserId) {
-  //     navigate("/register");
-  //   }
-  //   return () => null;
-  // }, []);
+  useEffect(() => {
+    if (!tempUserId) {
+      navigate("/register");
+    }
+    return;
+  }, []);
 
   return (
     <LeftBox heading={"Sign Up"} description={"Verify OTP sent to your email"}>

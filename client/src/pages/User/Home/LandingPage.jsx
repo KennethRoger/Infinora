@@ -14,12 +14,13 @@ import ProductCard from "@/components/Product/ProductCard";
 import CreatorBanner from "@/components/Section/CreatorBanner";
 import CraftIdeaSection from "@/components/Section/CraftIdeaSection";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer/Footer";
 
 const LandingPage = () => {
   const navigate = useNavigate()
   return (
     <>
-      <header className="flex justify-center items-center p-6 bg-white">
+      <header className="flex justify-center items-center p-3 bg-white">
         <img
           className="w-[250px] flex justify-center"
           src={infinoraBlackLogo}
@@ -113,6 +114,7 @@ const LandingPage = () => {
           <CraftIdeaSection />
         </section>
       </main>
+      <Footer />
     </>
   );
 };

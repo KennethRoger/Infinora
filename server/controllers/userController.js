@@ -3,13 +3,24 @@ const bcryptjs = require("bcryptjs");
 const { sendEmail } = require("../utils/emailService");
 const TempUser = require("../models/TempUser");
 const User = require("../models/User");
-const { generateToken } = require("../utils/generateToken");
+const { generateToken } = require("../utils/tokenValidator");
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  maxAge: 60 * 60 * 1000,
+};
 
 const generateOTP = async (req, res) => {
   try {
     const { email, phoneNumber, password } = req.body;
     const hashPassword = await bcryptjs.hash(password, 10);
     const otp = crypto.randomInt(100000, 999999).toString();
+    const user = await User.find({ $or: [{ email }, { phoneNumber }] });
+    if (user)
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
     const tempUser = await TempUser.create({
       email,
       phoneNumber,
@@ -26,8 +37,8 @@ const generateOTP = async (req, res) => {
       message: "OTP sent successfully",
       data: {
         tempUserId: tempUser._id,
-        email: tempUser.email
-      } 
+        email: tempUser.email,
+      },
     });
   } catch (error) {
     console.error("Error sending OTP: ", error);
@@ -110,7 +121,6 @@ const resendOTP = async (req, res) => {
   }
 };
 
-
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -118,24 +128,26 @@ const login = async (req, res) => {
     if (!user)
       return res
         .status(400)
-        .json({ message: "email or password is incorrect" });
+        .json({ message: "This user does not exist. Try registering" });
     const validPass = bcryptjs.compare(password, user.password);
+
+    if (user.isBlocked)
+      return res
+        .status(403)
+        .json({ message: "Access denied! Contact Support" });
+
     if (!validPass)
       return res
         .status(400)
         .json({ message: "email or password is incorrect" });
+
     const token = generateToken(user);
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 1000,
-    };
-
     res.cookie("token", token, cookieOptions);
+    
     return res.status(200).json({
       message: "Login successful",
-      user: { name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, email: user.email, role: user.role },
     });
   } catch (error) {
     console.error("Sign-In Error:", error);

@@ -14,7 +14,7 @@ export default function Header() {
       <header className="bg-black fixed w-full z-50">
         <nav className="text-white text-xl">
           <ul className="flex h-[75px] items-center pl-4 gap-5">
-            <li onClick={() => navigate("/home")}>
+            <li onClick={() => navigate("/")} className="cursor-pointer">
               <img
                 className="w-44"
                 src={infinoraWhiteLogo}
@@ -31,7 +31,7 @@ export default function Header() {
               <SearchBar placeholder={"Search for your desired product"}/>
             </li>
             <li>
-              <Link className="flex items-center gap-1">
+              <Link to={"/login"} className="flex items-center gap-1">
                 <FaRegUser />
                 <p>Sign in</p>
               </Link>
