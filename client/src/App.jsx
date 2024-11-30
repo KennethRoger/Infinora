@@ -38,13 +38,6 @@ export function App() {
           <Route path="profile-info" element={<ProfilePage />}>
             <Route index element={<ProfileInfo />} />
           </Route>
-          {/* <Route path="address" element={<ProfilePage />}>
-            <Route index element={<Address />} />
-          </Route>
-
-          <Route path="wallet" element={<ProfilePage />}>
-            <Route index element={<Wallet />} />
-          </Route> */}
           <Route path="creator-info" element={<CreatorProfile />} />
         </Route>
         <Route path="creator" element={<CreatorPage />} />

@@ -27,7 +27,7 @@ const authorizeToken = async (req, res, next) => {
 };
 
 const authorizeRoles =
-  (roles) =>
+  (...roles) =>
   (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res

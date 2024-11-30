@@ -47,10 +47,12 @@ export const verifyOTP = async (data) => {
 
 export const login = async (data) => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/signin`, data);
-    console.log(response.data)
+    const response = await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/login`, data);
+    const user = response.data.user;
+    return user;
+    
   } catch (error) {
-    console.error("Google Sign-In Error:", error);
+    console.error("Sign-In Error:", error);
   }
 };
 
