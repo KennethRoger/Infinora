@@ -213,4 +213,31 @@ const googleSignIn = async (req, res) => {
   }
 };
 
-module.exports = { generateOTP, verifyOTP, resendOTP, login, googleSignIn };
+const getUserInfo = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token)
+      return res.status(401).json({ success: false, message: "Unauthorized: No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    res.status(200).json({
+      success: true,
+      user: { id: user._id, email: user.email, role: user.role },
+    });
+  } catch (error) {
+    console.error("Get User Info Error:", error);
+    res.status(401).json({ success: false, message: "Invalid or expired token" });
+  }
+};
+
+const logout = (req, res) => {
+  res.clearCookie("token");
+  res.status(200).json({ success: true, message: "Logged out successfully" });
+};
+
+module.exports = { generateOTP, verifyOTP, resendOTP, login, googleSignIn, getUserInfo, logout };

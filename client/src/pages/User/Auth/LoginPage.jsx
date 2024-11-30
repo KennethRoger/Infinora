@@ -2,13 +2,24 @@ import GenericForm from "../../../components/Form/GenericForm";
 import { loginFields } from "../../../constants/user/Form/loginFields";
 import { login } from "../../../api/auth";
 import LeftBox from "../../../components/Form/LeftBox";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import GoogleSignin from "./GoogleSignin";
-import { useLoading } from "@/hooks/useLoading";
-
 
 function LoginPage() {
-  const {loading, startLoading, stopLoading} = useLoading()
+  const navigate = useNavigate();
+
+  const handleLogin = async (data) => {
+    try {
+      const { id, email, role } = await login(data);
+      console.log(id, email, role);
+      if (data) {
+        navigate("/home", { state: { id, role } });
+      }
+    } catch (error) {
+      console.error("Error Logging in:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
   return (
     <>
       <LeftBox
@@ -17,7 +28,7 @@ function LoginPage() {
       >
         <GenericForm
           inputFields={loginFields}
-          apiFunction={login}
+          apiFunction={handleLogin}
           buttonName={"login"}
           buttonStyle={`w-full bg-[#33A0FF] text-white`}
         />
