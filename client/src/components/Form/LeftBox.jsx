@@ -6,7 +6,7 @@ function LeftBox({ heading, description, children }) {
         <div className="bg-[#F7F23B] p-5 flex flex-col justify-between w-[350px]">
           <div>
             <h1 className="font-bold text-3xl">{heading}</h1>
-            <p className="text-2xl mt-3">{description}</p>
+            <p className="text-2xl mt-3 w-[75%]">{description}</p>
           </div>
           <img className="w-full" src={authImage} alt="A login pic"></img>
         </div>

@@ -2,29 +2,37 @@ import { useState, useEffect } from "react";
 
 const OtpTimer = ({ duration = 30, onResend }) => {
   const [timeLeft, setTimeLeft] = useState(0);
-  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     const expirationTime = localStorage.getItem("otpExpirationTime");
     const now = Date.now();
 
-    if (expirationTime && now < parseInt(expirationTime, 10)) {
-      setTimeLeft(Math.ceil((parseInt(expirationTime, 10) - now) / 1000));
+    if (expirationTime) {
+      const timeRemaining = Math.ceil((parseInt(expirationTime, 10) - now) / 1000);
+
+      if (timeRemaining > 0) {
+        setTimeLeft(timeRemaining); 
+      } else {
+        setTimeLeft(0);
+      }
     } else {
-      setTimeLeft(duration);
-      setIsExpired(false);
+      setTimeLeft(0);
     }
   }, [duration]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
-      setIsExpired(true);
-      localStorage.removeItem("otpExpirationTime");
       return;
     }
 
     const timerId = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerId);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timerId);
@@ -34,7 +42,6 @@ const OtpTimer = ({ duration = 30, onResend }) => {
     const newExpirationTime = Date.now() + duration * 1000;
     localStorage.setItem("otpExpirationTime", newExpirationTime.toString());
     setTimeLeft(duration);
-    setIsExpired(false);
     if (onResend) onResend();
   };
 
@@ -45,15 +52,17 @@ const OtpTimer = ({ duration = 30, onResend }) => {
   };
 
   return (
-    <div>
-      {isExpired ? (
-        <div>
-          <p>OTP expired. Please resend.</p>
-          <button onClick={handleResend}>Resend OTP</button>
-        </div>
-      ) : (
-        <p>OTP expires in: {formatTime(timeLeft)}</p>
-      )}
+    <div className="mt-10">
+      <div className="flex gap-1 text-base">
+        <p>Didn't receive the OTP? </p>
+        {timeLeft === 0 ? (
+          <button onClick={handleResend} className="text-blue-500">
+            Resend OTP
+          </button>
+        ) : (
+          <p className="text-black/90">Resend OTP in: {formatTime(timeLeft)}</p>
+        )}
+      </div>
     </div>
   );
 };
