@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { verifyOTP } from "../../../api/auth";
+import { resendOTP, verifyOTP } from "../../../api/auth";
 import AuthPage from "../../../components/Auth/AuthPage";
 import LeftBox from "../../../components/Form/LeftBox";
 import { useState, useEffect } from "react";
@@ -11,11 +11,12 @@ import {
 
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import Button from "@/components/Form/Button";
+import OtpTimer from "@/components/OTPTimer/OtpTimer";
 
 export default function OTPVerificationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const tempUserId = location.state?.tempUserId;
+  const { tempUserId, email } = location.state;
 
   const [otp, setOtp] = useState("");
 
@@ -32,6 +33,17 @@ export default function OTPVerificationPage() {
     console.log(response?.data);
   };
 
+  const handleResendOTP = async (e) => {
+    const resendReqData = {
+      email,
+      tempUserId,
+    };
+    console.log(resendReqData);
+
+    const response = await resendOTP(resendReqData);
+    console.log(response?.data);
+  };
+
   // useEffect(() => {
   //   if (!tempUserId) {
   //     navigate("/register");
@@ -42,7 +54,9 @@ export default function OTPVerificationPage() {
   return (
     <LeftBox heading={"Sign Up"} description={"Verify OTP sent to your email"}>
       <form onSubmit={handleVerifyOTP}>
-        <label className="text-black text-2xl font-semibold mb-5">Enter OTP</label>
+        <label className="text-black text-2xl font-semibold mb-5">
+          Enter OTP
+        </label>
         <p className="text-lg py-2">Enter OTP sent to the number</p>
         <InputOTP
           maxLength={6}
@@ -59,6 +73,7 @@ export default function OTPVerificationPage() {
             <InputOTPSlot index={5} />
           </InputOTPGroup>
         </InputOTP>
+        <OtpTimer onResend={handleResendOTP} />
         <Button
           buttonType={"submit"}
           styles={`w-[80%] mt-14 bg-[#33A0FF] text-white`}

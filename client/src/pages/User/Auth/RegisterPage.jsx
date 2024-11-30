@@ -10,17 +10,17 @@ import { useState } from "react";
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState()
-  const { loading, startLoading, stopLoading } = useLoading()
+  const [serverError, setServerError] = useState();
+  const { loading, startLoading, stopLoading } = useLoading();
 
   const otpData = async (data) => {
     try {
-      startLoading()
+      startLoading();
       const response = await register(data);
 
       if (response.success) {
-        const tempUserId = response.tempUserId;
-        navigate("/verify-otp", { state: { tempUserId } });
+        const { tempUserId, email } = response.data;
+        navigate("/verify-otp", { state: { tempUserId, email } });
       } else {
         setServerError(response.message);
         alert("Error generating OTP. Please try again.");
@@ -29,7 +29,7 @@ function RegisterPage() {
       console.error("Error generating OTP:", error);
       alert("An error occurred. Please try again.");
     } finally {
-      stopLoading()
+      stopLoading();
     }
   };
 

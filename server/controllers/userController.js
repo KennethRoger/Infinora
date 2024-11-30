@@ -24,7 +24,10 @@ const generateOTP = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "OTP sent successfully",
-      tempUserId: tempUser._id,
+      data: {
+        tempUserId: tempUser._id,
+        email: tempUser.email
+      } 
     });
   } catch (error) {
     console.error("Error sending OTP: ", error);
@@ -37,7 +40,6 @@ const generateOTP = async (req, res) => {
 const verifyOTP = async (req, res) => {
   try {
     const { tempUserId, otp } = req.body;
-    console.log(otp);
     const tempUser = await TempUser.findById(tempUserId);
 
     if (!tempUser) {
@@ -70,16 +72,44 @@ const verifyOTP = async (req, res) => {
 
 const resendOTP = async (req, res) => {
   try {
-    const { tempUserId } = req.body;
+    const { tempUserId, email } = req.body;
+
     const otp = crypto.randomInt(100000, 999999).toString();
-    await TempUser.findByIdAndUpdate({ tempUserId }, { otp });
+
+    const updatedUser = await TempUser.findByIdAndUpdate(
+      tempUserId,
+      {
+        otp,
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Temporary user not found.",
+      });
+    }
+
     await sendEmail(
       email,
       "Your OTP verification code for Infinora",
       `Your OTP is ${otp}`
     );
-  } catch (error) {}
+
+    res.status(200).json({
+      success: true,
+      message: "OTP resent successfully.",
+    });
+  } catch (error) {
+    console.error("Error resending OTP: ", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to resend OTP.",
+    });
+  }
 };
+
 
 const login = async (req, res) => {
   try {
@@ -171,4 +201,4 @@ const googleSignIn = async (req, res) => {
   }
 };
 
-module.exports = { generateOTP, verifyOTP, login, googleSignIn };
+module.exports = { generateOTP, verifyOTP, resendOTP, login, googleSignIn };

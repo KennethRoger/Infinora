@@ -17,6 +17,20 @@ export const register = async (data) => {
   }
 };
 
+export const resendOTP = async (data) => {
+  try {
+    console.log(data);
+    await axios
+      .post(
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/resend-otp`,
+        data
+      )
+    
+  } catch (error) {
+    console.error("Error on resend: ", error.response?.data);
+  }
+}
+
 export const verifyOTP = async (data) => {
   try {
     console.log(data);
