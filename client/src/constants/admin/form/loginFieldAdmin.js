@@ -4,7 +4,7 @@ export const loginFields = [
     name: "name",
     type: "text",
     validations: {
-      required: "username is mandatory",
+      required: "Username is mandatory",
     },
   },
   {
@@ -19,6 +19,8 @@ export const loginFields = [
     label: "Password",
     name: "password",
     type: "password",
-    validations: { required: "Password is mandatory" },
+    validations: {
+      required: "Password is mandatory",
+    },
   },
 ];

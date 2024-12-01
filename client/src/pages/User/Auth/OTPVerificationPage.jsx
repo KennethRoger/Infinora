@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { resendOTP, verifyOTP } from "../../../api/auth";
+import { resendOTP, verifyOTP } from "../../../api/user/userAuth";
 import AuthPage from "../../../components/Auth/AuthPage";
 import LeftBox from "../../../components/Form/LeftBox";
 import { useState, useEffect } from "react";
@@ -30,7 +30,10 @@ export default function OTPVerificationPage() {
     console.log("Request Data:", requestData);
 
     const response = await verifyOTP(requestData);
-    console.log(response?.data);
+    // if (response.success) {
+    //   navigate("/");
+    // }
+    console.log(response);
   };
 
   const handleResendOTP = async (e) => {
@@ -39,8 +42,8 @@ export default function OTPVerificationPage() {
       tempUserId,
     };
     const response = await resendOTP(resendReqData);
-    console.log(response?.data);
-    if (!response?.data.success) {
+    console.log(response)
+    if (!response?.success) {
       navigate("/register")
     }
   };

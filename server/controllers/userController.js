@@ -16,7 +16,7 @@ const generateOTP = async (req, res) => {
     const { email, phoneNumber, password } = req.body;
     const hashPassword = await bcryptjs.hash(password, 10);
     const otp = crypto.randomInt(100000, 999999).toString();
-    const user = await User.find({ $or: [{ email }, { phoneNumber }] });
+    const user = await User.findOne({ $or: [{ email }, { phoneNumber }] });
     if (user)
       return res
         .status(400)
@@ -144,7 +144,7 @@ const login = async (req, res) => {
     const token = generateToken(user);
 
     res.cookie("token", token, cookieOptions);
-    
+
     return res.status(200).json({
       message: "Login successful",
       user: { id: user._id, email: user.email, role: user.role },
@@ -217,13 +217,17 @@ const getUserInfo = async (req, res) => {
   try {
     const token = req.cookies.token;
     if (!token)
-      return res.status(401).json({ success: false, message: "Unauthorized: No token provided" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized: No token provided" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user)
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     res.status(200).json({
       success: true,
@@ -231,7 +235,9 @@ const getUserInfo = async (req, res) => {
     });
   } catch (error) {
     console.error("Get User Info Error:", error);
-    res.status(401).json({ success: false, message: "Invalid or expired token" });
+    res
+      .status(401)
+      .json({ success: false, message: "Invalid or expired token" });
   }
 };
 
@@ -240,4 +246,12 @@ const logout = (req, res) => {
   res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
-module.exports = { generateOTP, verifyOTP, resendOTP, login, googleSignIn, getUserInfo, logout };
+module.exports = {
+  generateOTP,
+  verifyOTP,
+  resendOTP,
+  login,
+  googleSignIn,
+  getUserInfo,
+  logout,
+};

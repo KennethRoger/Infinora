@@ -1,8 +1,22 @@
 import Modal from "@/components/Modal/Modal";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 export default function CreatorPage() {
   const [isOpen, setIsOpen] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+    reset,
+  } = useForm({
+    mode: "onChange",
+  });
+
+  const onSubmit = (data) => {
+    console.log("Form Data Submitted:", data);
+    reset();
+  };
   return (
     <>
       <main className="pt-[75px] flex">
@@ -29,101 +43,12 @@ export default function CreatorPage() {
                 stand out.
               </p>
               <div>
-                <button className="relative bg-gradient-to-r from-[#FFA500] to-[#E7511A] rounded-xl font-bold px-5 min-w-[130px] h-12 shadow-[0px_3px_4px] shadow-[#000000]/50 text-lg z-20">
+                <button
+                  onClick={() => setIsOpen(true)}
+                  className="relative bg-gradient-to-r from-[#FFA500] to-[#E7511A] rounded-xl font-bold px-5 min-w-[130px] h-12 shadow-[0px_3px_4px] shadow-[#000000]/50 text-lg z-20"
+                >
                   Start as a creator
                 </button>
-                {/*  */}
-                <Modal isOpen={""}>
-                  <div className="min-h-screen flex items-center justify-center p-4">
-                    <div className="w-full max-w-md space-y-8">
-                      <div className="text-center space-y-6">
-                        {/* Welcome Text with Decorative Elements */}
-                        <div className="relative">
-                          <h1 className="text-5xl font-bold text-blue-500 tracking-wide">
-                            WELCOME
-                          </h1>
-                          {/* Decorative elements - orange leaves */}
-                          <div className="absolute -right-4 -top-4">
-                            <div className="w-6 h-6 bg-orange-400 rounded-full transform rotate-45" />
-                          </div>
-                          <div className="absolute -left-4 bottom-0">
-                            <div className="w-6 h-6 bg-orange-400 rounded-full transform -rotate-45" />
-                          </div>
-                        </div>
-
-                        {/* Heading */}
-                        <h2 className="text-xl font-semibold text-gray-900 max-w-sm mx-auto">
-                          Start your journey as one of our creators with simple
-                          process
-                        </h2>
-                      </div>
-
-                      <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Password Input */}
-                        <div className="space-y-2">
-                          <Label htmlFor="password">Enter Your Password</Label>
-                          <Input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full"
-                            required
-                          />
-                          <div className="text-right">
-                            <a
-                              href="#"
-                              className="text-blue-500 hover:text-blue-600 text-sm"
-                            >
-                              forgot password?
-                            </a>
-                          </div>
-                        </div>
-
-                        {/* Terms Checkbox */}
-                        <div className="flex items-start space-x-2">
-                          <Checkbox
-                            id="terms"
-                            checked={agreed}
-                            onCheckedChange={(checked) => setAgreed("")}
-                          />
-                          <Label
-                            htmlFor="terms"
-                            className="text-sm leading-none"
-                          >
-                            By checking this you are agreeing to our{" "}
-                            <a
-                              href="#"
-                              className="text-orange-500 hover:text-orange-600"
-                            >
-                              terms and conditions
-                            </a>
-                          </Label>
-                        </div>
-
-                        {/* Buttons */}
-                        <div className="flex space-x-4">
-                          <Button
-                            type="submit"
-                            className="flex-1 bg-blue-500 hover:bg-blue-600"
-                            disabled={!agreed}
-                          >
-                            Proceed
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="flex-1"
-                            onClick={() => console.log("Cancelled")}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </Modal>
-                {/*  */}
               </div>
             </div>
           </div>
@@ -155,6 +80,88 @@ export default function CreatorPage() {
             </div>
           </div>
         </div>
+        <Modal isOpen={isOpen}>
+          <div className="flex items-center justify-center ">
+            <div className="w-full max-w-md space-y-8">
+              <div className="text-center space-y-6">
+                <div className="relative flex justify-center">
+                  <img src="/welcome-creator.png" className="w-[300px]" />
+                </div>
+
+                <h2 className="text-2xl font-bold text-black mx-auto">
+                  Start your journey as one of our creators with simple process
+                </h2>
+              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="password">Enter Your Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    {...register("password", {
+                      required: "Password is required",
+                    })}
+                    className="w-full border-b-2 border-black focus:outline-none focus:border-blue-500"
+                  />
+                  {errors.password && (
+                    <p className="text-red-500 text-sm">
+                      {errors.password.message}
+                    </p>
+                  )}
+                  <div className="text-right">
+                    <a
+                      href="#"
+                      className="text-blue-500 hover:text-blue-600 text-sm"
+                    >
+                      forgot password?
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="terms"
+                    type="checkbox"
+                    {...register("terms", {
+                      required: "You must agree to the terms",
+                    })}
+                  />
+                  <label htmlFor="terms" className="text-sm leading-none">
+                    By checking this you are agreeing to our{" "}
+                    <a
+                      href="#"
+                      className="text-orange-500 hover:text-orange-600"
+                    >
+                      terms and conditions
+                    </a>
+                  </label>
+                </div>
+                {errors.terms && (
+                  <p className="text-red-500 text-sm">{errors.terms.message}</p>
+                )}
+
+                {/* Buttons */}
+                <div className="flex space-x-4">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 px-4 py-2 text-white"
+                    disabled={!isValid}
+                  >
+                    Proceed
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 px-4 py-2 text-black"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Modal>
       </main>
     </>
   );
