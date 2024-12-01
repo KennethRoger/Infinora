@@ -31,9 +31,9 @@ export default function Header() {
               <SearchBar placeholder={"Search for your desired product"}/>
             </li>
             <li>
-              <Link to={"/home/profile"} className="flex items-center gap-1">
+              <Link to={"/login"} className="flex items-center gap-1">
                 <FaRegUser />
-                <p>Profile</p>
+                <p>sign in</p>
               </Link>
             </li>
             <li>

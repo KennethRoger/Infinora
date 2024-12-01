@@ -1,6 +1,6 @@
 import GenericForm from "../../../components/Form/GenericForm";
 import { loginFields } from "../../../constants/user/Form/loginFields";
-import { login } from "../../../api/auth";
+import { login } from "../../../api/user/userAuth";
 import LeftBox from "../../../components/Form/LeftBox";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleSignin from "./GoogleSignin";

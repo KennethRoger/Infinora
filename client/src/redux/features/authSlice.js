@@ -15,7 +15,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
-      state.role = action.payload.user.role;
+      state.role = action.payload.role;
     },
     clearAuthData: (state) => {
       state.user = null;

@@ -1,11 +1,11 @@
 const nodemailer = require("nodemailer");
 
-const tranporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
   service: "Gmail",
   auth: {
     user: process.env.EMAIL_USERNAME,
     pass: process.env.EMAIL_PASSWORD,
-  },
+  }
 });
 
 async function sendEmail(to, subject, text) {
@@ -17,7 +17,7 @@ async function sendEmail(to, subject, text) {
       text,
     };
 
-    const info = await tranporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
     console.log("Email sent: " + info.response);
   } catch (error) {
     console.error("Error sending email:", error);

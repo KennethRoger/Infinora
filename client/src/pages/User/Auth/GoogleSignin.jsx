@@ -1,5 +1,5 @@
 import { FcGoogle } from "react-icons/fc";
-import { googleSignIn } from "@/api/auth";
+import { googleSignIn } from "@/api/user/userAuth";
 import { useLoading } from "@/hooks/useLoading";
 
 export default function GoogleSignin() {

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+
 const userSchema = new mongoose.Schema(
   {
     role: {
@@ -19,15 +20,12 @@ const userSchema = new mongoose.Schema(
       required: function () {
         return this.role === "user" || this.role === "vendor";
       },
-      unique: true,
-      sparse: true,
     },
     phoneNumber: {
       type: String,
       required: function () {
-        this.role === "vendor";
+        return this.role === "vendor";
       },
-      unique: true,
       sparse: true,
       default: null,
     },
@@ -36,12 +34,19 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       default: null,
     },
+    adminId: {
+      type: String,
+      default: null,
+      required: function () {
+        return this.role === "admin";
+      },
+    },
     password: {
       type: String,
       required: function () {
-        return !this.googleId || !this.googlePicture;
+        return !this.googleId && !this.googlePicture;
       },
-      default: null
+      default: null,
     },
     profileImagePath: {
       type: String,

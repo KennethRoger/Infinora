@@ -1,6 +1,6 @@
 import GenericForm from "../../../components/Form/GenericForm";
 import { registerFields } from "../../../constants/user/Form/registerFields";
-import { register } from "../../../api/auth";
+import { register } from "../../../api/user/userAuth";
 import LeftBox from "../../../components/Form/LeftBox";
 import { Link, useNavigate } from "react-router-dom";
 import Spinner from "@/components/Spinner/Spinner";
@@ -17,7 +17,6 @@ function RegisterPage() {
     try {
       startLoading();
       const response = await register(data);
-
       if (response.success) {
         const { tempUserId, email } = response.data;
         navigate("/verify-otp", { state: { tempUserId, email } });

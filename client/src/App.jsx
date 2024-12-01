@@ -17,8 +17,8 @@ import HomeLayout from "./Layouts/User/HomeLayout";
 import ProfileLayout from "./Layouts/User/ProfileLayout";
 import ProfileInfo from "./pages/User/Home/ProfileInfo";
 import CreatorProfile from "./pages/User/Creator/CreatorProfile";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
-// const USERS_API = import.meta.env.VITE_USERS_API_BASE_URL;
 export function App() {
   return (
     <Routes>
@@ -47,10 +47,38 @@ export function App() {
       <Route path="/admin/login" element={<LoginPageAdmin />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="product-list" element={<ProductListPage />} />
-        <Route path="user-list" element={<UserListPage />} />
-        <Route path="creator-list" element={<CreatorListPage />} />
+        <Route
+          path="dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="product-list"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ProductListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="user-list"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <UserListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="creator-list"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <CreatorListPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );

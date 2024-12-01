@@ -1,10 +1,10 @@
 import axios from "axios";
-import { auth, provider, signInWithPopup } from "../firebaseConfig";
+import { auth, provider, signInWithPopup } from "../../firebaseConfig";
 
 export const register = async (data) => {
   try {
     const response = await axios.post(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/register`,
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/register`,
       data
     );
     console.log(response.data);
@@ -19,24 +19,22 @@ export const register = async (data) => {
 
 export const resendOTP = async (data) => {
   try {
-    const response = await axios
-      .post(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/resend-otp`,
-        data
-      )
-      return response.data;
-    
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/resend-otp`,
+      data
+    );
+    return response.data;
   } catch (error) {
     console.error("Error on resend: ", error.response?.data);
   }
-}
+};
 
 export const verifyOTP = async (data) => {
   try {
     console.log(data);
     await axios
       .post(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/verify-otp`,
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/verify-otp`,
         data
       )
       .then((response) => console.log(response.data.message));
@@ -47,22 +45,26 @@ export const verifyOTP = async (data) => {
 
 export const login = async (data) => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/login`, data);
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/login`,
+      data
+    );
     const user = response.data.user;
     return user;
-    
   } catch (error) {
     console.error("Sign-In Error:", error);
-  }
-};
+  }};
 
 export const googleSignIn = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    console.log(user)
-    const response = await axios.post(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/users/google-signin`, user);
-    console.log(response)
+    console.log(user);
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/google-signin`,
+      user
+    );
+    console.log(response);
   } catch (error) {
     console.error("Google Sign-In Error:", error);
   }
