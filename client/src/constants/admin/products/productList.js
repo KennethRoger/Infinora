@@ -1,11 +1,11 @@
 export const productTableHead = [
-    { heading: "Image", field: "image", styles: "" },
-    { heading: "Product name", field: "name", styles: "" },
-    { heading: "Category", field: "category", styles: "" },
-    { heading: "Price", field: "price", styles: "" },
-    { heading: "Creator", field: "creator", styles: "" },
-    { heading: "Rating", field: "rating", styles: "" },
-    {heading: "Actions", field: "actions", styles: "text-center"}
+  { heading: "Image", field: "image", styles: "" },
+  { heading: "Product name", field: "name", styles: "" },
+  { heading: "Category", field: "category", styles: "" },
+  { heading: "Price", field: "price", styles: "" },
+  { heading: "Creator", field: "creator", styles: "" },
+  { heading: "Rating", field: "rating", styles: "" },
+  { heading: "Actions", field: "actions", styles: "text-center" },
 ];
 export const products = [
   {

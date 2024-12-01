@@ -1,5 +1,4 @@
 import SearchBarAdmin from "@/components/Form/SearchBarAdmin";
-import HeadAndSideAdmin from "../../../components/Section/HeadAndSideAdmin";
 import TableCreator from "@/components/Table/TableCreator";
 import {
   productTableHead,
@@ -22,6 +21,7 @@ export default function ProductListPage() {
   );
   return (
     <>
+      <h1 className="text-2xl font-bold">Products</h1>
       <SearchBarAdmin />
       <TableCreator
         tableHead={productTableHead}

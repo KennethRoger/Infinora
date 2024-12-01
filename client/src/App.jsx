@@ -18,6 +18,7 @@ import ProfileLayout from "./Layouts/User/ProfileLayout";
 import ProfileInfo from "./pages/User/Home/ProfileInfo";
 import CreatorProfile from "./pages/User/Creator/CreatorProfile";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import CategoryListPage from "./pages/Admin/Home/CategoryListPage";
 
 export function App() {
   return (
@@ -50,7 +51,7 @@ export function App() {
         <Route
           path="dashboard"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["user"]}>
               <DashboardPage />
             </ProtectedRoute>
           }
@@ -58,7 +59,7 @@ export function App() {
         <Route
           path="product-list"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["user"]}>
               <ProductListPage />
             </ProtectedRoute>
           }
@@ -66,7 +67,7 @@ export function App() {
         <Route
           path="user-list"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["user"]}>
               <UserListPage />
             </ProtectedRoute>
           }
@@ -74,11 +75,12 @@ export function App() {
         <Route
           path="creator-list"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["user"]}>
               <CreatorListPage />
             </ProtectedRoute>
           }
         />
+        <Route path="category-list" element={<CategoryListPage />} />
       </Route>
     </Routes>
   );
