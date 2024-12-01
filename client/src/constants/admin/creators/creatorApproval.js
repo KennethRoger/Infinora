@@ -4,7 +4,7 @@ export const nonVerifiedCreatorTableHead = [
   { heading: "Phone Number", field: "phoneNumber", styles: "" },
   { heading: "Speciality", field: "speciality", styles: "" },
   { heading: "Verification ID", field: "verificationId", styles: "" },
-  { heading: "Created At", field: "createdAt", styles: "" },
+  { heading: "Requested At", field: "createdAt", styles: "" },
   { heading: "Actions", field: "actions", styles: "" },
 ];
 
