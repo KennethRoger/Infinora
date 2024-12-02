@@ -5,6 +5,7 @@ const { generateToken } = require("../utils/tokenValidator");
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
   maxAge: 60 * 60 * 1000,
 };
 
@@ -33,7 +34,7 @@ const registerAdmin = async (req, res) => {
   } catch (error) {
     console.error("Error signing up admin:", error.message);
     res.status(500).json({ message: "Internal server error." });
-  }
+  }k
 };
 
 const loginAdmin = async (req, res) => {
@@ -63,7 +64,7 @@ const loginAdmin = async (req, res) => {
     res.cookie("token", token, cookieOptions);
     res.status(200).json({
       message: "Login successful!",
-      data: { role: "admin", user: name },
+      data: { role: "admin", user: name},
     });
   } catch (error) {
     console.error("Error logging in admin:", error.message);

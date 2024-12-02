@@ -34,7 +34,7 @@ export function App() {
 
       <Route path="/home" element={<HomeLayout />}>
         <Route index element={<MainPage />} />
-        <Route path="profile" element={<ProfileLayout />}>
+        <Route path="profile" element={<ProtectedRoute allowedRoles={["user"]}><ProfileLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="profile-info" replace />} />
           <Route path="profile-info" element={<ProfilePage />}>
             <Route index element={<ProfileInfo />} />
@@ -47,11 +47,11 @@ export function App() {
       {/* Admin Routes */}
       <Route path="/admin/login" element={<LoginPageAdmin />} />
       <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route index element={<Navigate to="/admin/login" replace />} />
         <Route
           path="dashboard"
           element={
-            <ProtectedRoute allowedRoles={["user"]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <DashboardPage />
             </ProtectedRoute>
           }
@@ -59,7 +59,7 @@ export function App() {
         <Route
           path="product-list"
           element={
-            <ProtectedRoute allowedRoles={["user"]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <ProductListPage />
             </ProtectedRoute>
           }
@@ -67,7 +67,7 @@ export function App() {
         <Route
           path="user-list"
           element={
-            <ProtectedRoute allowedRoles={["user"]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <UserListPage />
             </ProtectedRoute>
           }
@@ -75,7 +75,7 @@ export function App() {
         <Route
           path="creator-list"
           element={
-            <ProtectedRoute allowedRoles={["user"]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <CreatorListPage />
             </ProtectedRoute>
           }

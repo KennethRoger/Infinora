@@ -283,7 +283,6 @@ export default function ProfileInfo({ userData}) {
             )}
           </div>
 
-          {/* About */}
           <div>
             <label htmlFor="about" className="block text-gray-700 font-medium">
               About
@@ -299,7 +298,6 @@ export default function ProfileInfo({ userData}) {
             )}
           </div>
 
-          {/* ID Card */}
           <div>
             <label htmlFor="idCard" className="block text-gray-700 font-medium">
               ID Card

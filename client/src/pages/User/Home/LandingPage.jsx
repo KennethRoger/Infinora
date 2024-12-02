@@ -1,3 +1,5 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import infinoraBlackLogo from "../../../assets/images/logo/Infinora-black-transparent.png";
 import placeholder from "../../../assets/images/pexels-kamo11235-667838.jpg";
 import {
@@ -7,17 +9,27 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
 import Button from "@/components/Form/Button";
 import SearchBar from "@/components/Form/SearchBar";
 import ProductCard from "@/components/Product/ProductCard";
 import CreatorBanner from "@/components/Section/CreatorBanner";
 import CraftIdeaSection from "@/components/Section/CraftIdeaSection";
-import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer/Footer";
+import { verifyUser } from "@/api/auth/verifyUser";
 
 const LandingPage = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const result = await verifyUser();
+      setIsAuthenticated(result.authenticated);
+    };
+
+    checkAuthentication();
+  }, []);
+
   return (
     <>
       <header className="flex justify-center items-center p-3 bg-white">
@@ -25,7 +37,7 @@ const LandingPage = () => {
           className="w-[250px] flex justify-center"
           src={infinoraBlackLogo}
           alt="Infinora Logo"
-        ></img>
+        />
       </header>
       <main>
         <section className="flex justify-center items-center py-12 bg-white">
@@ -65,10 +77,30 @@ const LandingPage = () => {
                 </p>
               </div>
               <div className="flex justify-center gap-8">
-                <button className="bg-[#F7F23B] text-black border px-5 min-w-[130px] rounded h-12 shadow-md text-lg" onClick={() => navigate("/home")} >
-                  Browse creations
+                {isAuthenticated ? (
+                  <button
+                    className="bg-[#F7F23B] text-black border px-5 min-w-[130px] rounded h-12 shadow-md text-lg"
+                    onClick={() => navigate("/home")}
+                  >
+                    Browse creations
+                  </button>
+                ) :  (
+                  <>
+                  <button
+                    className="bg-[#F7F23B] text-black border px-5 min-w-[130px] rounded h-12 shadow-md text-lg"
+                    onClick={() => navigate("/home")}
+                  >
+                    Browse creations
+                  </button>
+                  <button
+                  className="bg-black text-white border px-5 min-w-[130px] rounded h-12 shadow-md text-lg"
+                  onClick={() => navigate("/login")}
+                >
+                  Sign in
                 </button>
-                <button className="bg-black text-white border px-5 min-w-[130px] rounded h-12 shadow-md text-lg" onClick={() => navigate("/login")}>Sign in</button>
+                </>
+                )}
+                
               </div>
             </div>
           </div>

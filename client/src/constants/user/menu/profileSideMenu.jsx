@@ -5,7 +5,7 @@ import { AiOutlineLogout } from "react-icons/ai";
 import { FaListCheck } from "react-icons/fa6";
 import { BsCart3 } from "react-icons/bs";
 import { FaRegUser } from "react-icons/fa";
-
+import { logout } from "@/api/user/userAuth";
 
 export const profileSideMenu = [
   {
@@ -90,6 +90,9 @@ export const profileSideMenu = [
   {
     id: 7,
     label: "Logout",
-    icon: <AiOutlineLogout />,
+    icon: <AiOutlineLogout className="text-[#ff9500]" />,
+    onClick: async () => {
+      await logout();
+    },
   },
 ];

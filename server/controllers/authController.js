@@ -12,6 +12,7 @@ const verifyUser = async (req, res) => {
 
   try {
     const decoded = verifyToken(token);
+    console.log(decoded);
 
     const user = await User.findById(decoded.id).select("role isBlocked");
     if (!user) {
@@ -26,13 +27,11 @@ const verifyUser = async (req, res) => {
         .json({ authenticated: false, message: "User is blocked." });
     }
 
-    res
-      .status(200)
-      .json({
-        authenticated: true,
-        role: user.role,
-        message: "User verified.",
-      });
+    res.status(200).json({
+      authenticated: true,
+      role: user.role,
+      message: "User verified.",
+    });
   } catch (error) {
     res
       .status(401)

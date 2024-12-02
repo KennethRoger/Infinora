@@ -8,10 +8,18 @@ export default function LoginPageAdmin() {
   const navigate = useNavigate();
 
   const handleLogin = async (data) => {
-    const response = await adminLogin(data);
-
-    console.log(response);
-    navigate("/admin/dashboard");
+    try {
+      const response = await adminLogin(data);
+      console.log("Admin login response:", response);
+      
+      if (response && response.data) {
+        navigate("/admin/dashboard");
+      } else {
+        console.error("Login failed:", response);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+    }
   };
 
   return (
