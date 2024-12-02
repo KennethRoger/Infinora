@@ -183,7 +183,6 @@ const googleSignIn = async (req, res) => {
     } else {
       let isUpdated = false;
 
-      // For what if user gonna have a new email, the uid remains the same
       if (user.googleId === uid && user.email !== email) {
         user.email = email;
         user.googleVerified = emailVerified;

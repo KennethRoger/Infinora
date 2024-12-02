@@ -20,12 +20,19 @@ export default function TableCreator({
     return rows.map((row, rowIndex) => (
       <React.Fragment key={rowIndex}>
         <TableRow
-          className={`text-lg odd:bg-gray-${200 + level * 50} even:bg-gray-${
-            100 + level * 50
+          className={`text-lg ${
+            level === 0
+              ? "bg-gray-300 font-semibold hover:bg-gray-400"
+              : "odd:bg-gray-100 even:bg-gray-50"
           }`}
         >
           {tableHead.map((head, cellIndex) => (
-            <TableCell key={cellIndex} className={`pl-${level * 4}`}>
+            <TableCell
+              key={cellIndex}
+              className={`${
+                level === 0 ? "text-black" : "text-gray-700"
+              } pl-${level * 4}`}
+            >
               {head.field === "image" ? (
                 <img
                   src={row[head.field]}
@@ -50,12 +57,14 @@ export default function TableCreator({
 
   return (
     <div className="pt-10">
-      <Table className="bg-white rounded-3xl">
-        {/* <TableCaption>A list of your data.</TableCaption> */}
-        <TableHeader className="text-xl bg-black">
-          <TableRow className="hover:bg-black">
+      <Table className="bg-white rounded-3xl shadow-lg">
+        <TableHeader className="text-xl bg-black rounded-t-3xl">
+          <TableRow>
             {tableHead.map((head, index) => (
-              <TableHead key={index} className={`${head.styles} text-white`}>
+              <TableHead
+                key={index}
+                className={`${head.styles} text-white font-bold`}
+              >
                 {head.heading}
               </TableHead>
             ))}
