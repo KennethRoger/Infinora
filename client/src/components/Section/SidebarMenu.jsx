@@ -4,9 +4,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function SidebarMenu({ menuItems }) {
+  const navigate = useNavigate();
+
+  const handleLogout = async (onClick) => {
+    await onClick();
+    navigate("/home");
+  };
+
   return (
     <nav>
       <ul
@@ -36,17 +43,29 @@ export default function SidebarMenu({ menuItems }) {
             </li>
           ) : (
             <li key={item.id}>
-              <NavLink
-                to={item?.path}
-                className={
-                  "w-full pl-5 pr-3 py-5 border-b-[1px] border-black border-opacity-50 justify-between flex items-center text-xl hover:bg-gray-200"
-                }
-              >
-                <div className="flex items-center gap-2">
-                  {item.icon}
-                  <p>{item.label}</p>
-                </div>
-              </NavLink>
+              {item.onClick ? (
+                <button
+                  onClick={() => handleLogout(item.onClick)}
+                  className="w-full pl-5 pr-3 py-5 border-b-[1px] border-black border-opacity-50 flex items-center text-xl hover:bg-gray-200"
+                >
+                  <div className="flex items-center gap-2">
+                    {item.icon}
+                    <p>{item.label}</p>
+                  </div>
+                </button>
+              ) : (
+                <NavLink
+                  to={item?.path}
+                  className={
+                    "w-full pl-5 pr-3 py-5 border-b-[1px] border-black border-opacity-50 flex items-center text-xl hover:bg-gray-200"
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    {item.icon}
+                    <p>{item.label}</p>
+                  </div>
+                </NavLink>
+              )}
             </li>
           )
         )}

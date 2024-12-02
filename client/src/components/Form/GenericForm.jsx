@@ -2,9 +2,9 @@ import useFormHandler from "../../hooks/useFormHandler";
 import Button from "./Button";
 import InputBox from "./InputBox";
 
-function GenericForm({ inputFields, apiFunction, serrverErrors, buttonName, buttonStyle, buttonAttributes }) {
-  const { inputData, errors, handleChange, handleSubmit } =
-    useFormHandler(inputFields);
+function GenericForm({ inputFields, apiFunction, serverError, buttonName, buttonStyle, buttonAttributes }) {
+  const { inputData, errors, handleChange, handleSubmit } = useFormHandler(inputFields);
+
   return (
     <>
       <form onSubmit={(e) => handleSubmit(e, apiFunction)}>
@@ -22,7 +22,7 @@ function GenericForm({ inputFields, apiFunction, serrverErrors, buttonName, butt
             )}
           </div>
         ))}
-        <p className="text-red-600">{serrverErrors}</p>
+        {serverError && <p className="text-red-600 text-lg mt-4">{serverError}</p>}
         <Button
           type={"submit"}
           styles={`mt-8 ${buttonStyle}`}

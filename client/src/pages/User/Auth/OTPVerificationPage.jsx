@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { resendOTP, verifyOTP } from "../../../api/user/userAuth";
-import AuthPage from "../../../components/Auth/AuthPage";
 import LeftBox from "../../../components/Form/LeftBox";
 import { useState, useEffect } from "react";
 import {
@@ -19,6 +18,7 @@ export default function OTPVerificationPage() {
   const { tempUserId, email } = location?.state || {};
 
   const [otp, setOtp] = useState("");
+  const [serverError, setServerError] = useState("");
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
@@ -29,22 +29,38 @@ export default function OTPVerificationPage() {
     };
     console.log("Request Data:", requestData);
 
-    const response = await verifyOTP(requestData);
-    // if (response.success) {
-    //   navigate("/");
-    // }
-    console.log(response);
+    try {
+      const response = await verifyOTP(requestData);
+      if (response.success) {
+        navigate("/home");
+      } else if (response.expired) {
+        setServerError("OTP has expired. Please register again.");
+        navigate("/register");
+      } else {
+        setServerError(response.message || "Verification failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error on verification: ", error);
+      setServerError(error.response?.data?.message || "An error occurred. Please try again.");
+    }
   };
 
   const handleResendOTP = async (e) => {
     const resendReqData = {
       email,
-      tempUserId,
     };
-    const response = await resendOTP(resendReqData);
-    console.log(response)
-    if (!response?.success) {
-      navigate("/register")
+    try { 
+      const response = await resendOTP(resendReqData);
+      if (response.success) {
+        console.log("OTP resent successfully");
+      } else if (response.expired) {
+        navigate("/register");
+      } else {
+        setServerError(response.message || "Failed to resend OTP. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error on resend: ", error);
+      setServerError(error.response?.data?.message || "An error occurred. Please try again.");
     }
   };
 
@@ -77,6 +93,7 @@ export default function OTPVerificationPage() {
             <InputOTPSlot index={5} />
           </InputOTPGroup>
         </InputOTP>
+        {serverError && <p className="text-red-600 text-lg mt-4">{serverError}</p>}
         <OtpTimer onResend={handleResendOTP} />
         <Button
           buttonType={"submit"}

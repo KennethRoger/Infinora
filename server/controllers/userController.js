@@ -20,7 +20,7 @@ const generateOTP = async (req, res) => {
     if (user)
       return res
         .status(400)
-        .json({ success: false, message: "User already exists" });
+        .json({ success: false, message: "Email or phone number already exists" });
     const tempUser = await TempUser.create({
       email,
       phoneNumber,
@@ -54,7 +54,7 @@ const verifyOTP = async (req, res) => {
     const tempUser = await TempUser.findById(tempUserId);
 
     if (!tempUser) {
-      return res.status(400).json({ success: false, message: "OTP expired!" });
+      return res.status(400).json({ expired: true, success: false, message: "OTP expired!" });
     }
 
     if (tempUser.otp !== otp) {
@@ -68,6 +68,9 @@ const verifyOTP = async (req, res) => {
     });
 
     await TempUser.findByIdAndDelete(tempUserId);
+    const token = generateToken({ id: newUser._id, role: newUser.role });
+
+    res.cookie("token", token, cookieOptions);
     res.status(201).json({
       success: true,
       message: "OTP verified and user created successfully",
@@ -170,6 +173,9 @@ const googleSignIn = async (req, res) => {
       });
       await newUser.save();
 
+      const token = generateToken(newUser); 
+      res.cookie("token", token, cookieOptions);
+
       return res.status(200).json({
         success: true,
         user: {
@@ -183,7 +189,7 @@ const googleSignIn = async (req, res) => {
     } else {
       let isUpdated = false;
 
-      if (user.googleId === uid && user.email !== email) {
+      if (user.googleId === uid && user.email !== email) {r
         user.email = email;
         user.googleVerified = emailVerified;
         isUpdated = true;
@@ -192,6 +198,9 @@ const googleSignIn = async (req, res) => {
       if (isUpdated) {
         await user.save();
       }
+
+      const token = generateToken(user);
+      res.cookie("token", token, cookieOptions); 
 
       return res.status(200).json({
         success: true,
@@ -245,6 +254,22 @@ const logout = (req, res) => {
   res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, { password: 0 });
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+    });
+  }
+};
+
 module.exports = {
   generateOTP,
   verifyOTP,
@@ -253,4 +278,5 @@ module.exports = {
   googleSignIn,
   getUserInfo,
   logout,
+  getAllUsers,
 };

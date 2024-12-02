@@ -5,15 +5,17 @@ export const register = async (data) => {
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/register`,
-      data
+      data,
+      { withCredentials: true }
     );
     console.log(response.data);
     return response.data;
   } catch (error) {
     console.error(
-      "Error occured sending generateOTP request: ",
+      "Error occurred sending generateOTP request: ",
       error.response?.data
     );
+    return error.response?.data;
   }
 };
 
@@ -21,7 +23,8 @@ export const resendOTP = async (data) => {
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/resend-otp`,
-      data
+      data,
+      { withCredentials: true }
     );
     return response.data;
   } catch (error) {
@@ -32,14 +35,15 @@ export const resendOTP = async (data) => {
 export const verifyOTP = async (data) => {
   try {
     console.log(data);
-    await axios
-      .post(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/verify-otp`,
-        data
-      )
-      .then((response) => console.log(response.data.message));
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/verify-otp`,
+      data,
+      { withCredentials: true }
+    );
+    return response.data;
   } catch (error) {
     console.error("Error on verification: ", error.response?.data);
+    return error.response?.data;
   }
 };
 
@@ -47,13 +51,15 @@ export const login = async (data) => {
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/login`,
-      data
+      data,
+      { withCredentials: true }
     );
     const user = response.data.user;
     return user;
   } catch (error) {
     console.error("Sign-In Error:", error);
-  }};
+  }
+};
 
 export const googleSignIn = async () => {
   try {
@@ -62,10 +68,26 @@ export const googleSignIn = async () => {
     console.log(user);
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/google-signin`,
-      user
+      user,
+      { withCredentials: true }
     );
     console.log(response);
+    return response.data;
   } catch (error) {
     console.error("Google Sign-In Error:", error);
+  }
+};
+
+export const logout = async () => {
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/logout`,
+      {},
+      { withCredentials: true }
+    );
+    console.log("Logout successful:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Logout Error:", error);
   }
 };

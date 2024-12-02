@@ -10,23 +10,22 @@ import { useState } from "react";
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const [serverError, setServerError] = useState();
+  const [serverError, setServerError] = useState("");
   const { loading, startLoading, stopLoading } = useLoading();
 
   const otpData = async (data) => {
     try {
       startLoading();
       const response = await register(data);
-      if (response.success) {
+      if (response && response.success) {
         const { tempUserId, email } = response.data;
         navigate("/verify-otp", { state: { tempUserId, email } });
       } else {
-        setServerError(response.message);
-        alert("Error generating OTP. Please try again.");
+        setServerError(response?.message || "An unexpected error occurred.");
       }
     } catch (error) {
       console.error("Error generating OTP:", error);
-      alert("An error occurred. Please try again.");
+      setServerError(error.response?.data?.message || "An error occurred. Please try again.");
     } finally {
       stopLoading();
     }
@@ -39,18 +38,18 @@ function RegisterPage() {
           <GenericForm
             inputFields={registerFields}
             apiFunction={otpData}
-            buttonName={loading ? <Spinner /> : "Register"}
+            buttonName={loading ? <Spinner /> : "Sign Up"}
             buttonStyle={`w-full text-white ${
               loading ? "bg-[#006dcc] cursor-not-allowed" : "bg-[#33A0FF]"
             }`}
             buttonAttributes={loading ? "disabled" : ""}
-            serrverErrors={serverError}
+            serverError={serverError}
           />
-          <div className="flex items-center justify-center my-4">
-            <div className="h-px bg-gray-300 flex-1"></div>
-            <span className="px-3 text-sm text-gray-500 font-medium">OR</span>
-            <div className="h-px bg-gray-300 flex-1"></div>
-          </div>
+        </div>
+        <div className="flex items-center justify-center my-4">
+          <div className="h-px bg-gray-300 flex-1"></div>
+          <span className="px-3 text-sm text-gray-500 font-medium">OR</span>
+          <div className="h-px bg-gray-300 flex-1"></div>
         </div>
         <GoogleSignin />
         <div className="text-center mt-10">

@@ -1,14 +1,31 @@
+import { useEffect, useState } from "react";
+import { verifyUser } from "../../api/auth/verifyUser";
 import infinoraWhiteLogo from "../../assets/images/logo/Infinora-white-transparent.png";
 import { Link, useNavigate } from "react-router-dom";
 import { RiArrowDropDownLine } from "react-icons/ri";
-import { FaRegUser, FaSearch } from "react-icons/fa";
+import { FaRegUser } from "react-icons/fa";
 import { BsCart3 } from "react-icons/bs";
 import { FiPackage } from "react-icons/fi";
 import { GrFavorite } from "react-icons/gr";
 import SearchBar from "../Form/SearchBar";
 
 export default function Header() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const result = await verifyUser();
+        setIsAuthenticated(result.authenticated && (result.role === "user" || result.role === "vendor"));
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+      }
+    };
+
+    checkAuthentication();
+  }, []);
+
   return (
     <>
       <header className="bg-black fixed w-full z-50">
@@ -28,13 +45,20 @@ export default function Header() {
               </Link>
             </li>
             <li className="flex-1">
-              <SearchBar placeholder={"Search for your desired product"}/>
+              <SearchBar placeholder={"Search for your desired product"} />
             </li>
             <li>
-              <Link to={"/login"} className="flex items-center gap-1">
-                <FaRegUser />
-                <p>sign in</p>
-              </Link>
+              {isAuthenticated ? (
+                <Link to={"/home/profile"} className="flex items-center gap-1">
+                  <FaRegUser />
+                  <p>Profile</p>
+                </Link>
+              ) : (
+                <Link to={"/login"} className="flex items-center gap-1">
+                  <FaRegUser />
+                  <p>Sign In</p>
+                </Link>
+              )}
             </li>
             <li>
               <Link className="flex items-center gap-1">
