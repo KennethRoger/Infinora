@@ -20,12 +20,10 @@ const userSchema = new mongoose.Schema(
       required: function () {
         return this.role === "user" || this.role === "vendor";
       },
+      default: null
     },
     phoneNumber: {
       type: String,
-      required: function () {
-        return this.role === "vendor";
-      },
       sparse: true,
       default: null,
     },
@@ -41,6 +39,10 @@ const userSchema = new mongoose.Schema(
         return this.role === "admin";
       },
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
     password: {
       type: String,
       required: function () {
@@ -50,16 +52,10 @@ const userSchema = new mongoose.Schema(
     },
     profileImagePath: {
       type: String,
-      required: function () {
-        return this.role === "vendor";
-      },
       default: null,
     },
     name: {
       type: String,
-      required: function () {
-        return this.role === "vendor" || this.role === "admin";
-      },
       default: null,
     },
     gender: {
@@ -74,9 +70,6 @@ const userSchema = new mongoose.Schema(
     speciality: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
-      required: function () {
-        return this.role === "vendor";
-      },
       default: null,
     },
     socialLink: {
@@ -89,9 +82,6 @@ const userSchema = new mongoose.Schema(
     },
     idProofPath: {
       type: String,
-      required: function () {
-        return this.role === "vendor";
-      },
       default: null,
     },
     googlePicture: {

@@ -34,7 +34,7 @@ const registerAdmin = async (req, res) => {
   } catch (error) {
     console.error("Error signing up admin:", error.message);
     res.status(500).json({ message: "Internal server error." });
-  }k
+  }
 };
 
 const loginAdmin = async (req, res) => {

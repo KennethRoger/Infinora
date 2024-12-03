@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 export const fetchUsers = createAsyncThunk("users/fetchUsers", async () => {
-  const response = await axios.get(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/me`);
+  const response = await axios.get(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/all`);
+  console.log(response.data);
   return response.data;
 });
 
@@ -21,7 +22,7 @@ const userSlice = createSlice({
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.users = action.payload;
+        state.users = action.payload.data;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.status = "failed";

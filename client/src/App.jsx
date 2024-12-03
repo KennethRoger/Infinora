@@ -18,6 +18,7 @@ import ProfileLayout from "./Layouts/User/ProfileLayout";
 import ProfileInfo from "./pages/User/Home/ProfileInfo";
 import CreatorProfile from "./pages/User/Creator/CreatorProfile";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import RedirectIfAuthenticated from './components/Auth/RedirectIfAuthenticated';
 import CategoryListPage from "./pages/Admin/Home/CategoryListPage";
 
 export function App() {
@@ -27,19 +28,32 @@ export function App() {
       <Route path="/" element={<LandingPage />} />
 
       <Route element={<AuthLayout />}>
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
+        <Route path="login" element={
+          <RedirectIfAuthenticated>
+            <LoginPage />
+          </RedirectIfAuthenticated>
+        } />
+        <Route path="register" element={
+          <RedirectIfAuthenticated>
+            <RegisterPage />
+          </RedirectIfAuthenticated>
+        } />
         <Route path="verify-otp" element={<OTPVerificationPage />} />
       </Route>
 
       <Route path="/home" element={<HomeLayout />}>
         <Route index element={<MainPage />} />
-        <Route path="profile" element={<ProtectedRoute allowedRoles={["user"]}><ProfileLayout /></ProtectedRoute>}>
+        <Route path="profile" element={<ProtectedRoute allowedRoles={["user", "vendor"]}><ProfileLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="profile-info" replace />} />
           <Route path="profile-info" element={<ProfilePage />}>
             <Route index element={<ProfileInfo />} />
           </Route>
-          <Route path="creator-info" element={<CreatorProfile />} />
+          <Route path="creator-info" element={<ProfilePage />} >
+            <Route index element={<CreatorProfile />} />
+          </Route>
+          <Route path="creator-product" element={<ProfilePage />} >
+            <Route index element={<CreatorProfile />} />
+          </Route>
         </Route>
         <Route path="creator" element={<CreatorPage />} />
       </Route>

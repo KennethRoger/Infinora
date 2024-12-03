@@ -47,6 +47,7 @@ export default function OTPVerificationPage() {
 
   const handleResendOTP = async (e) => {
     const resendReqData = {
+      tempUserId,
       email,
     };
     try { 

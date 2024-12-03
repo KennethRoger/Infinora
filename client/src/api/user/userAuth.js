@@ -54,10 +54,10 @@ export const login = async (data) => {
       data,
       { withCredentials: true }
     );
-    const user = response.data.user;
-    return user;
+    return response.data;
   } catch (error) {
     console.error("Sign-In Error:", error);
+    throw error.response?.data?.message || "An error occurred. Please try again.";
   }
 };
 

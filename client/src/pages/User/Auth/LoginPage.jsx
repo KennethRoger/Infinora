@@ -12,14 +12,18 @@ function LoginPage() {
 
   const handleLogin = async (data) => {
     try {
-      const { id, email, role } = await login(data);
-      console.log(id, email, role);
-      if (data) {
+      const { user, message } = await login(data);
+      console.log("Login response:", user, message);
+  
+      if (user) {
+        const { id, email, role } = user;
         navigate("/home", { state: { id, role } });
+      } else {
+        setServerError("Unexpected error occurred. Please try again.");
       }
     } catch (error) {
       console.error("Error Logging in:", error);
-      setServerError(error.response?.data?.message || "An error occurred. Please try again.");
+      setServerError(error || "An error occurred. Please try again.");
     }
   };
 
