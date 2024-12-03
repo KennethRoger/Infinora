@@ -12,7 +12,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   useEffect(() => {
     const checkUser = async () => {
       const result = await verifyUser();
-      console.log("result from proute: ", result)
       setStatus({
         loading: false,
         authenticated: result.authenticated,

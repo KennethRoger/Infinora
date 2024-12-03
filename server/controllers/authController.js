@@ -3,7 +3,7 @@ const User = require("../models/User");
 
 const verifyUser = async (req, res) => {
   const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
-  
+
   if (!token) {
     return res
       .status(401)
@@ -12,9 +12,9 @@ const verifyUser = async (req, res) => {
 
   try {
     const decoded = verifyToken(token);
-console.log(decoded)
-    const user = await User.findById(decoded.id).select("role isBlocked");
     
+    const user = await User.findById(decoded.id).select("role isBlocked");
+
     if (!user) {
       return res
         .status(404)
@@ -56,12 +56,22 @@ const blockUserOrVendor = async (req, res) => {
       return res.status(400).json({ message: "Role mismatch." });
     }
 
-    user.isBlocked = !user.isBlocked; // Toggle the isBlocked status
+    user.isBlocked = !user.isBlocked;
     await user.save();
 
-    res.status(200).json({ message: `${role} ${user.isBlocked ? 'blocked' : 'unblocked'} successfully.` });
+    res
+      .status(200)
+      .json({
+        message: `${role} ${
+          user.isBlocked ? "blocked" : "unblocked"
+        } successfully.`,
+      });
   } catch (error) {
-    res.status(500).json({ message: "An error occurred while updating the user's blocked status." });
+    res
+      .status(500)
+      .json({
+        message: "An error occurred while updating the user's blocked status.",
+      });
   }
 };
 

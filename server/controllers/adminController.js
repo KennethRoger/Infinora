@@ -41,7 +41,7 @@ const loginAdmin = async (req, res) => {
   try {
     const { name, adminId, password } = req.body;
 
-    const adminUser = await User.findOne({ name, role: "admin" });
+    const adminUser = await User.findOne({ name, adminId, role: "admin" });
     if (!adminUser) {
       return res.status(404).json({ message: "Admin not found." });
     }

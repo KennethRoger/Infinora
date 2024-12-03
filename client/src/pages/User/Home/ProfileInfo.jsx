@@ -6,6 +6,7 @@ import axios from "axios";
 
 export default function ProfileInfo({ userData }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [user, setUser] = useState({});
 
   const [profileImage, setProfileImage] = useState(null);
   const [idCardFile, setIdCardFile] = useState(null);
@@ -25,7 +26,8 @@ export default function ProfileInfo({ userData }) {
           `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/me`,
           { withCredentials: true }
         );
-        setUserRole(response.data.user.role);
+        const user = response.data.user
+        setUserRole(user.role);
         
       } catch (error) {
         console.error("Failed to fetch user role:", error);
@@ -107,7 +109,7 @@ export default function ProfileInfo({ userData }) {
         <form
           onSubmit={handleSubmit(onSubmit)}
           className={`${
-            isEditing ? "opacity-100" : "opacity-50 pointer-events-none"
+            isEditing ? "opacity-100" : "opacity-100 "
           } transition-opacity duration-300 w-[400px]`}
         >
           <div className="flex gap-2 items-center mb-4">
@@ -132,6 +134,7 @@ export default function ProfileInfo({ userData }) {
                 isEditing ? "bg-white" : "bg-gray-200"
               }`}
               {...register("name", { required: "Name is required" })}
+              defaultValue={user.name}
             />
             {errors.name && (
               <p className="text-red-500 text-sm">{errors.name.message}</p>

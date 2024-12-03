@@ -18,9 +18,10 @@ const generateOTP = async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     const user = await User.findOne({ $or: [{ email }, { phoneNumber }] });
     if (user)
-      return res
-        .status(400)
-        .json({ success: false, message: "Email or phone number already exists" });
+      return res.status(400).json({
+        success: false,
+        message: "Email or phone number already exists",
+      });
     const tempUser = await TempUser.create({
       email,
       phoneNumber,
@@ -54,7 +55,9 @@ const verifyOTP = async (req, res) => {
     const tempUser = await TempUser.findById(tempUserId);
 
     if (!tempUser) {
-      return res.status(400).json({ expired: true, success: false, message: "OTP expired!" });
+      return res
+        .status(400)
+        .json({ expired: true, success: false, message: "OTP expired!" });
     }
 
     if (tempUser.otp !== otp) {
@@ -132,12 +135,12 @@ const login = async (req, res) => {
       return res
         .status(400)
         .json({ message: "This user does not exist. Try registering" });
-    const validPass = bcryptjs.compare(password, user.password);
-
     if (user.isBlocked)
       return res
         .status(403)
         .json({ message: "Access denied! Contact Support" });
+    const validPass = await bcryptjs.compare(password, user.password);
+    console.log(validPass)
 
     if (!validPass)
       return res
@@ -173,7 +176,7 @@ const googleSignIn = async (req, res) => {
       });
       await newUser.save();
 
-      const token = generateToken(newUser); 
+      const token = generateToken(newUser);
       res.cookie("token", token, cookieOptions);
 
       return res.status(200).json({
@@ -189,7 +192,8 @@ const googleSignIn = async (req, res) => {
     } else {
       let isUpdated = false;
 
-      if (user.googleId === uid && user.email !== email) {r
+      if (user.googleId === uid && user.email !== email) {
+        r;
         user.email = email;
         user.googleVerified = emailVerified;
         isUpdated = true;
@@ -200,7 +204,7 @@ const googleSignIn = async (req, res) => {
       }
 
       const token = generateToken(user);
-      res.cookie("token", token, cookieOptions); 
+      res.cookie("token", token, cookieOptions);
 
       return res.status(200).json({
         success: true,
