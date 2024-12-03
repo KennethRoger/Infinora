@@ -3,7 +3,7 @@ const bcryptjs = require("bcryptjs");
 const { sendEmail } = require("../utils/emailService");
 const TempUser = require("../models/TempUser");
 const User = require("../models/User");
-const { generateToken } = require("../utils/tokenValidator");
+const { generateToken, verifyToken } = require("../utils/tokenValidator");
 
 const cookieOptions = {
   httpOnly: true,
@@ -68,13 +68,13 @@ const verifyOTP = async (req, res) => {
     });
 
     await TempUser.findByIdAndDelete(tempUserId);
-    const token = generateToken({ id: newUser._id, role: newUser.role });
+    const token = generateToken(newUser);
 
     res.cookie("token", token, cookieOptions);
     res.status(201).json({
       success: true,
       message: "OTP verified and user created successfully",
-      data: { userId: newUser._id },
+      user: { id: newUser._id, email: newUser.email, role: newUser.role },
     });
   } catch (error) {
     console.error("OTP verification failed:", error);
@@ -229,7 +229,7 @@ const getUserInfo = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Unauthorized: No token provided" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyToken(token);
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user)

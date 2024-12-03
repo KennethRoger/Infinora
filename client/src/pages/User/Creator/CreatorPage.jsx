@@ -1,21 +1,35 @@
 import Modal from "@/components/Modal/Modal";
+import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 
 export default function CreatorPage() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors },
     reset,
   } = useForm({
     mode: "onChange",
   });
 
-  const onSubmit = (data) => {
-    console.log("Form Data Submitted:", data);
-    reset();
+  const onSubmit = async (data) => {
+    try {
+      console.log(data)
+      const response = await axios.post(
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/vendor/verify`,
+        data,
+        { withCredentials: true }
+      );
+      console.log("Verification successful:", response.data);
+      navigate("/home/profile");
+      reset();
+    } catch (error) {
+      console.error("Error during verification:", error.response?.data || error.message);
+    }
   };
   return (
     <>
@@ -146,7 +160,7 @@ export default function CreatorPage() {
                   <button
                     type="submit"
                     className="flex-1 bg-blue-500 hover:bg-blue-600 px-4 py-2 text-white"
-                    disabled={!isValid}
+                    
                   >
                     Proceed
                   </button>
