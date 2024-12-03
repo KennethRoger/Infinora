@@ -43,23 +43,24 @@ export function App() {
 
       <Route path="/home" element={<HomeLayout />}>
         <Route index element={<MainPage />} />
-        <Route path="profile" element={<ProtectedRoute allowedRoles={["user", "vendor"]}><ProfileLayout /></ProtectedRoute>}>
+        <Route path="profile" element={<ProfileLayout />}>
           <Route index element={<Navigate to="profile-info" replace />} />
           <Route path="profile-info" element={<ProfilePage />}>
-            <Route index element={<ProfileInfo />} />
+            <Route index element={<ProtectedRoute allowedRoles={["user", "vendor"]}><ProfileInfo /></ProtectedRoute>} />
           </Route>
           <Route path="creator-info" element={<ProfilePage />} >
-            <Route index element={<CreatorProfile />} />
+            <Route index element={<ProtectedRoute allowedRoles={["vendor"]}><CreatorProfile /></ProtectedRoute>} />
           </Route>
           <Route path="creator-product" element={<ProfilePage />} >
-            <Route index element={<CreatorProfile />} />
+            <Route index element={<ProtectedRoute allowedRoles={["vendor"]}><CreatorProfile /></ProtectedRoute>} />
           </Route>
         </Route>
         <Route path="creator" element={<CreatorPage />} />
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin/login" element={<LoginPageAdmin />} />
+      <Route path="/admin/login" element={<RedirectIfAuthenticated
+      ><LoginPageAdmin /></RedirectIfAuthenticated>} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="/admin/login" replace />} />
         <Route
