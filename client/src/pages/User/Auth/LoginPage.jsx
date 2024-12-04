@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import GoogleSignin from "./GoogleSignin";
 import { useState } from "react";
 import { useLoading } from "@/hooks/useLoading";
+import Spinner from "@/components/Spinner/Spinner";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -14,7 +15,9 @@ function LoginPage() {
 
   const handleLogin = async (data) => {
     try {
+      startLoading();
       const { user, message } = await login(data);
+
       console.log("Login response:", user, message);
   
       if (user) {
@@ -26,6 +29,8 @@ function LoginPage() {
     } catch (error) {
       console.error("Error Logging in:", error);
       setServerError(error || "An error occurred. Please try again.");
+    } finally {
+      stopLoading();
     }
   };
 
@@ -51,7 +56,7 @@ function LoginPage() {
         <div className="text-center mt-10">
           <span>Don't have an account? </span>
           <Link to={loading ? "#" : "/register"}>
-            <span className="text-[#FF9500]">Register</span>
+            <span className="text-[#FF9500]">{loading ? <Spinner /> : "Register"}</span>
           </Link>
         </div>
       </LeftBox>

@@ -4,16 +4,20 @@ import { useLoading } from "@/hooks/useLoading";
 import { useNavigate } from "react-router-dom";
 
 export default function GoogleSignin() {
-  const { loading } = useLoading();
+  const { loading, startLoading, stopLoading } = useLoading();
   const navigate = useNavigate();
   const handleGoogleSignIn = async () => {
     try {
+      startLoading();
       const response = await googleSignIn();
       if (response.success) {
         navigate("/home");
       }
     } catch (error) {
+      stopLoading();
       console.error("Google Sign-In Error:", error);
+    } finally {
+      stopLoading();
     }
   };
   return (
@@ -24,7 +28,7 @@ export default function GoogleSignin() {
         attributes={loading ? "disabled" : ""}
       >
         <FcGoogle />
-        <p>Sign in with Google</p>
+        <p>{loading ? "Signing in..." : "Sign in with Google"}</p>
       </button>
     </>
   );
