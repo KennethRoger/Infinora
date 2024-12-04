@@ -24,14 +24,14 @@ export default function Header() {
     };
 
     checkAuthentication();
-  }, []);
+  }, [navigate]);
 
   return (
     <>
       <header className="bg-black fixed w-full z-50">
         <nav className="text-white text-xl">
           <ul className="flex h-[75px] items-center pl-4 gap-5">
-            <li onClick={() => navigate("/")} className="cursor-pointer">
+            <li onClick={() => navigate("/home")} className="cursor-pointer">
               <img
                 className="w-44"
                 src={infinoraWhiteLogo}

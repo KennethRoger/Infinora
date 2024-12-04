@@ -5,10 +5,12 @@ import LeftBox from "../../../components/Form/LeftBox";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleSignin from "./GoogleSignin";
 import { useState } from "react";
+import { useLoading } from "@/hooks/useLoading";
 
 function LoginPage() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
+  const { loading, startLoading, stopLoading } = useLoading();
 
   const handleLogin = async (data) => {
     try {
@@ -46,9 +48,10 @@ function LoginPage() {
           <div className="h-px bg-gray-300 flex-1"></div>
         </div>
         <GoogleSignin />
-        <div className="text-center mt-14">
-          <Link to="/register" className="text-sm text-[#33A0FF] font-medium">
-            Don't have an account? Sign up
+        <div className="text-center mt-10">
+          <span>Don't have an account? </span>
+          <Link to={loading ? "#" : "/register"}>
+            <span className="text-[#FF9500]">Register</span>
           </Link>
         </div>
       </LeftBox>

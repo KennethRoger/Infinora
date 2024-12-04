@@ -33,12 +33,12 @@ function RegisterPage() {
 
   return (
     <>
-      <LeftBox heading={"Sign Up"} description={"Sign up and explore more"}>
+      <LeftBox heading={"Register"} description={"Sign up and explore more"}>
         <div>
           <GenericForm
             inputFields={registerFields}
             apiFunction={otpData}
-            buttonName={loading ? <Spinner /> : "Sign Up"}
+            buttonName={loading ? <Spinner /> : "Register"}
             buttonStyle={`w-full text-white ${
               loading ? "bg-[#006dcc] cursor-not-allowed" : "bg-[#33A0FF]"
             }`}
