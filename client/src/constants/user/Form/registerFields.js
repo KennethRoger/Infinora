@@ -33,7 +33,7 @@ export const registerFields = [
         value:
           /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
         message:
-          "Password must be atleast 8 characters long and include uppercase, lowercase, number, and special character",
+          "Password must be atleast 8 characters long and only include an uppercase, lowercase, number, and special character",
       },
     },
   },

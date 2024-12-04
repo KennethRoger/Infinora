@@ -1,23 +1,44 @@
+import InputBox from "@/components/Form/InputBox";
 import Modal from "@/components/Modal/Modal";
 import axios from "axios";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { set } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 export default function CreatorPage() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm({
-    mode: "onChange",
-  });
+  const [formValues, setFormValues] = useState({ password: "", terms: false }); 
+  const [formErrors, setFormErrors] = useState({});
 
-  const onSubmit = async (data) => {
+  useEffect(() => {
+    if (formValues.password && formValues.password.length < 1) {
+      setFormErrors((formErrors) => ({
+        ...formErrors,
+        password: "Password is required",
+      }));
+    } else {
+      setFormErrors((formErrors) => ({
+        ...formErrors,
+        password: "",
+      }));
+    }
+    if (!formValues.terms) {
+      setFormErrors((formErrors) => ({
+        ...formErrors,
+        terms: "You must accept the terms and conditions",
+      }));
+    } else {
+      setFormErrors((formErrors) => ({
+        ...formErrors,
+        terms: false,
+      }));
+    }
+  } ,[formValues])
+
+  const onSubmit = async (e, data) => {
     try {
+      e.preventDefault();
       console.log(data)
       const response = await axios.post(
         `${import.meta.env.VITE_USERS_API_BASE_URL}/api/vendor/verify`,
@@ -26,7 +47,6 @@ export default function CreatorPage() {
       );
       console.log("Verification successful:", response.data);
       navigate("/home/profile");
-      reset();
     } catch (error) {
       console.error("Error during verification:", error.response?.data || error.message);
     }
@@ -107,23 +127,20 @@ export default function CreatorPage() {
                 </h2>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={onSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label htmlFor="password">Enter Your Password</label>
-                  <input
-                    id="password"
-                    type="password"
-                    {...register("password", {
-                      required: "Password is required",
-                    })}
-                    className="w-full border-b-2 border-black focus:outline-none focus:border-blue-500"
-                  />
-                  {errors.password && (
-                    <p className="text-red-500 text-sm">
-                      {errors.password.message}
-                    </p>
-                  )}
-                  <div className="text-right">
+                <InputBox
+                  label="Enter Your Password"
+                  name="password"
+                  type="password"
+                  onChange={(e) => setFormValues((formValues) => ({...formValues, [e.target.name]: e.target.value}))}
+                  value={formValues?.password}
+                  styles="w-full border-b-2 border-black focus:outline-none focus:border-blue-500"
+                />
+                {formErrors?.password && (
+                  <p className="text-red-500 text-sm">{formErrors?.password}</p>
+                )}
+                <div className="text-right">
                     <a
                       href="#"
                       className="text-blue-500 hover:text-blue-600 text-sm"
@@ -132,15 +149,16 @@ export default function CreatorPage() {
                     </a>
                   </div>
                 </div>
-
                 <div className="flex items-center space-x-2">
                   <input
                     id="terms"
                     type="checkbox"
-                    {...register("terms", {
-                      required: "You must agree to the terms",
-                    })}
+                    name="terms"
+                    checked={formValues?.terms}
+                    onChange={(e) => setFormValues((formValues) => ({...formValues, [e.target.name]: e.target.checked}))}
+                    className="w-4 h-4"
                   />
+
                   <label htmlFor="terms" className="text-sm leading-none">
                     By checking this you are agreeing to our{" "}
                     <a
@@ -151,11 +169,9 @@ export default function CreatorPage() {
                     </a>
                   </label>
                 </div>
-                {errors.terms && (
-                  <p className="text-red-500 text-sm">{errors.terms.message}</p>
+                {formErrors?.terms && (
+                  <p className="text-red-500 text-sm">{formErrors?.terms}</p>
                 )}
-
-                {/* Buttons */}
                 <div className="flex space-x-4">
                   <button
                     type="submit"

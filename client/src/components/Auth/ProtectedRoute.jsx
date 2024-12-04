@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!status.authenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(status.role)) {
