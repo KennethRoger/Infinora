@@ -43,7 +43,7 @@ function LoginPage() {
         <GenericForm
           inputFields={loginFields}
           apiFunction={handleLogin}
-          buttonName={"login"}
+          buttonName={loading ? <Spinner /> : "login"}
           buttonStyle={`w-full bg-[#33A0FF] text-white`}
           serverError={serverError}
         />
@@ -56,7 +56,7 @@ function LoginPage() {
         <div className="text-center mt-10">
           <span>Don't have an account? </span>
           <Link to={loading ? "#" : "/register"}>
-            <span className="text-[#FF9500]">{loading ? <Spinner /> : "Register"}</span>
+            <span className="text-[#FF9500]">Register</span>
           </Link>
         </div>
       </LeftBox>

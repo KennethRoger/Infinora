@@ -7,7 +7,7 @@ import ProductListPage from "./pages/Admin/Home/ProductListPage";
 import ProfilePage from "./Layouts/User/ProfilePage";
 import LandingPage from "./pages/User/Home/LandingPage";
 import MainPage from "./pages/User/Home/MainPage";
-import CreatorPage from "./pages/User/Creator/CreatorPage";
+import CreatorSection from "./pages/Creator/CreatorSection";
 import UserListPage from "./pages/Admin/Home/UserListPage";
 import CreatorListPage from "./pages/Admin/Home/CreatorListPage";
 import AdminLayout from "./Layouts/Admin/AdminLayout";
@@ -16,10 +16,11 @@ import AuthLayout from "./Layouts/User/AuthLayout";
 import HomeLayout from "./Layouts/User/HomeLayout";
 import ProfileLayout from "./Layouts/User/ProfileLayout";
 import ProfileInfo from "./pages/User/Home/ProfileInfo";
-import CreatorProfile from "./pages/User/Creator/CreatorProfile";
+import CreatorProfile from "./pages/Creator/CreatorProfile";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import RedirectIfAuthenticated from './components/Auth/RedirectIfAuthenticated';
 import CategoryListPage from "./pages/Admin/Home/CategoryListPage";
+import CreatorMenu from "./Layouts/Creator/CreatorMenu";
 
 export function App() {
   return (
@@ -43,19 +44,20 @@ export function App() {
 
       <Route path="/home" element={<HomeLayout />}>
         <Route index element={<MainPage />} />
+        <Route path="creator" element={<CreatorSection />} />
         <Route path="profile" element={<ProfileLayout />}>
           <Route index element={<Navigate to="profile-info" replace />} />
           <Route path="profile-info" element={<ProfilePage />}>
             <Route index element={<ProtectedRoute allowedRoles={["user", "vendor"]}><ProfileInfo /></ProtectedRoute>} />
           </Route>
-          <Route path="creator-info" element={<ProfilePage />} >
+          {/* Creator Routes */}
+          <Route path="creator" element={<CreatorMenu />} >
             <Route index element={<ProtectedRoute allowedRoles={["vendor"]}><CreatorProfile /></ProtectedRoute>} />
           </Route>
-          <Route path="creator-product" element={<ProfilePage />} >
+          <Route path="creator-product" element={<CreatorMenu />} >
             <Route index element={<ProtectedRoute allowedRoles={["vendor"]}><CreatorProfile /></ProtectedRoute>} />
           </Route>
         </Route>
-        <Route path="creator" element={<CreatorPage />} />
       </Route>
 
       {/* Admin Routes */}

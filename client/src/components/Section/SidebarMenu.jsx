@@ -4,10 +4,34 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export default function SidebarMenu({ menuItems }) {
+  const [openSections, setOpenSections] = useState({});
+  const location = useLocation();
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    const newOpenSections = {};
+    menuItems.forEach((item) => {
+      if (item.collapse) {
+        item.collapse.forEach((subItem) => {
+          if (location.pathname.startsWith(subItem?.subPath)) {
+            newOpenSections[item.id] = true;  
+          }
+        });
+      }
+    });
+    setOpenSections(newOpenSections);
+  }, [location.pathname, menuItems]);
+
+  const toggleSection = (id) => {
+    setOpenSections((prevState) => ({
+      ...prevState,
+      [id]: !prevState[id],
+    }));
+  };
 
   const handleLogout = async (onClick) => {
     await onClick();
@@ -15,16 +39,16 @@ export default function SidebarMenu({ menuItems }) {
   };
 
   return (
-    <nav>
+    <nav className="">
       <ul
-        className="text-black border-r-2 whitespace-nowrap no-scrollbar
-                   overflow-y-auto h-[calc(100vh-80px)]" // Adjust height as needed
-      >
+        className="text-black whitespace-nowrap no-scrollbar
+                   overflow-y-auto h-[calc(100vh-80px)]"
+      >                      
         {menuItems.map((item) =>
           item?.collapse ? (
             <li key={item.id}>
-              <Collapsible>
-                <CollapsibleTrigger className="w-full pl-5 pr-3 py-5 border-b-[1px] border-black border-opacity-50 justify-between flex items-center text-xl hover:bg-gray-200">
+              <Collapsible open={openSections[item.id]}>
+                <CollapsibleTrigger onClick={() => toggleSection(item.id)} className={`w-full pl-5 pr-3 py-5  justify-between flex items-center text-xl hover:bg-gray-200`}>
                   <div className="flex items-center gap-2">
                     {item.icon}
                     <p>{item.label}</p>
@@ -34,7 +58,7 @@ export default function SidebarMenu({ menuItems }) {
                 {item.collapse.map((subItem) => (
                   <CollapsibleContent
                     key={subItem.subId}
-                    className="text-xl pl-16 hover:bg-[#FF9500]/50 py-2 cursor-pointer"
+                    className={`text-xl pl-16 hover:bg-gray-200 py-2 cursor-pointer ${location.pathname === subItem.subPath ? "bg-orange-200 hover:bg-yellow-200" : "bg-white"}`}
                   >
                     <NavLink to={subItem?.subPath}>{subItem.subLabel}</NavLink>
                   </CollapsibleContent>
@@ -46,7 +70,7 @@ export default function SidebarMenu({ menuItems }) {
               {item.onClick ? (
                 <button
                   onClick={() => handleLogout(item.onClick)}
-                  className="w-full pl-5 pr-3 py-5 border-b-[1px] border-black border-opacity-50 flex items-center text-xl hover:bg-gray-200"
+                  className="w-full pl-5 pr-3 py-5 flex items-center text-xl hover:bg-gray-200"
                 >
                   <div className="flex items-center gap-2">
                     {item.icon}
@@ -57,7 +81,7 @@ export default function SidebarMenu({ menuItems }) {
                 <NavLink
                   to={item?.path}
                   className={
-                    "w-full pl-5 pr-3 py-5 border-b-[1px] border-black border-opacity-50 flex items-center text-xl hover:bg-gray-200"
+                    `w-full pl-5 pr-3 py-5 flex items-center text-xl hover:bg-gray-200 ${location.pathname === item?.path ? "bg-orange-200" : "bg-white"}`
                   }
                 >
                   <div className="flex items-center gap-2">

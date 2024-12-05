@@ -6,27 +6,31 @@ export default function ProfileLayout() {
   const [isPressed, setIsPressed] = useState(false);
 
   const handleClick = (location) => {
+    
     setIsPressed(!isPressed);
+    navigate(location);
   };
   return (
     <>
       <div className="flex bg-[#f1f3f6] pt-[80px]">
+      {/* Style change and functionality change based on state isPressed to show a click and active effect */}
         <button
-          onClick={() => navigate("/home/profile/profile-info")}
-          className={`px-9 border-black/50 border-l-2 border-t-[1px] border-r-2 rounded-tl-xl hover:bg-gray-200 ${
+          onClick={isPressed ? () => handleClick("/home/profile/profile-info") : ""}
+          className={`px-9 border-black/50 border-l-2 border-t-[1px] border-r-2 rounded-tl-xl ${
             isPressed
               ? "bg-white shadow-none"
-              : "bg-gray-200 shadow-[inset_0_0_4px_#000]"
+              : "bg-[#ff9500] shadow-[inset_0_0_1px_#000]"
           }`}
         >
           <p>Profile</p>
         </button>
         <button
-          onClick={() => handleClick("/home/profile/creator-product")}
-          className={`px-5 py-2 border-black/50 border-t-[1px] border-r-2 rounded-tr-xl hover:bg-gray-200 ${
-            isPressed
-              ? "bg-gray-200 shadow-[inset_0_0_3px_#000]"
-              : "bg-white shadow-none"
+          onClick={!isPressed ? () => handleClick("/home/profile/creator") : ""}
+          className={`px-5 py-2 border-black/50 border-t-[1px] border-r-2 rounded-tr-xl ${
+            !isPressed
+            ? "bg-white shadow-none"
+              : "bg-[#ff9500] shadow-[inset_0_0_1px_#000]"
+              
           }`}
         >
           <p>Creator Studio</p>
