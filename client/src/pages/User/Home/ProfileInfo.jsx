@@ -22,11 +22,16 @@ export default function ProfileInfo() {
     formState: { errors },
   } = useForm({ mode: "onChange" });
 
-  const onSubmit = (userData) => {
+  const onSubmit = async (userData) => {
     setUserData(userData);
     if (userData.email !== user.email) { 
-      
-      setIsModalOpen(true);
+      try {
+        const response = await recieveOTPForUpdate(userData);
+        setIsModalOpen(true);
+        console.log(response);
+      } catch (error) {
+        console.error("Error generating OTP:", error);
+      }
     }
     setIsEditing(false);
   };
