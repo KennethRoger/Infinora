@@ -97,6 +97,7 @@ export default function OTPVerificationPage() {
         {serverError && <p className="text-red-600 text-lg mt-4">{serverError}</p>}
         <OtpTimer onResend={handleResendOTP} />
         <Button
+        
           buttonType={"submit"}
           styles={`w-[80%] mt-14 bg-[#33A0FF] text-white`}
         >
