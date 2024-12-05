@@ -23,12 +23,28 @@ export const recieveOTPForUpdate = async (data) => {
     isUpdate: true
   }
   try {
-    axios.post(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/resend-otp`,
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/register`,
       sendData,
       { withCredentials: true }
     );
+
+    return response.data;
   } catch (error) {
     console.error("Failed to send OTP:", error);
+    throw error;
+  }
+}
+
+export const updateProfile = async (data) => {
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/update-profile`,
+      data,
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update profile:", error);
   }
 }

@@ -1,18 +1,35 @@
-import Modal from "@/components/Modal/Modal";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom"; // Added useNavigate
+import { recieveOTPForUpdate, updateProfile } from "@/api/user/userData";
+import { verifyOTP, resendOTP } from "@/api/user/userAuth"; // Added resendOTP import
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+import OtpTimer from "@/components/OTPTimer/OtpTimer";
+import Modal from "@/components/Modal/Modal";
+import { useLoading } from "@/hooks/useLoading";
+import Spinner from "@/components/Spinner/Spinner";
 
 export default function ProfileInfo() {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tempUser, setTempUser] = useState(null);
+  const [serverError, setServerError] = useState("");
+  const [otp, setOtp] = useState("");
+
+  const { loading, startLoading, stopLoading } = useLoading();
 
   const { user } = useOutletContext();
   const [userData, setUserData] = useState({
     name: "",
     email: "",
     phoneNumber: "",
-    otp: ""
+    otp: "",
   });
 
   const {
@@ -22,33 +39,110 @@ export default function ProfileInfo() {
     formState: { errors },
   } = useForm({ mode: "onChange" });
 
-  const onSubmit = async (userData) => {
-    setUserData(userData);
-    if (userData.email !== user.email) { 
+  const onSubmit = async (formData) => {
+    setUserData(formData);
+    setServerError("");
+
+    if (formData.email !== user.email) {
       try {
-        const response = await recieveOTPForUpdate(userData);
-        setIsModalOpen(true);
-        console.log(response);
+        startLoading();
+        const response = await recieveOTPForUpdate(formData);
+        if (response && response.success) {
+          setIsModalOpen(true);
+          setTempUser(response.data);
+        } else {
+          setServerError(response?.message || "Failed to send OTP");
+        }
       } catch (error) {
         console.error("Error generating OTP:", error);
+        setServerError(
+          error?.response?.data?.message ||
+            "Failed to generate OTP. Please try again."
+        );
+      } finally {
+        stopLoading();
+      }
+    } else {
+      try {
+        startLoading();
+        const response = await updateProfile(formData);
+        console.log(response);
+        if (response && response.success) {
+          setIsEditing(false);
+        } else {
+          setServerError(response?.message || "Failed to update profile");
+        }
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        setServerError(
+          error?.response?.data?.message ||
+            "Failed to update profile. Please try again."
+        );
+      } finally {
+        stopLoading();
       }
     }
-    setIsEditing(false);
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await verifyOTP({
+        tempUserId: tempUser.tempUserId,
+        otp: otp,
+      });
+
+      if (response.success) {
+        setIsModalOpen(false);
+
+        const updateResponse = await updateProfile(userData);
+        if (updateResponse.success) {
+          setIsEditing(false);
+        }
+      } else {
+        setServerError(response.message || "Invalid OTP");
+      }
+    } catch (error) {
+      console.error("Error on OTP verification: ", error);
+      setServerError("Failed to verify OTP. Please try again.");
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (!tempUser) return;
+
+    try {
+      const response = await resendOTP({
+        tempUserId: tempUser.tempUserId,
+        email: tempUser.email,
+      });
+
+      if (response.success) {
+        setServerError("");
+      } else if (response.expired) {
+        setIsModalOpen(false);
+        navigate("/register");
+      } else {
+        setServerError(response.message || "Failed to resend OTP");
+      }
+    } catch (error) {
+      console.error("Error on resend: ", error);
+      setServerError("Failed to resend OTP. Please try again.");
+    }
   };
 
   useEffect(() => {
-    if (userData) {
+    if (user) {
       reset({
-        name: userData.name || "",
-        email: userData.email || "",
-        phoneNumber: userData.phoneNumber || "",
+        name: user.name || "",
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
       });
     }
-  }, [userData, reset]);
+  }, [user, reset]);
 
   const handleCancel = () => {
     setIsEditing(false);
-    reset(userData);
   };
 
   return (
@@ -83,7 +177,7 @@ export default function ProfileInfo() {
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 ${
                 isEditing ? "bg-white" : "bg-gray-200"
               }`}
-              {...register("name", { required: "Name is required" })}
+              {...register("name")}
               defaultValue={user?.name}
             />
             {errors.name && (
@@ -130,11 +224,17 @@ export default function ProfileInfo() {
               }`}
               {...register("phoneNumber", {
                 required: "Phone number is required",
+                pattern: {
+                  value: /^[0-9]{10}$/,
+                  message: "Invalid phone number",
+                },
               })}
               defaultValue={user?.phoneNumber}
             />
             {errors.phoneNumber && (
-              <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>
+              <p className="text-red-500 text-sm">
+                {errors.phoneNumber.message}
+              </p>
             )}
           </div>
 
@@ -144,7 +244,11 @@ export default function ProfileInfo() {
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
               >
-                Submit
+                {loading ? (
+                  <Spinner />
+                ) : (
+                  "Submit"
+                )}
               </button>
               <button
                 type="button"
@@ -156,12 +260,13 @@ export default function ProfileInfo() {
             </div>
           )}
         </form>
+
         <Modal isOpen={isModalOpen}>
-          {/* <form onSubmit={handleVerifyOTP}>
+          <form onSubmit={handleVerifyOTP}>
             <label className="text-black text-2xl font-semibold mb-5">
               Enter OTP
             </label>
-            <p className="text-lg py-2">Enter OTP sent to the number</p>
+            <p className="text-lg py-2">Enter OTP sent to your email</p>
             <InputOTP
               maxLength={6}
               pattern={REGEXP_ONLY_DIGITS}
@@ -181,13 +286,22 @@ export default function ProfileInfo() {
               <p className="text-red-600 text-lg mt-4">{serverError}</p>
             )}
             <OtpTimer onResend={handleResendOTP} />
-            <Button
-              buttonType={"submit"}
-              styles={`w-[80%] mt-14 bg-[#33A0FF] text-white`}
-            >
-              Verify
-            </Button>
-          </form> */}
+            <div className="flex gap-3 mt-4">
+              <button
+                type="submit"
+                className="bg-[#33A0FF] text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+              >
+                Verify
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </Modal>
       </div>
     </>
