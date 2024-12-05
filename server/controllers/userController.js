@@ -8,7 +8,7 @@ const { generateToken, verifyToken } = require("../utils/tokenValidator");
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  maxAge: 60 * 60 * 1000,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 const generateOTP = async (req, res) => {
@@ -26,6 +26,36 @@ const generateOTP = async (req, res) => {
       email,
       phoneNumber,
       password: hashPassword,
+      otp,
+    });
+    await sendEmail(
+      email,
+      "Your OTP verification code for Infinora",
+      `Your OTP is ${otp}`
+    );
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully",
+      data: {
+        tempUserId: tempUser._id,
+        email: tempUser.email,
+      },
+    });
+  } catch (error) {
+    console.error("Error sending OTP: ", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send OTP to email" });
+  }
+};
+
+const generateOTPForUpdateUser = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const tempUser = await TempUser.create({
+      email,
+      phoneNumber,
       otp,
     });
     await sendEmail(
@@ -243,7 +273,7 @@ const getUserInfo = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      user: { id: user._id, email: user.email, role: user.role },
+      user,
     });
   } catch (error) {
     console.error("Get User Info Error:", error);

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { set } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-export default function CreatorPage() {
+export default function CreatorSection() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [formValues, setFormValues] = useState({ password: "", terms: false }); 

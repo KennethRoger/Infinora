@@ -12,7 +12,7 @@ const verifyUser = async (req, res) => {
 
   try {
     const decoded = verifyToken(token);
-    
+
     const user = await User.findById(decoded.id).select("role isBlocked");
 
     if (!user) {
@@ -59,19 +59,15 @@ const blockUserOrVendor = async (req, res) => {
     user.isBlocked = !user.isBlocked;
     await user.save();
 
-    res
-      .status(200)
-      .json({
-        message: `${role} ${
-          user.isBlocked ? "blocked" : "unblocked"
-        } successfully.`,
-      });
+    res.status(200).json({
+      message: `${role} ${
+        user.isBlocked ? "blocked" : "unblocked"
+      } successfully.`,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "An error occurred while updating the user's blocked status.",
-      });
+    res.status(500).json({
+      message: "An error occurred while updating the user's blocked status.",
+    });
   }
 };
 
