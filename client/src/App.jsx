@@ -52,7 +52,7 @@ export function App() {
           </Route>
           {/* Creator Routes */}
           <Route path="creator" element={<CreatorMenu />} >
-            <Route index element={<ProtectedRoute allowedRoles={["vendor"]}><CreatorProfile /></ProtectedRoute>} />
+            <Route index element={<CreatorProfile />} />
           </Route>
           <Route path="creator-product" element={<CreatorMenu />} >
             <Route index element={<ProtectedRoute allowedRoles={["vendor"]}><CreatorProfile /></ProtectedRoute>} />

@@ -20,8 +20,8 @@ export const recieveOTPForUpdate = async (data) => {
     name: data.name || "",
     email: data.email,
     phoneNumber: data.phoneNumber,
-    isUpdate: true
-  }
+    isUpdate: true,
+  };
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/register`,
@@ -34,7 +34,7 @@ export const recieveOTPForUpdate = async (data) => {
     console.error("Failed to send OTP:", error);
     throw error;
   }
-}
+};
 
 export const updateProfile = async (data) => {
   try {
@@ -46,5 +46,6 @@ export const updateProfile = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Failed to update profile:", error);
+    throw error;
   }
-}
+};
