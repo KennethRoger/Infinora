@@ -14,7 +14,9 @@ export const register = async (data) => {
     console.error(
       "Error occurred sending generateOTP request: ",
       error.response?.data
-    );
+    );name
+    email
+    phoneNumber
     return error.response?.data;
   }
 };

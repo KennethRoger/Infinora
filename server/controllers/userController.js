@@ -13,56 +13,40 @@ const cookieOptions = {
 
 const generateOTP = async (req, res) => {
   try {
-    const { email, phoneNumber, password } = req.body;
-    const hashPassword = await bcryptjs.hash(password, 10);
-    const otp = crypto.randomInt(100000, 999999).toString();
-    const user = await User.findOne({ $or: [{ email }, { phoneNumber }] });
-    if (user)
+    const { name, email, phoneNumber, password } = req.body;
+
+    const existingUser = await User.findOne({
+      $or: [{ email }, { phoneNumber }],
+    });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         message: "Email or phone number already exists",
       });
-    const tempUser = await TempUser.create({
-      email,
-      phoneNumber,
-      password: hashPassword,
-      otp,
-    });
-    await sendEmail(
-      email,
-      "Your OTP verification code for Infinora",
-      `Your OTP is ${otp}`
-    );
-    res.status(200).json({
-      success: true,
-      message: "OTP sent successfully",
-      data: {
-        tempUserId: tempUser._id,
-        email: tempUser.email,
-      },
-    });
-  } catch (error) {
-    console.error("Error sending OTP: ", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to send OTP to email" });
-  }
-};
+    }
 
-const generateOTPForUpdateUser = async (req, res) => {
-  try {
-    const { email } = req.body;
     const otp = crypto.randomInt(100000, 999999).toString();
-    const tempUser = await TempUser.create({
+
+    const tempUserData = {
+      name,
       email,
       phoneNumber,
       otp,
-    });
+    };
+
+    if (password) {
+      const hashedPassword = await bcryptjs.hash(password, 10);
+      tempUserData.password = hashedPassword;
+    }
+
+    const tempUser = await TempUser.create(tempUserData);
+
     await sendEmail(
       email,
       "Your OTP verification code for Infinora",
       `Your OTP is ${otp}`
     );
+
     res.status(200).json({
       success: true,
       message: "OTP sent successfully",
@@ -73,9 +57,10 @@ const generateOTPForUpdateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Error sending OTP: ", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to send OTP to email" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to send OTP to email",
+    });
   }
 };
 
@@ -170,7 +155,7 @@ const login = async (req, res) => {
         .status(403)
         .json({ message: "Access denied! Contact Support" });
     const validPass = await bcryptjs.compare(password, user.password);
-    console.log(validPass)
+    console.log(validPass);
 
     if (!validPass)
       return res
