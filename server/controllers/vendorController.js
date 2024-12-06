@@ -2,17 +2,16 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { verifyToken } = require("../utils/tokenValidator");
+const cloudinary = require("cloudinary").v2;
 
 const verifyVendor = async (req, res) => {
   const { password, terms } = req.body;
 
   if (!terms) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "You must accept the terms and conditions.",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "You must accept the terms and conditions.",
+    });
   }
 
   try {
@@ -41,12 +40,10 @@ const verifyVendor = async (req, res) => {
     user.role = "vendor";
     await user.save();
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Verification successful. You are now a vendor.",
-      });
+    res.status(200).json({
+      success: true,
+      message: "Verification successful. You are now a vendor.",
+    });
   } catch (error) {
     res
       .status(500)
@@ -54,48 +51,78 @@ const verifyVendor = async (req, res) => {
   }
 };
 
-const registerVendor = async (req, res) => {
+// Register vendor details
+const registerVendorDetails = async (req, res) => {
   try {
-    const token = req.cookies.token;
-    if (!token) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized: No token provided" });
+    const { name, speciality, bio, socialLink, about } = req.body;
+    const userId = req.user.id; // Assuming you have user ID from auth middleware
+
+    // Upload profile image to cloudinary if exists
+    let profileImagePath = null;
+    if (req.files && req.files.profileImage) {
+      const result = await cloudinary.uploader.upload(
+        req.files.profileImage[0].path,
+        {
+          folder: "infinora/vendors/profile",
+          width: 500,
+          height: 500,
+          crop: "fill",
+          quality: "auto",
+        }
+      );
+      profileImagePath = result.secure_url;
     }
 
-    const decoded = verifyToken(token);
-    const userId = decoded.id;
+    // Upload ID proof to cloudinary if exists
+    let idProofPath = null;
+    if (req.files && req.files.idCard) {
+      const result = await cloudinary.uploader.upload(
+        req.files.idCard[0].path,
+        {
+          folder: "infinora/vendors/id_proofs",
+          width: 800,
+          quality: "auto",
+        }
+      );
+      idProofPath = result.secure_url;
+    }
 
-    // Temporarily store files locally or handle them later with AWS S3
-    const { profileImage, idCard, ...vendorData } = req.body;
-
-    // TODO: Implement AWS S3 upload logic here
-    const profileImageUrl = null; // Will be replaced with S3 URL
-    const idCardUrl = null; // Will be replaced with S3 URL
-
+    // Update user with vendor details
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        ...vendorData,
-        profileImage: profileImageUrl,
-        idCard: idCardUrl,
         role: "vendor",
+        name,
+        speciality,
+        bio,
+        socialLink,
+        about,
+        ...(profileImagePath && { profileImagePath }),
+        ...(idProofPath && { idProofPath }),
       },
       { new: true }
     );
 
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     res.status(200).json({
       success: true,
-      message: "Vendor registration successful",
+      message: "Vendor details updated successfully",
       user: updatedUser,
     });
   } catch (error) {
+    console.error("Vendor registration error:", error);
     res.status(500).json({
       success: false,
-      message: "Error registering vendor",
+      message: "Error updating vendor details",
       error: error.message,
     });
   }
 };
 
-module.exports = { verifyVendor, registerVendor };
+module.exports = { verifyVendor, registerVendorDetails };
