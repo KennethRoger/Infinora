@@ -21,6 +21,7 @@ import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import RedirectIfAuthenticated from './components/Auth/RedirectIfAuthenticated';
 import CategoryListPage from "./pages/Admin/Home/CategoryListPage";
 import CreatorMenu from "./Layouts/Creator/CreatorMenu";
+import CreatorOverview from "./pages/Creator/CreatorOverview";
 
 export function App() {
   return (
@@ -51,11 +52,9 @@ export function App() {
             <Route index element={<ProtectedRoute allowedRoles={["user", "vendor"]}><ProfileInfo /></ProtectedRoute>} />
           </Route>
           {/* Creator Routes */}
+          <Route path="creator-profile" element={<CreatorProfile />} />
           <Route path="creator" element={<CreatorMenu />} >
-            <Route index element={<CreatorProfile />} />
-          </Route>
-          <Route path="creator-product" element={<CreatorMenu />} >
-            <Route index element={<ProtectedRoute allowedRoles={["vendor"]}><CreatorProfile /></ProtectedRoute>} />
+            <Route path="overview" element={<CreatorOverview />} />
           </Route>
         </Route>
       </Route>
