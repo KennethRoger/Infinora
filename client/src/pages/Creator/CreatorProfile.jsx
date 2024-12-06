@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { fetchCategories } from "@/redux/features/categorySlice";
 import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import axios from "axios";
+import { registerVendorDetails } from "@/api/vendor/vendorAuth";
+import { useUser } from "@/context/UserContext";
 
 export default function CreatorProfile() {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ export default function CreatorProfile() {
   const [idCardFile, setIdCardFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const { user, loading, refreshUser } = useUser();
+
   const [crop, setCrop] = useState({
     unit: "%",
     width: 100,
@@ -120,21 +123,12 @@ export default function CreatorProfile() {
       formData.append("socialLink", data.socialLink);
       formData.append("about", data.about);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/vendor/register`,
-        {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        }
-      );
+      const response = await registerVendorDetails(formData);
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (response.success) {
         navigate("/home/profile/creator-info");
       } else {
-        console.error(result.message);
+        console.error(response.message);
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -142,9 +136,9 @@ export default function CreatorProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-gray-50 rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800">
               Complete Your Creator Profile
@@ -239,6 +233,7 @@ export default function CreatorProfile() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Your full name"
                   {...register("name", { required: "Name is required" })}
+                  defaultValue={loading ? "" :user.name}
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-500">
@@ -287,12 +282,12 @@ export default function CreatorProfile() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Bio
                 </label>
-                <textarea
+                <input
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows="3"
                   placeholder="Write a short bio about yourself"
                   {...register("bio", { required: "Bio is required" })}
-                ></textarea>
+                ></input>
                 {errors.bio && (
                   <p className="mt-1 text-sm text-red-500">
                     {errors.bio.message}

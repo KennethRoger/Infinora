@@ -7,6 +7,10 @@ dotenv.config();
 
 const connectDB = require("./config/db");
 
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
