@@ -10,6 +10,7 @@ const {
   getUserInfo,
   logout,
   getAllUsers,
+  updateUser
 } = require("../controllers/userController");
 
 router.post("/register", generateOTP);
@@ -21,5 +22,7 @@ router.get("/me", getUserInfo);
 router.post("/logout", logout);
 
 router.get("/all", getAllUsers);
+
+router.post("/update-profile", updateUser)
 
 module.exports = router;

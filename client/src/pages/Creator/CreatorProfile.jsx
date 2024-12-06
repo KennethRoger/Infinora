@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 
 export default function CreatorProfile() {
+  
   const [profileImage, setProfileImage] = useState(null);
   const [idCardFile, setIdCardFile] = useState(null);
 

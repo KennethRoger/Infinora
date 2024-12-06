@@ -13,16 +13,24 @@ const cookieOptions = {
 
 const generateOTP = async (req, res) => {
   try {
-    const { name, email, phoneNumber, password } = req.body;
+    const { name, email, phoneNumber, password, isUpdate = false } = req.body;
 
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phoneNumber }],
-    });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Email or phone number already exists",
+        message: "Email already exists",
       });
+    }
+
+    if (!isUpdate) {
+      const existingPhoneUser = await User.findOne({ phoneNumber });
+      if (existingPhoneUser) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number already exists",
+        });
+      }
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();
@@ -155,8 +163,6 @@ const login = async (req, res) => {
         .status(403)
         .json({ message: "Access denied! Contact Support" });
     const validPass = await bcryptjs.compare(password, user.password);
-    console.log(validPass);
-
     if (!validPass)
       return res
         .status(400)
@@ -289,6 +295,66 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const { name, email, phoneNumber } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (phoneNumber !== undefined) {
+      if (phoneNumber !== existingUser.phoneNumber) {
+        const phoneExists = await User.findOne({
+          phoneNumber,
+          _id: { $ne: existingUser._id },
+        });
+        if (phoneExists) {
+          return res.status(400).json({
+            success: false,
+            message: "Phone number is already in use",
+          });
+        }
+      }
+      updateData.phoneNumber = phoneNumber;
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: existingUser._id },
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Failed to update user",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update user",
+    });
+  }
+};
+
 module.exports = {
   generateOTP,
   verifyOTP,
@@ -298,4 +364,5 @@ module.exports = {
   getUserInfo,
   logout,
   getAllUsers,
+  updateUser,
 };
