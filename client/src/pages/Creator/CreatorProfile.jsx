@@ -3,12 +3,26 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { fetchCategories } from "@/redux/features/categorySlice";
+import ReactCrop from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+import axios from "axios";
 
 export default function CreatorProfile() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [profileImage, setProfileImage] = useState(null);
   const [idCardFile, setIdCardFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [crop, setCrop] = useState({
+    unit: "%",
+    width: 100,
+    aspect: 1,
+  });
+  const [completedCrop, setCompletedCrop] = useState(null);
+  const [imageRef, setImageRef] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [originalFile, setOriginalFile] = useState(null);
 
   const {
     categories,
@@ -29,11 +43,69 @@ export default function CreatorProfile() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size should be less than 5MB");
+        return;
+      }
+      setOriginalFile(file);
       const reader = new FileReader();
       reader.onload = () => {
         setProfileImage(reader.result);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const getCroppedImg = async (image, crop) => {
+    const canvas = document.createElement("canvas");
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            blob.name = originalFile.name;
+            resolve(blob);
+          }
+        },
+        "image/jpeg",
+        1
+      );
+    });
+  };
+
+  const handleCropComplete = async () => {
+    if (imageRef && completedCrop?.width && completedCrop?.height) {
+      const croppedImage = await getCroppedImg(imageRef, completedCrop);
+      setProfileImage(URL.createObjectURL(croppedImage));
+      setShowCropper(false);
+
+      const croppedFile = new File([croppedImage], originalFile.name, {
+        type: "image/jpeg",
+        lastModified: new Date().getTime(),
+      });
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(croppedFile);
+      document.querySelector('input[name="profileImage"]').files =
+        dataTransfer.files;
     }
   };
 
@@ -78,38 +150,62 @@ export default function CreatorProfile() {
               Complete Your Creator Profile
             </h2>
             <p className="text-gray-600 mt-2">
-              Let's set up your creator profile to help you showcase your work
+              Let's set up your creator profile
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Profile Image Section */}
             <div className="flex flex-col items-center space-y-4 p-6 bg-gray-50 rounded-lg">
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-white border-2 border-blue-500 shadow-lg">
-                {profileImage ? (
-                  <img
-                    src={profileImage}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                    <svg
-                      className="w-12 h-12 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
+              {showCropper && profileImage ? (
+                <div className="w-full max-w-md">
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(c) => setCrop(c)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={1}
+                  >
+                    <img
+                      src={profileImage}
+                      onLoad={(e) => setImageRef(e.currentTarget)}
+                      alt="Crop me"
+                    />
+                  </ReactCrop>
+                  <button
+                    type="button"
+                    onClick={handleCropComplete}
+                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Crop Image
+                  </button>
+                </div>
+              ) : (
+                <div className="w-32 h-32 rounded-full overflow-hidden bg-white border-2 border-blue-500 shadow-lg">
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <svg
+                        className="w-12 h-12 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="text-center">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Profile Photo
