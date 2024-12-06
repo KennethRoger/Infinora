@@ -8,7 +8,7 @@ export const fetchUser = async () => {
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/me`,
       { withCredentials: true }
     );
-    console.log("Logout successful:", response.data);
+    console.log("Fetched user:", response.data);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch user:", error);
@@ -22,6 +22,7 @@ export const recieveOTPForUpdate = async (data) => {
     phoneNumber: data.phoneNumber,
     isUpdate: true,
   };
+  
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/register`,

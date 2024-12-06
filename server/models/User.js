@@ -10,16 +10,10 @@ const userSchema = new mongoose.Schema(
     },
     isBlocked: {
       type: Boolean,
-      required: function () {
-        return this.role === "user" || this.role === "vendor";
-      },
       default: false,
     },
     email: {
       type: String,
-      required: function () {
-        return this.role === "user" || this.role === "vendor";
-      },
       default: null
     },
     phoneNumber: {
@@ -35,9 +29,6 @@ const userSchema = new mongoose.Schema(
     adminId: {
       type: String,
       default: null,
-      required: function () {
-        return this.role === "admin";
-      },
     },
     isVerified: {
       type: Boolean,
@@ -45,9 +36,6 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: function () {
-        return !this.googleId && !this.googlePicture;
-      },
       default: null,
     },
     profileImagePath: {
