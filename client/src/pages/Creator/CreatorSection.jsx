@@ -2,13 +2,14 @@ import InputBox from "@/components/Form/InputBox";
 import Modal from "@/components/Modal/Modal";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { set } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@/context/UserContext";
 
 export default function CreatorSection() {
   const navigate = useNavigate();
+  const { user, loading, refreshUser } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [formValues, setFormValues] = useState({ password: "", terms: false }); 
+  const [formValues, setFormValues] = useState({ password: "", terms: false });
   const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
@@ -34,23 +35,71 @@ export default function CreatorSection() {
         terms: false,
       }));
     }
-  } ,[formValues])
+  }, [formValues]);
 
-  const onSubmit = async (e, data) => {
+  useEffect(() => {
+    refreshUser();
+  }, []);
+
+  const onSubmit = async (e) => {
     try {
       e.preventDefault();
-      console.log(data)
+
+      if (!formValues.password) {
+        setFormErrors((prev) => ({
+          ...prev,
+          password: "Password is required",
+        }));
+        return;
+      }
+      if (!formValues.terms) {
+        setFormErrors((prev) => ({
+          ...prev,
+          terms: "You must accept the terms and conditions",
+        }));
+        return;
+      }
+
       const response = await axios.post(
         `${import.meta.env.VITE_USERS_API_BASE_URL}/api/vendor/verify`,
-        data,
+        formValues,
         { withCredentials: true }
       );
+
       console.log("Verification successful:", response.data);
       navigate("/home/profile");
     } catch (error) {
-      console.error("Error during verification:", error.response?.data || error.message);
+      console.error(
+        "Error during verification:",
+        error.response?.data || error.message
+      );
+      if (error.response?.data?.message) {
+        if (error.response.data.message.includes("terms")) {
+          setFormErrors((prev) => ({
+            ...prev,
+            terms: error.response.data.message,
+          }));
+        } else {
+          setFormErrors((prev) => ({
+            ...prev,
+            password: error.response.data.message,
+          }));
+        }
+      }
     }
   };
+
+  const handleStartAsCreator = async () => {
+    if (loading) return;
+    await refreshUser();
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setIsOpen(true);
+  };
+
   return (
     <>
       <main className="pt-[75px] flex">
@@ -78,7 +127,7 @@ export default function CreatorSection() {
               </p>
               <div>
                 <button
-                  onClick={() => setIsOpen(true)}
+                  onClick={handleStartAsCreator}
                   className="relative bg-gradient-to-r from-[#FFA500] to-[#E7511A] rounded-xl font-bold px-5 min-w-[130px] h-12 shadow-[0px_3px_4px] shadow-[#000000]/50 text-lg z-20"
                 >
                   Start as a creator
@@ -129,18 +178,25 @@ export default function CreatorSection() {
 
               <form onSubmit={onSubmit} className="space-y-6">
                 <div className="space-y-2">
-                <InputBox
-                  label="Enter Your Password"
-                  name="password"
-                  type="password"
-                  onChange={(e) => setFormValues((formValues) => ({...formValues, [e.target.name]: e.target.value}))}
-                  value={formValues?.password}
-                  styles="w-full border-b-2 border-black focus:outline-none focus:border-blue-500"
-                />
-                {formErrors?.password && (
-                  <p className="text-red-500 text-sm">{formErrors?.password}</p>
-                )}
-                <div className="text-right">
+                  <InputBox
+                    label="Enter Your Password"
+                    name="password"
+                    type="password"
+                    onChange={(e) =>
+                      setFormValues((formValues) => ({
+                        ...formValues,
+                        [e.target.name]: e.target.value,
+                      }))
+                    }
+                    value={formValues?.password}
+                    styles="w-full border-b-2 border-black focus:outline-none focus:border-blue-500"
+                  />
+                  {formErrors?.password && (
+                    <p className="text-red-500 text-sm">
+                      {formErrors?.password}
+                    </p>
+                  )}
+                  <div className="text-right">
                     <a
                       href="#"
                       className="text-blue-500 hover:text-blue-600 text-sm"
@@ -155,7 +211,12 @@ export default function CreatorSection() {
                     type="checkbox"
                     name="terms"
                     checked={formValues?.terms}
-                    onChange={(e) => setFormValues((formValues) => ({...formValues, [e.target.name]: e.target.checked}))}
+                    onChange={(e) =>
+                      setFormValues((formValues) => ({
+                        ...formValues,
+                        [e.target.name]: e.target.checked,
+                      }))
+                    }
                     className="w-4 h-4"
                   />
 
@@ -176,7 +237,6 @@ export default function CreatorSection() {
                   <button
                     type="submit"
                     className="flex-1 bg-blue-500 hover:bg-blue-600 px-4 py-2 text-white"
-                    
                   >
                     Proceed
                   </button>
