@@ -51,69 +51,59 @@ const verifyVendor = async (req, res) => {
   }
 };
 
-// Register vendor details
 const registerVendorDetails = async (req, res) => {
   try {
     const { name, speciality, bio, socialLink, about } = req.body;
-    const userId = req.user.id; // Assuming you have user ID from auth middleware
 
-    // Upload profile image to cloudinary if exists
     let profileImagePath = null;
     if (req.files && req.files.profileImage) {
-      const result = await cloudinary.uploader.upload(
-        req.files.profileImage[0].path,
-        {
-          folder: "infinora/vendors/profile",
-          width: 500,
-          height: 500,
-          crop: "fill",
-          quality: "auto",
-        }
+      // Convert buffer to base64 string for Cloudinary
+      const b64 = Buffer.from(req.files.profileImage[0].buffer).toString(
+        "base64"
       );
+      const dataURI =
+        "data:" + req.files.profileImage[0].mimetype + ";base64," + b64;
+
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "infinora/vendors/profile",
+        width: 500,
+        height: 500,
+        crop: "fill",
+        quality: "auto",
+      });
       profileImagePath = result.secure_url;
     }
 
-    // Upload ID proof to cloudinary if exists
     let idProofPath = null;
     if (req.files && req.files.idCard) {
-      const result = await cloudinary.uploader.upload(
-        req.files.idCard[0].path,
-        {
-          folder: "infinora/vendors/id_proofs",
-          width: 800,
-          quality: "auto",
-        }
-      );
+      // Convert buffer to base64 string for Cloudinary
+      const b64 = Buffer.from(req.files.idCard[0].buffer).toString("base64");
+      const dataURI = "data:" + req.files.idCard[0].mimetype + ";base64," + b64;
+
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "infinora/vendors/id_proofs",
+        width: 800,
+        quality: "auto",
+      });
       idProofPath = result.secure_url;
     }
 
-    // Update user with vendor details
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        role: "vendor",
-        name,
-        speciality,
-        bio,
-        socialLink,
-        about,
-        ...(profileImagePath && { profileImagePath }),
-        ...(idProofPath && { idProofPath }),
-      },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+    // Create new user entry
+    const newUser = await User.create({
+      role: "vendor",
+      name,
+      speciality,
+      bio,
+      socialLink,
+      about,
+      profileImagePath,
+      idProofPath,
+    });
 
     res.status(200).json({
       success: true,
-      message: "Vendor details updated successfully",
-      user: updatedUser,
+      message: "Vendor details saved successfully",
+      user: newUser,
     });
   } catch (error) {
     console.error("Vendor registration error:", error);
