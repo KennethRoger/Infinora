@@ -6,7 +6,7 @@ export default function CreatorMenu() {
     return (
         <>
             <div className="flex relative">
-                <aside className="min-w-[250px] sticky top-0">
+                <aside className="min-w-[250px] sticky top-0 border-r-2">
                     <SidebarMenu menuItems={creatorSideMenu} />
                 </aside>
                 <div className="w-full border-black/50 p-5">

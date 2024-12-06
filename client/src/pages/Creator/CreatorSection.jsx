@@ -67,7 +67,7 @@ export default function CreatorSection() {
       );
 
       console.log("Verification successful:", response.data);
-      navigate("/home/profile");
+      navigate("/home/profile/creator-profile");
     } catch (error) {
       console.error(
         "Error during verification:",
