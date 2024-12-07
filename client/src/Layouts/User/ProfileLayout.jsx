@@ -6,7 +6,6 @@ export default function ProfileLayout() {
   const [isPressed, setIsPressed] = useState(false);
 
   const handleClick = (location) => {
-    
     setIsPressed(!isPressed);
     navigate(location);
   };

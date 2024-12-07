@@ -22,10 +22,32 @@ import RedirectIfAuthenticated from './components/Auth/RedirectIfAuthenticated';
 import CategoryListPage from "./pages/Admin/Home/CategoryListPage";
 import CreatorMenu from "./Layouts/Creator/CreatorMenu";
 import CreatorOverview from "./pages/Creator/CreatorOverview";
+import { Toaster } from 'react-hot-toast';
 
 export function App() {
   return (
-    <Routes>
+    <>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
+          success: {
+            style: {
+              background: 'green',
+            },
+          },
+          error: {
+            style: {
+              background: 'red',
+            },
+          },
+        }}
+      />
+      <Routes>
       {/* User Routes */}
       <Route path="/" element={<LandingPage />} />
 
@@ -99,5 +121,6 @@ export function App() {
         <Route path="category-list" element={<CategoryListPage />} />
       </Route>
     </Routes>
+    </>
   );
 }

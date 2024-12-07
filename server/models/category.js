@@ -23,6 +23,10 @@ const categorySchema = new mongoose.Schema(
       ref: "Category",
       default: null,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
