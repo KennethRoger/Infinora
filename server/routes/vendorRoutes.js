@@ -3,36 +3,62 @@ const router = express.Router();
 const multer = require("multer");
 const storage = multer.memoryStorage();
 
-// File filter to accept only images
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
-    cb(null, true);
-  } else {
-    cb(new Error("Not an image! Please upload an image."), false);
+
+  if (!file) {
+    cb(new Error("No file uploaded"), false);
+    return;
   }
+
+
+  if (file.fieldname === "profileImage") {
+    if (!file.mimetype.startsWith("image/")) {
+      cb(new Error("Profile picture must be an image file"), false);
+      return;
+    }
+  } else if (file.fieldname === "idCard") {
+    if (file.mimetype !== "application/pdf") {
+      cb(new Error("ID Card must be a PDF file"), false);
+      return;
+    }
+  }
+
+  cb(null, true);
 };
 
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024,
   },
-});
+}).fields([
+  { name: "profileImage", maxCount: 1 },
+  { name: "idCard", maxCount: 1 },
+]);
 
 const {
   verifyVendor,
   registerVendorDetails,
 } = require("../controllers/vendorController");
 
+
+const handleUpload = (req, res, next) => {
+  upload(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        message: err.message || "Error uploading file",
+      });
+    } else if (err) {
+      return res.status(400).json({
+        message: err.message || "Error processing file upload",
+      });
+    }
+    next();
+  });
+};
+
 router.post("/verify", verifyVendor);
-router.post(
-  "/register",
-  upload.fields([
-    { name: "profileImage", maxCount: 1 },
-    { name: "idCard", maxCount: 1 },
-  ]),
-  registerVendorDetails
-);
+router.post("/register", handleUpload, registerVendorDetails);
 
 module.exports = router;

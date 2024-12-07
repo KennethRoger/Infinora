@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { fetchCategories } from "@/redux/features/categorySlice";
+import { toast } from "react-hot-toast";
 
 const CategoryListPage = () => {
   const dispatch = useDispatch();
@@ -18,32 +19,44 @@ const CategoryListPage = () => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [editData, setEditData] = useState(null); 
   const [isOpen, setIsOpen] = useState(false);
-  const [deleteCategory, setDeleteCategory] = useState(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-    setValue
   } = useForm();
 
   const addSubModal = () => {
     setEditData(null);
+    reset({
+      name: "",
+      description: "",
+      parent_id: "",
+    });
     setIsOpen(true);
   };
 
   const editModal = (category) => {
     setEditData(category);
-    setValue("name", category.name);
-    setValue("description", category.description);
-    setValue("parent_id", category.parent_id);
+    reset({
+      name: category.name,
+      description: category.description,
+      parent_id: category.parent_id || "",
+    });
     setIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsOpen(false);
+    setEditData(null);
+    reset({
+      name: "",
+      description: "",
+      parent_id: "",
+    });
   };
 
   const onCreateSubmit = async (data) => {
@@ -52,65 +65,55 @@ const CategoryListPage = () => {
         `${import.meta.env.VITE_USERS_API_BASE_URL}/api/category/create`,
         data
       );
-      setSuccessMessage(response.data.message);
-      setErrorMessage("");
+      toast.success(response.data.message);
       reset();
       setIsOpen(false);
       dispatch(fetchCategories());
     } catch (error) {
-      setErrorMessage(
+      toast.error(
         error.response?.data?.message || "An error occurred while creating"
       );
-      setSuccessMessage("");
     }
   };
 
   const onEditSubmit = async (data) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/category/edit/${editData._id}`,
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/category/edit/${
+          editData._id
+        }`,
         data
       );
-      setSuccessMessage(response.data.message);
-      setErrorMessage("");
+      toast.success(response.data.message);
       reset();
       setIsOpen(false);
       dispatch(fetchCategories());
     } catch (error) {
-      setErrorMessage(
+      toast.error(
         error.response?.data?.message || "An error occurred while submitting"
       );
-      setSuccessMessage("");
     }
   };
 
-  const onDeleteCategory = async () => {
-    if (!deleteCategory) return;
-
+  const onToggleStatus = async (category) => {
     try {
-      const response = await axios.delete(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/category/delete/${deleteCategory._id}`
+      const response = await axios.patch(
+        `${
+          import.meta.env.VITE_USERS_API_BASE_URL
+        }/api/category/toggle-status/${category._id}`
       );
-      setSuccessMessage(response.data.message);
-      setErrorMessage("");
-      setIsDeleteModalOpen(false);
+      toast.success(response.data.message);
       dispatch(fetchCategories());
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message || "An error occurred while deleting"
+      toast.error(
+        error.response?.data?.message ||
+          "An error occurred while toggling status"
       );
-      setSuccessMessage("");
     }
   };
 
   const ControlButtons = (category) => (
     <div className="flex gap-5 justify-center">
-      <button
-        className="bg-blue-500 text-white px-3 py-1 rounded"
-        onClick={() => addSubModal()}
-      >
-        Add SubCategory
-      </button>
       <button
         className="bg-yellow-500 text-white px-3 py-1 rounded"
         onClick={() => editModal(category)}
@@ -118,18 +121,18 @@ const CategoryListPage = () => {
         Edit
       </button>
       <button
-        className="bg-red-500 text-white px-3 py-1 rounded"
-        onClick={() => {
-          setDeleteCategory(category);
-          setIsDeleteModalOpen(true);
-        }}
+        className={`${
+          category.isActive ? "bg-red-500" : "bg-green-500"
+        } text-white px-3 py-1 rounded`}
+        onClick={() => onToggleStatus(category)}
       >
-        Delete
+        {category.isActive ? "Disable" : "Enable"}
       </button>
     </div>
   );
 
-  if (loading) return <p className="text-center h-screen">Loading categories...</p>;
+  if (loading)
+    return <p className="text-center h-screen">Loading categories...</p>;
 
   return (
     <>
@@ -147,7 +150,7 @@ const CategoryListPage = () => {
         actionsRenderer={ControlButtons}
       />
 
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+      <Modal isOpen={isOpen} onClose={closeModal}>
         <form onSubmit={handleSubmit(editData ? onEditSubmit : onCreateSubmit)}>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1" htmlFor="name">
@@ -168,9 +171,7 @@ const CategoryListPage = () => {
               }`}
             />
             {errors.name && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.name.message}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
             )}
           </div>
 
@@ -222,13 +223,6 @@ const CategoryListPage = () => {
             </select>
           </div>
 
-          {successMessage && (
-            <p className="text-green-500 mb-4">{successMessage}</p>
-          )}
-          {errorMessage && (
-            <p className="text-red-500 mb-4">{errorMessage}</p>
-          )}
-
           <button
             type="submit"
             className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
@@ -239,40 +233,11 @@ const CategoryListPage = () => {
           <button
             type="button"
             className="w-full bg-gray-300 text-black p-2 rounded hover:bg-gray-400 mt-5"
-            onClick={() => setIsOpen(false)}
+            onClick={closeModal}
           >
             Cancel
           </button>
         </form>
-      </Modal>
-
-      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
-        <div className="p-5">
-          <h2 className="text-xl font-semibold text-red-500">Are you sure?</h2>
-          <p className="mb-4">Do you really want to delete this category? This action cannot be undone.</p>
-
-          {errorMessage && (
-            <p className="text-red-500 text-sm mb-4">{errorMessage}</p>
-          )}
-          {successMessage && (
-            <p className="text-green-500 text-sm mb-4">{successMessage}</p>
-          )}
-
-          <div className="flex gap-4 justify-end">
-            <button
-              className="bg-gray-300 text-black px-3 py-1 rounded"
-              onClick={() => setIsDeleteModalOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="bg-red-600 text-white px-3 py-1 rounded"
-              onClick={onDeleteCategory}
-            >
-              Yes, Delete
-            </button>
-          </div>
-        </div>
       </Modal>
     </>
   );

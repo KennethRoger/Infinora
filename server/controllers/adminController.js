@@ -6,7 +6,7 @@ const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
-  maxAge: 60 * 60 * 1000,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 const registerAdmin = async (req, res) => {
@@ -19,12 +19,11 @@ const registerAdmin = async (req, res) => {
     }
 
     const hashedPassword = await bcryptjs.hash(password, 10);
-    const hashedId = await bcryptjs.hash(adminId, 10);
 
     const adminUser = new User({
       role: "admin",
       name,
-      adminId: hashedId,
+      adminId,
       password: hashedPassword,
     });
 
@@ -46,11 +45,6 @@ const loginAdmin = async (req, res) => {
       return res.status(404).json({ message: "Admin not found." });
     }
 
-    const isAdminIdValid = await bcryptjs.compare(adminId, adminUser.adminId);
-    if (!isAdminIdValid) {
-      return res.status(401).json({ message: "Invalid credentials." });
-    }
-
     const isPasswordValid = await bcryptjs.compare(
       password,
       adminUser.password
@@ -64,7 +58,7 @@ const loginAdmin = async (req, res) => {
     res.cookie("token", token, cookieOptions);
     res.status(200).json({
       message: "Login successful!",
-      data: { role: "admin", user: name},
+      data: { role: "admin", user: name },
     });
   } catch (error) {
     console.error("Error logging in admin:", error.message);
@@ -72,4 +66,99 @@ const loginAdmin = async (req, res) => {
   }
 };
 
-module.exports = { registerAdmin, loginAdmin };
+// Creator
+
+const approveCreatorStatus = async (req, res) => {
+  try {
+    const { creatorId } = req.body;
+
+    const creator = await User.findById(creatorId);
+    if (!creator) {
+      return res.status(404).json({
+        success: false,
+        message: "Creator not found.",
+      });
+    }
+
+    // Check if creator is in a valid state to be approved
+    if (creator.vendorStatus !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Creator is not in pending status.",
+      });
+    }
+
+    await User.updateOne(
+      { _id: creatorId },
+      { $set: { vendorStatus: "approved" } }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Creator has been approved successfully.",
+      data: {
+        creatorId: creator._id,
+        name: creator.name,
+        email: creator.email,
+        status: "approved",
+      },
+    });
+  } catch (error) {
+    console.error("Error approving creator:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to approve creator. Please try again.",
+    });
+  }
+};
+
+const rejectCreatorStatus = async (req, res) => {
+  try {
+    const { creatorId } = req.body;
+
+    const creator = await User.findById(creatorId);
+    if (!creator) {
+      return res.status(404).json({
+        success: false,
+        message: "Creator not found.",
+      });
+    }
+
+    // Check if creator is in a valid state to be rejected
+    if (creator.vendorStatus !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Creator is not in pending status.",
+      });
+    }
+
+    await User.updateOne(
+      { _id: creatorId },
+      { $set: { vendorStatus: "rejected" } }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Creator has been rejected successfully.",
+      data: {
+        creatorId: creator._id,
+        name: creator.name,
+        email: creator.email,
+        status: "rejected",
+      },
+    });
+  } catch (error) {
+    console.error("Error rejecting creator:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reject creator. Please try again.",
+    });
+  }
+};
+
+module.exports = {
+  registerAdmin,
+  loginAdmin,
+  approveCreatorStatus,
+  rejectCreatorStatus,
+};

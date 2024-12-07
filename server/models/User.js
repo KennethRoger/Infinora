@@ -8,13 +8,18 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: "user",
     },
+    vendorStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: null,
+    },
     isBlocked: {
       type: Boolean,
       default: false,
     },
     email: {
       type: String,
-      default: null
+      default: null,
     },
     phoneNumber: {
       type: String,
