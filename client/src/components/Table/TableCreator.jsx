@@ -35,13 +35,15 @@ export default function TableCreator({
               {tableHead.map((head, cellIndex) => (
                 <TableCell
                   key={cellIndex}
-                  
                   className={`text-black ${
                     head.field === "actions" ? "text-center" : ""
                   }`}
                 >
                   {head.field === "name" ? (
-                    <div className="cursor-pointer" onClick={() => toggleItem(row._id)}>
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => toggleItem(row._id)}
+                    >
                       <div className="flex items-center gap-2">
                         <ChevronRight
                           className={`h-5 transition-transform flex-shrink-0 ${
@@ -51,12 +53,27 @@ export default function TableCreator({
                         <span className="flex-1">{row[head.field]}</span>
                       </div>
                     </div>
-                  ) : head.field === "image" ? (
-                    <img
-                      src={row[head.field]}
-                      alt={row.name || "Image"}
-                      className="h-12 w-12 rounded-full object-cover"
-                    />
+                  ) : head.field === "profileImagePath" ? (
+                    <div className="flex items-center justify-center">
+                      {row[head.field] ? (
+                        <div className="h-12 w-12 rounded-full overflow-hidden">
+                          <img
+                            src={row[head.field]}
+                            alt={row.name || "Profile"}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.target.src = "https://via.placeholder.com/48";
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-500 text-xs">
+                            No Image
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   ) : head.field === "actions" && actionsRenderer ? (
                     actionsRenderer(row)
                   ) : head.field === "verificationId" && extraActionRenderer ? (
@@ -92,14 +109,13 @@ export default function TableCreator({
             {tableHead.map((head, cellIndex) => (
               <TableCell
                 key={cellIndex}
-                
                 className={`${
                   level === 0 ? "text-black" : "text-gray-700"
                 } pl-${level * 4} ${
                   head.field === "actions" ? "text-center" : ""
                 }`}
               >
-                {head.field === "image" ? (
+                {head.field === "profileImagePath" ? (
                   <img
                     src={row[head.field]}
                     alt={row.name || "Image"}
@@ -128,7 +144,6 @@ export default function TableCreator({
             {tableHead.map((head, index) => (
               <TableHead
                 key={index}
-                
                 className={`${head.styles} text-white font-bold`}
               >
                 {head.heading}
@@ -136,7 +151,39 @@ export default function TableCreator({
             ))}
           </TableRow>
         </TableHeader>
-        <TableBody>{renderRows(tableBody)}</TableBody>
+        <TableBody>
+          {tableBody.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={tableHead.length}
+                className="text-center py-8"
+              >
+                <div className="flex flex-col items-center justify-center text-gray-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-12 w-12 mb-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                    />
+                  </svg>
+                  <p className="text-lg font-medium">No data found</p>
+                  <p className="text-sm">
+                    There are no records to display at the moment.
+                  </p>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            renderRows(tableBody, 0)
+          )}
+        </TableBody>
       </Table>
     </div>
   );

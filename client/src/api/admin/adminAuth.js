@@ -17,7 +17,7 @@ export const adminLogin = async (data) => {
 
 export const approveVendor = async (data) => {
   try {
-    const response = await axios.post(
+    const response = await axios.patch(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/admin/approve-vendor`,
       data,
       { withCredentials: true }
@@ -31,7 +31,7 @@ export const approveVendor = async (data) => {
 
 export const rejectVendor = async (data) => {
   try {
-    const response = await axios.post(
+    const response = await axios.patch(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/admin/reject-vendor`,
       data,
       { withCredentials: true }

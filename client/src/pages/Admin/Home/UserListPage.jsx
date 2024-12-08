@@ -39,7 +39,7 @@ export default function UserListPage() {
 
     return (
       <>
-        <button
+        <button 
           onClick={handleBlock}
           className={`text-white ${user.isBlocked ? 'bg-gray-500' : 'bg-red-500 hover:bg-red-600'} gap-2 w-full border px-5 min-w-[50px] rounded h-12 shadow-md text-lg`}
         >

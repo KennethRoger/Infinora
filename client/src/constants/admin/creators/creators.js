@@ -1,6 +1,6 @@
 export const creatorTableHead = [
-  { heading: "Creator ID", field: "userId", styles: "" },
-  { heading: "Profile Image", field: "image", styles: "" },
+  { heading: "Creator ID", field: "_id", styles: "" },
+  { heading: "Profile Image", field: "profileImagePath", styles: "" },
   { heading: "Name", field: "name", styles: "" },
   { heading: "Email", field: "email", styles: "" },
   { heading: "Phone Number", field: "phoneNumber", styles: "" },
