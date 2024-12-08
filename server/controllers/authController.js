@@ -56,13 +56,25 @@ const blockUserOrVendor = async (req, res) => {
       return res.status(400).json({ message: "Role mismatch." });
     }
 
-    user.isBlocked = !user.isBlocked;
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { isBlocked: !user.isBlocked },
+      { new: true }
+    );
+    console.log(updatedUser)
+
+    if (!updatedUser) {
+      console.log(updatedUser)
+      return res.status(500).json({
+        message: "An error occurred while updating the user's blocked status.",
+      });
+    }
 
     res.status(200).json({
+      success: true,
       message: `${role} ${
-        user.isBlocked ? "blocked" : "unblocked"
-      } successfully.`,
+        updatedUser.isBlocked ? "blocked" : "unblocked"
+      } successfully.`
     });
   } catch (error) {
     res.status(500).json({

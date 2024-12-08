@@ -19,6 +19,14 @@ export default function CreatorProfile() {
     loading: categoriesLoading,
     error: categoriesError,
   } = useSelector((state) => state.categories);
+
+  useEffect(() => {
+    if (user?.vendorStatus === "approved" && user?.role === "Creator") {
+      navigate("/home/profile/creator/overview");
+      return;
+    }
+  }, [user, navigate]);
+
   const {
     register,
     handleSubmit,

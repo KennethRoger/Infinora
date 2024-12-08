@@ -80,7 +80,6 @@ const approveCreatorStatus = async (req, res) => {
       });
     }
 
-    // Check if creator is in a valid state to be approved
     if (creator.vendorStatus !== "pending") {
       return res.status(400).json({
         success: false,
@@ -90,7 +89,7 @@ const approveCreatorStatus = async (req, res) => {
 
     await User.updateOne(
       { _id: creatorId },
-      { $set: { vendorStatus: "approved" } }
+      { $set: { vendorStatus: "approved", role: "vendor" } }
     );
 
     res.status(200).json({
@@ -124,7 +123,6 @@ const rejectCreatorStatus = async (req, res) => {
       });
     }
 
-    // Check if creator is in a valid state to be rejected
     if (creator.vendorStatus !== "pending") {
       return res.status(400).json({
         success: false,

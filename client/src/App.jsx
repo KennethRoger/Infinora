@@ -18,109 +18,151 @@ import ProfileLayout from "./Layouts/User/ProfileLayout";
 import ProfileInfo from "./pages/User/Home/ProfileInfo";
 import CreatorProfile from "./pages/Creator/CreatorProfile";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
-import RedirectIfAuthenticated from './components/Auth/RedirectIfAuthenticated';
+import RedirectIfAuthenticated from "./components/Auth/RedirectIfAuthenticated";
 import CategoryListPage from "./pages/Admin/Home/CategoryListPage";
 import CreatorMenu from "./Layouts/Creator/CreatorMenu";
 import CreatorOverview from "./pages/Creator/CreatorOverview";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
+import CreatorProduct from "./pages/Creator/CreatorProduct";
 
 export function App() {
   return (
     <>
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#333',
-            color: '#fff',
+            background: "#333",
+            color: "#fff",
           },
           success: {
             style: {
-              background: 'green',
+              background: "green",
             },
           },
           error: {
             style: {
-              background: 'red',
+              background: "red",
             },
           },
         }}
       />
       <Routes>
-      {/* User Routes */}
-      <Route path="/" element={<LandingPage />} />
+        {/* User Routes */}
+        <Route path="/" element={<LandingPage />} />
 
-      <Route element={<AuthLayout />}>
-        <Route path="login" element={
-          <RedirectIfAuthenticated>
-            <LoginPage />
-          </RedirectIfAuthenticated>
-        } />
-        <Route path="register" element={
-          <RedirectIfAuthenticated>
-            <RegisterPage />
-          </RedirectIfAuthenticated>
-        } />
-        <Route path="verify-otp" element={<OTPVerificationPage />} />
-      </Route>
+        <Route element={<AuthLayout />}>
+          <Route
+            path="login"
+            element={
+              <RedirectIfAuthenticated>
+                <LoginPage />
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route
+            path="register"
+            element={
+              <RedirectIfAuthenticated>
+                <RegisterPage />
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route path="verify-otp" element={<OTPVerificationPage />} />
+        </Route>
 
-      <Route path="/home" element={<HomeLayout />}>
-        <Route index element={<MainPage />} />
-        <Route path="creator" element={<CreatorSection />} />
-        <Route path="profile" element={<ProfileLayout />}>
-          <Route index element={<Navigate to="profile-info" replace />} />
-          <Route path="profile-info" element={<ProfilePage />}>
-            <Route index element={<ProtectedRoute allowedRoles={["user", "vendor"]}><ProfileInfo /></ProtectedRoute>} />
-          </Route>
-          {/* Creator Routes */}
-          <Route path="creator-profile" element={<CreatorProfile />} />
-          <Route path="creator" element={<CreatorMenu />} >
-            <Route path="overview" element={<CreatorOverview />} />
+        <Route path="/home" element={<HomeLayout />}>
+          <Route index element={<MainPage />} />
+          <Route path="creator" element={<CreatorSection />} />
+          <Route path="profile" element={<ProfileLayout />}>
+            <Route index element={<Navigate to="profile-info" replace />} />
+            <Route path="profile-info" element={<ProfilePage />}>
+              <Route
+                index
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <ProfileInfo />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+            {/* Creator Routes */}
+            <Route
+              path="creator-profile"
+              element={
+                <ProtectedRoute allowedRoles={["user"]}>
+                  <CreatorProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="creator" element={<CreatorMenu />}>
+              <Route
+                path="overview"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <CreatorOverview />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="products"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <CreatorProduct />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
           </Route>
         </Route>
-      </Route>
 
-      {/* Admin Routes */}
-      <Route path="/admin/login" element={<RedirectIfAuthenticated
-      ><LoginPageAdmin /></RedirectIfAuthenticated>} />
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="/admin/login" replace />} />
+        {/* Admin Routes */}
         <Route
-          path="dashboard"
+          path="/admin/login"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <DashboardPage />
-            </ProtectedRoute>
+            <RedirectIfAuthenticated>
+              <LoginPageAdmin />
+            </RedirectIfAuthenticated>
           }
         />
-        <Route
-          path="product-list"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <ProductListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="user-list"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <UserListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="creator-list"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <CreatorListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="category-list" element={<CategoryListPage />} />
-      </Route>
-    </Routes>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/login" replace />} />
+          <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="product-list"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ProductListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="user-list"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <UserListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="creator-list"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <CreatorListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="category-list" element={<CategoryListPage />} />
+        </Route>
+      </Routes>
     </>
   );
 }

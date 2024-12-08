@@ -8,7 +8,8 @@ import Modal from "@/components/Modal/Modal";
 import { creatorTableHead } from "@/constants/admin/creators/creators";
 import { nonVerifiedCreatorTableHead } from "@/constants/admin/creators/creatorApproval";
 import { fetchUsers } from "@/redux/features/userSlice";
-import { approveVendor, rejectVendor } from "@/api/vendorApi";
+import { approveVendor, rejectVendor } from "@/api/admin/adminAuth";
+import axios from "axios";
 
 export default function CreatorListPage() {
   const dispatch = useDispatch();
@@ -51,7 +52,7 @@ export default function CreatorListPage() {
         );
         setShowApproveModal(false);
         setSelectedCreator(null);
-        dispatch(fetchUsers()); // Refresh the list
+        dispatch(fetchUsers());
       } else {
         throw new Error(response.message || "Failed to approve creator");
       }
@@ -75,7 +76,7 @@ export default function CreatorListPage() {
         );
         setShowRejectModal(false);
         setSelectedCreator(null);
-        dispatch(fetchUsers()); // Refresh the list
+        dispatch(fetchUsers());
       } else {
         throw new Error(response.message || "Failed to reject creator");
       }
@@ -90,9 +91,22 @@ export default function CreatorListPage() {
   const creatorVerificationButton = (creator) => (
     <button
       className="border min-w-[100px] rounded h-10 shadow-md text-lg bg-[#00B69B] text-white"
-      onClick={() => console.log("Viewing...\nData: ", creator)}
+      onClick={() => {
+        if (creator.idProofPath) {
+          const link = document.createElement("a");
+          link.href = creator.idProofPath;
+          const fileName =
+            creator.idProofPath.split("/").pop() || "id-proof.pdf";
+          link.download = `${creator.name}-${fileName}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          toast.error("No ID card document found");
+        }
+      }}
     >
-      View
+      Download ID
     </button>
   );
 
@@ -112,6 +126,55 @@ export default function CreatorListPage() {
       </button>
     </div>
   );
+
+  const creatorTableActions = (creator) => {
+    const handleBlock = async () => {
+      const loadingToast = toast.loading(
+        creator.isBlocked ? "Unblocking creator..." : "Blocking creator..."
+      );
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_USERS_API_BASE_URL}/api/auth/block`,
+          { id: creator._id, role: creator.role }
+        );
+        console.log("Response: ", response);
+        if (response.data.success) {
+          toast.success(
+            creator.isBlocked
+              ? "Creator unblocked successfully"
+              : "Creator blocked successfully"
+          );
+          dispatch(fetchUsers());
+        } else {
+          throw new Error(
+            response.data.message || "Failed to update block status"
+          );
+        }
+      } catch (error) {
+        console.error("Error updating creator block status:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to update block status"
+        );
+      } finally {
+        toast.dismiss(loadingToast);
+      }
+    };
+
+    return (
+      <>
+        <button
+          onClick={handleBlock}
+          className={`text-white ${
+            creator.isBlocked
+              ? "bg-gray-500 hover:bg-gray-600"
+              : "bg-red-500 hover:bg-red-600"
+          } gap-2 w-full border px-5 min-w-[50px] rounded h-12 shadow-md text-lg transition-colors duration-200`}
+        >
+          {creator.isBlocked ? "Unblock" : "Block"}
+        </button>
+      </>
+    );
+  };
 
   if (loading) {
     return (
@@ -147,7 +210,7 @@ export default function CreatorListPage() {
       <TableCreator
         tableHead={creatorTableHead}
         tableBody={approvedCreators}
-        actionsRenderer={tableActions}
+        actionsRenderer={creatorTableActions}
       />
 
       {/* Approve Modal */}
@@ -175,7 +238,6 @@ export default function CreatorListPage() {
         </div>
       </Modal>
 
-      {/* Reject Modal */}
       <Modal isOpen={showRejectModal}>
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-4 text-red-600">
