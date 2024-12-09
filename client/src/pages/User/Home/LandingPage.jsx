@@ -16,19 +16,25 @@ import CreatorBanner from "@/components/Section/CreatorBanner";
 import CraftIdeaSection from "@/components/Section/CraftIdeaSection";
 import Footer from "@/components/Footer/Footer";
 import { verifyUser } from "@/api/auth/verifyUser";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAllProducts } from "@/redux/features/allProductsSlice";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { products, loading, error } = useSelector(
+    (state) => state.allProducts
+  );
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const checkAuthentication = async () => {
       const result = await verifyUser();
       setIsAuthenticated(result.authenticated);
     };
-
     checkAuthentication();
-  }, []);
+    dispatch(fetchAllProducts());
+  }, [dispatch]);
 
   return (
     <>
@@ -84,23 +90,22 @@ const LandingPage = () => {
                   >
                     Browse creations
                   </button>
-                ) :  (
+                ) : (
                   <>
-                  <button
-                    className="bg-[#F7F23B] text-black border px-5 min-w-[130px] rounded h-12 shadow-md text-lg"
-                    onClick={() => navigate("/home")}
-                  >
-                    Browse creations
-                  </button>
-                  <button
-                  className="bg-black text-white border px-5 min-w-[130px] rounded h-12 shadow-md text-lg"
-                  onClick={() => navigate("/login")}
-                >
-                  Sign in
-                </button>
-                </>
+                    <button
+                      className="bg-[#F7F23B] text-black border px-5 min-w-[130px] rounded h-12 shadow-md text-lg"
+                      onClick={() => navigate("/home")}
+                    >
+                      Browse creations
+                    </button>
+                    <button
+                      className="bg-black text-white border px-5 min-w-[130px] rounded h-12 shadow-md text-lg"
+                      onClick={() => navigate("/login")}
+                    >
+                      Sign in
+                    </button>
+                  </>
                 )}
-                
               </div>
             </div>
           </div>
@@ -127,11 +132,9 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="flex space-x-4 overflow-x-scroll whitespace-nowrap py-3 no-scrollbar w-full">
-            {Array(10)
-              .fill()
-              .map((_, i) => (
-                <ProductCard key={i} />
-              ))}
+            {products.map((product, i) => (
+              <ProductCard key={i} product={product} />
+            ))}
           </div>
         </section>
         <CreatorBanner />

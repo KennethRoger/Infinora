@@ -47,6 +47,9 @@ const generateOTP = async (req, res) => {
       tempUserData.password = hashedPassword;
     }
 
+    if (isUpdate) { 
+
+    }
     const tempUser = await TempUser.create(tempUserData);
 
     await sendEmail(

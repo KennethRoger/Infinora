@@ -4,12 +4,10 @@ const multer = require("multer");
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-
   if (!file) {
     cb(new Error("No file uploaded"), false);
     return;
   }
-
 
   if (file.fieldname === "profileImage") {
     if (!file.mimetype.startsWith("image/")) {
@@ -21,37 +19,72 @@ const fileFilter = (req, file, cb) => {
       cb(new Error("ID Card must be a PDF file"), false);
       return;
     }
+  } else if (file.fieldname === "images") {
+    if (!file.mimetype.startsWith("image/")) {
+      cb(new Error("Product images must be image files"), false);
+      return;
+    }
   }
 
   cb(null, true);
 };
 
-const upload = multer({
+const registrationUpload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 10 * 1024 * 1024, // 10MB
   },
 }).fields([
   { name: "profileImage", maxCount: 1 },
   { name: "idCard", maxCount: 1 },
 ]);
 
+const productUpload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB per image
+  },
+}).array("images", 4);
+
 const {
   verifyVendor,
   registerVendorDetails,
+  addVendorProducts
 } = require("../controllers/vendorController");
 
 
-const handleUpload = (req, res, next) => {
-  upload(req, res, (err) => {
+const handleRegistrationUpload = (req, res, next) => {
+  registrationUpload(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       return res.status(400).json({
+        success: false,
         message: err.message || "Error uploading file",
       });
-    } else if (err) {
+    }
+    if (err) {
       return res.status(400).json({
-        message: err.message || "Error processing file upload",
+        success: false,
+        message: err.message || "Error uploading file",
+      });
+    }
+    next();
+  });
+};
+
+const handleProductUpload = (req, res, next) => {
+  productUpload(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || "Error uploading product images",
+      });
+    }
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || "Error uploading product images",
       });
     }
     next();
@@ -59,6 +92,7 @@ const handleUpload = (req, res, next) => {
 };
 
 router.post("/verify", verifyVendor);
-router.post("/register", handleUpload, registerVendorDetails);
+router.post("/register", handleRegistrationUpload, registerVendorDetails);
+router.post("/product", handleProductUpload, addVendorProducts);
 
 module.exports = router;
