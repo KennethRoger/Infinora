@@ -11,7 +11,7 @@ export default function ProfileLayout() {
   useEffect(() => {
     refreshUser();
     setIsPressed(!location.pathname.includes("profile-info"));
-  }, []);
+  }, [navigate]);
 
   const handleClick = (path) => {
     if (

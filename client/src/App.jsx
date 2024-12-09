@@ -2,6 +2,7 @@ import RegisterPage from "./pages/User/Auth/RegisterPage";
 import LoginPage from "./pages/User/Auth/LoginPage";
 import LoginPageAdmin from "./pages/Admin/Auth/LoginPageAdmin";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import OTPVerificationPage from "./pages/User/Auth/OTPVerificationPage";
 import ProductListPage from "./pages/Admin/Home/ProductListPage";
 import ProfilePage from "./Layouts/User/ProfilePage";
@@ -22,8 +23,9 @@ import RedirectIfAuthenticated from "./components/Auth/RedirectIfAuthenticated";
 import CategoryListPage from "./pages/Admin/Home/CategoryListPage";
 import CreatorMenu from "./Layouts/Creator/CreatorMenu";
 import CreatorOverview from "./pages/Creator/CreatorOverview";
-import { Toaster } from "react-hot-toast";
-import CreatorProduct from "./pages/Creator/CreatorProduct";
+import CreatorProductDashboard from "./pages/Creator/CreatorProduct/CreatorProductDashboard";
+import CreatorAddProduct from "./pages/Creator/CreatorProduct/CreatorAddProduct";
+import ProductViewPage from "./components/Product/ProductViewPage";
 
 export function App() {
   return (
@@ -74,6 +76,7 @@ export function App() {
 
         <Route path="/home" element={<HomeLayout />}>
           <Route index element={<MainPage />} />
+          <Route path="product/:productId" element={<ProductViewPage />} />
           <Route path="creator" element={<CreatorSection />} />
           <Route path="profile" element={<ProfileLayout />}>
             <Route index element={<Navigate to="profile-info" replace />} />
@@ -87,6 +90,7 @@ export function App() {
                 }
               />
             </Route>
+
             {/* Creator Routes */}
             <Route
               path="creator-profile"
@@ -109,7 +113,15 @@ export function App() {
                 path="products"
                 element={
                   <ProtectedRoute allowedRoles={["vendor"]}>
-                    <CreatorProduct />
+                    <CreatorProductDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="products/add"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <CreatorAddProduct />
                   </ProtectedRoute>
                 }
               />
@@ -162,6 +174,7 @@ export function App() {
           />
           <Route path="category-list" element={<CategoryListPage />} />
         </Route>
+
       </Routes>
     </>
   );

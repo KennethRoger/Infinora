@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Product = require("../models/Product"); // Added Product model
 const { verifyToken } = require("../utils/tokenValidator");
 const cloudinary = require("../config/cloudinaryConfig");
 
@@ -24,6 +25,9 @@ const verifyVendor = async (req, res) => {
 
     const decoded = verifyToken(token);
     const user = await User.findById(decoded.id);
+    console.log(typeof password);
+    console.log(typeof user.password);
+    console.log(user.password);
     if (!user) {
       return res
         .status(404)
@@ -32,6 +36,7 @@ const verifyVendor = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log("Incorrect password");
       return res
         .status(400)
         .json({ success: false, message: "Incorrect password." });
@@ -161,4 +166,91 @@ const registerVendorDetails = async (req, res) => {
   }
 };
 
-module.exports = { verifyVendor, registerVendorDetails };
+const addVendorProducts = async (req, res) => {
+  console.log("Recieved req");
+  try {
+    const {
+      name,
+      description,
+      price,
+      stock,
+      discount,
+      category,
+      status,
+      tags,
+    } = req.body;
+
+    const token = req.cookies.token;
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "No authentication token found." });
+    }
+
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
+
+    const imageUrls = [];
+    if (req.files) {
+      for (const file of req.files) {
+        try {
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          const dataURI = "data:" + file.mimetype + ";base64," + b64;
+
+          const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "infinora/products",
+            width: 800,
+            height: 800,
+            crop: "fill",
+            quality: "auto",
+          });
+          imageUrls.push(result.secure_url);
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          return res.status(500).json({
+            success: false,
+            message: "Failed to upload image",
+            error: error.message,
+          });
+        }
+      }
+    }
+
+    const product = new Product({
+      name,
+      description,
+      images: imageUrls,
+      price: Number(price),
+      stock: Number(stock),
+      discount: Number(discount),
+      category,
+      status,
+      tags: processedTags,
+      vendor: user._id,
+    });
+
+    await product.save();
+    console.log("Product added successfully:", product);
+    res.status(201).json({
+      success: true,
+      message: "Product added successfully",
+      product,
+    });
+  } catch (error) {
+    console.error("Error adding product:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add product",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { verifyVendor, registerVendorDetails, addVendorProducts };

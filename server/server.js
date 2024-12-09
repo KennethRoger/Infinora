@@ -15,7 +15,8 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
-const creatorRoutes = require("./routes/vendorRoutes")
+const creatorRoutes = require("./routes/vendorRoutes");
+const productRoutes = require("./routes/productRoutes");
 
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -37,6 +38,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/vendor", creatorRoutes);
+app.use("/api/products", productRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running`);

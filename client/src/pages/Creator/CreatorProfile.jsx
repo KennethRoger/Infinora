@@ -94,7 +94,7 @@ export default function CreatorProfile() {
     if (!userLoading && !user) {
       navigate("/login");
     }
-  }, [user, userLoading, navigate]);
+  }, [user, categories, userLoading, navigate]);
 
   if (userLoading || (!isInitialized && categoriesLoading)) {
     return (
