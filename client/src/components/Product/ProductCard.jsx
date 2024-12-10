@@ -14,6 +14,7 @@ export default function ProductCard({ product }) {
 
   const handleProductClick = async () => {
     try {
+      window.scrollTo(0, 0);
       await dispatch(fetchProductById(product._id));
       navigate(`/home/product/${product._id}`);
     } catch (error) {

@@ -7,6 +7,7 @@ import { fetchProductById } from "@/redux/features/singleProductSlice";
 import { fetchVendorProducts } from "@/redux/features/vendorProductsSlice";
 import Spinner from "@/components/Spinner/Spinner";
 import ProductCard from "./ProductCard";
+import MagnifyImage from "../Image/MagnifyImage";
 
 const ProductViewPage = () => {
   const { productId } = useParams();
@@ -67,13 +68,7 @@ const ProductViewPage = () => {
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
-            <div className="aspect-square overflow-hidden rounded-lg">
-              <img
-                src={product.images[selectedImage]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
+              <MagnifyImage src={product.images[selectedImage]} alt={product.name}/>
             <div className="grid grid-cols-4 gap-4">
               {product.images.map((image, index) => (
                 <button

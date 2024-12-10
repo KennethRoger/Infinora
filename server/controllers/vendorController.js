@@ -1,7 +1,6 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const Product = require("../models/Product"); // Added Product model
+const Product = require("../models/Product");
 const { verifyToken } = require("../utils/tokenValidator");
 const cloudinary = require("../config/cloudinaryConfig");
 
@@ -167,7 +166,6 @@ const registerVendorDetails = async (req, res) => {
 };
 
 const addVendorProducts = async (req, res) => {
-  console.log("Recieved req");
   try {
     const {
       name,
@@ -253,4 +251,108 @@ const addVendorProducts = async (req, res) => {
   }
 };
 
-module.exports = { verifyVendor, registerVendorDetails, addVendorProducts };
+const editVendorProduct = async (req, res) => {
+  try {
+    const { name, description, price, stock, discount, category, status, tags } = req.body;
+    const productId = req.params.productId;
+
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ success: false, message: "No authentication token found." });
+    }
+
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found." });
+    }
+
+    if (product.vendor.toString() !== user._id.toString()) {
+      return res.status(403).json({ success: false, message: "You are not authorized to edit this product." });
+    }
+
+    const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
+
+    let imageUrls = [...product.images]; 
+    console.log("req files", req.files)
+    if (req.files) {
+      console.log("editing for deletion reached")
+      if (product.images && product.images.length > 0) {
+        for (const imageUrl of product.images) {
+          const publicId = imageUrl.split("/").pop().split(".")[0];
+          try {
+            await cloudinary.uploader.destroy(publicId);
+            console.log(`Old image with public ID ${publicId} deleted from Cloudinary.`);
+          } catch (error) {
+            console.error("Error deleting image from Cloudinary:", error);
+            return res.status(500).json({
+              success: false,
+              message: "Failed to delete old image from Cloudinary",
+              error: error.message,
+            });
+          }
+        }
+      }
+
+      const newImages = [];
+      for (const file of req.files) {
+        try {
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          const dataURI = "data:" + file.mimetype + ";base64," + b64;
+
+          const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "infinora/products",
+            width: 800,
+            height: 800,
+            crop: "fill",
+            quality: "auto",
+          });
+          newImages.push(result.secure_url);
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          return res.status(500).json({
+            success: false,
+            message: "Failed to upload image",
+            error: error.message,
+          });
+        }
+      }
+
+      imageUrls = newImages; 
+    }
+
+    product.name = name || product.name;
+    product.description = description || product.description;
+    product.price = price ? Number(price) : product.price;
+    product.stock = stock ? Number(stock) : product.stock;
+    product.discount = discount ? Number(discount) : product.discount;
+    product.category = category || product.category;
+    product.status = status || product.status;
+    product.tags = processedTags.length > 0 ? processedTags : product.tags;
+    product.images = imageUrls;
+
+    await product.save();
+
+    console.log("Product updated successfully:", product);
+    return res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+      product,
+    });
+  } catch (error) {
+    console.error("Error editing product:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to edit product",
+      error: error.message,
+    });
+  }
+};
+
+
+module.exports = { verifyVendor, registerVendorDetails, addVendorProducts, editVendorProduct };

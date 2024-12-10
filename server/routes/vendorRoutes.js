@@ -33,7 +33,7 @@ const registrationUpload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 10 * 1024 * 1024,
   },
 }).fields([
   { name: "profileImage", maxCount: 1 },
@@ -44,14 +44,15 @@ const productUpload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per image
+    fileSize: 5 * 1024 * 1024,
   },
 }).array("images", 4);
 
 const {
   verifyVendor,
   registerVendorDetails,
-  addVendorProducts
+  addVendorProducts,
+  editVendorProduct
 } = require("../controllers/vendorController");
 
 
@@ -94,5 +95,6 @@ const handleProductUpload = (req, res, next) => {
 router.post("/verify", verifyVendor);
 router.post("/register", handleRegistrationUpload, registerVendorDetails);
 router.post("/product", handleProductUpload, addVendorProducts);
+router.put("/product/:productId", handleProductUpload, editVendorProduct);
 
 module.exports = router;
