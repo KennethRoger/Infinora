@@ -99,12 +99,16 @@ export default function CreatorEditProduct() {
           setValue("price", product.price);
           setValue("stock", product.stock);
           setValue("discount", product.discount || 0);
-          setValue("category", product.category);
+          setValue("category", product?.category);
           setValue("status", product.status || "available");
           setValue("tags", product.tags?.join(",") || "");
 
           if (product.images && product.images.length > 0) {
             setImagePreview({
+              main: product.images[0],
+              additional: product.images.slice(1, 4).map((img) => img || null),
+            });
+            setImageFiles({
               main: product.images[0],
               additional: product.images.slice(1, 4).map((img) => img || null),
             });
@@ -219,30 +223,36 @@ export default function CreatorEditProduct() {
       setImageError("Main product image is required");
       return;
     }
-
+  
     try {
       const formData = new FormData();
-
+  
       Object.keys(data).forEach((key) => {
         formData.append(key, data[key]);
       });
-
+  
       formData.append("images", imageFiles.main);
-
-      imageFiles.additional.forEach((file) => {
+  
+      const imagePositions = [];
+      imageFiles.additional.forEach((file, index) => {
         if (file) {
           formData.append("images", file);
+          imagePositions.push(index);
         }
       });
+  
+      formData.append("imagePositions", JSON.stringify(imagePositions));
+  
       console.log(formData);
       startLoading();
-      const response = await axios.put(`/api/vendor/product/${productId}`, {
+  
+      const response = await axios.put(`/api/vendor/product/${productId}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
         withCredentials: true,
       });
-
+  
       if (response.data.success) {
         stopLoading();
         toast.success("Product updated successfully!");
@@ -252,10 +262,12 @@ export default function CreatorEditProduct() {
         navigate("/home/profile/creator/products");
       }
     } catch (error) {
+      stopLoading()
       console.error("Error updating product:", error);
       toast.error(error.response?.data?.message || "Failed to update product");
     }
   };
+  
 
   return (
     <>
@@ -568,7 +580,7 @@ export default function CreatorEditProduct() {
                 disabled={loading}
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                {loading ? <Spinner /> : "Add Product"}
+                {loading ? <Spinner /> : "Update Product"}
               </button>
             </div>
           </form>

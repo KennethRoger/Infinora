@@ -277,19 +277,32 @@ const editVendorProduct = async (req, res) => {
     }
 
     const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
+    let updatedImages = product.images.slice(); // Clone current images to update
 
-    let imageUrls = [...product.images]; 
-    console.log("req files", req.files)
-    if (req.files) {
-      console.log("editing for deletion reached")
-      if (product.images && product.images.length > 0) {
-        for (const imageUrl of product.images) {
-          const publicId = imageUrl.split("/").pop().split(".")[0];
+    if (req.files && req.files.length > 0) {
+      const imagePositions = req.body.imagePositions
+        ? JSON.parse(req.body.imagePositions)
+        : Array(req.files.length).fill(null);
+
+      if (!Array.isArray(imagePositions)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid image positions. Provide an array of positions.",
+        });
+      }
+
+      for (let i = 0; i < req.files.length; i++) {
+        const position = imagePositions[i];
+
+        if (position !== null && updatedImages[position]) {
+          const oldImageUrl = updatedImages[position];
+          const publicId = oldImageUrl.split("/").pop().split(".")[0];
+
           try {
             await cloudinary.uploader.destroy(publicId);
             console.log(`Old image with public ID ${publicId} deleted from Cloudinary.`);
           } catch (error) {
-            console.error("Error deleting image from Cloudinary:", error);
+            console.error("Error deleting old image from Cloudinary:", error);
             return res.status(500).json({
               success: false,
               message: "Failed to delete old image from Cloudinary",
@@ -297,13 +310,10 @@ const editVendorProduct = async (req, res) => {
             });
           }
         }
-      }
 
-      const newImages = [];
-      for (const file of req.files) {
         try {
-          const b64 = Buffer.from(file.buffer).toString("base64");
-          const dataURI = "data:" + file.mimetype + ";base64," + b64;
+          const b64 = Buffer.from(req.files[i].buffer).toString("base64");
+          const dataURI = "data:" + req.files[i].mimetype + ";base64," + b64;
 
           const result = await cloudinary.uploader.upload(dataURI, {
             folder: "infinora/products",
@@ -312,9 +322,14 @@ const editVendorProduct = async (req, res) => {
             crop: "fill",
             quality: "auto",
           });
-          newImages.push(result.secure_url);
+
+          if (position !== null) {
+            updatedImages[position] = result.secure_url;
+          } else {
+            updatedImages.push(result.secure_url);
+          }
         } catch (error) {
-          console.error("Error uploading image:", error);
+          console.error("Error uploading new image:", error);
           return res.status(500).json({
             success: false,
             message: "Failed to upload image",
@@ -322,10 +337,13 @@ const editVendorProduct = async (req, res) => {
           });
         }
       }
-
-      imageUrls = newImages; 
     }
 
+    while (updatedImages.length < 4) {
+      updatedImages.push(null);
+    }
+    updatedImages = updatedImages.slice(0, 4);
+    
     product.name = name || product.name;
     product.description = description || product.description;
     product.price = price ? Number(price) : product.price;
@@ -334,7 +352,7 @@ const editVendorProduct = async (req, res) => {
     product.category = category || product.category;
     product.status = status || product.status;
     product.tags = processedTags.length > 0 ? processedTags : product.tags;
-    product.images = imageUrls;
+    product.images = updatedImages;
 
     await product.save();
 
