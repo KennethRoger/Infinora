@@ -47,9 +47,6 @@ const generateOTP = async (req, res) => {
       tempUserData.password = hashedPassword;
     }
 
-    if (isUpdate) { 
-
-    }
     const tempUser = await TempUser.create(tempUserData);
 
     await sendEmail(
@@ -77,7 +74,7 @@ const generateOTP = async (req, res) => {
 
 const verifyOTP = async (req, res) => {
   try {
-    const { tempUserId, otp } = req.body;
+    const { userId, tempUserId, otp, isUpdate = false } = req.body;
     const tempUser = await TempUser.findById(tempUserId);
 
     if (!tempUser) {
@@ -90,11 +87,24 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
 
-    const newUser = await User.create({
-      email: tempUser.email,
-      phoneNumber: tempUser.phoneNumber,
-      password: tempUser.password,
-    });
+    let newUser;
+    if (isUpdate) {
+      newUser = await User.findByIdAndUpdate(
+        { _id: userId },
+        {
+          email: tempUser.email,
+          phoneNumber: tempUser.phoneNumber,
+        }
+      );
+    } else {
+
+      newUser = await User.create({
+        email: tempUser.email,
+        phoneNumber: tempUser.phoneNumber,
+        password: tempUser.password,
+      });
+    }
+
 
     await TempUser.findByIdAndDelete(tempUserId);
     const token = generateToken(newUser);
