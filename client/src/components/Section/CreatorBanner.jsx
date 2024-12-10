@@ -1,6 +1,7 @@
-import Button from "../Form/Button";
+import { useNavigate } from "react-router-dom";
 
 export default function CreatorBanner() {
+  const navigate = useNavigate()
   return (
     <>
       <div className="py-12 bg-custom-gradient text-center flex justify-center items-center gap-36">
@@ -13,9 +14,9 @@ export default function CreatorBanner() {
             talent to the world
           </p>
           <div>
-            <Button styles="bg-[#F7F23B] text-black border-none px-4 py-2 rounded">
+            <button className="bg-[#F7F23B] text-black border-none px-4 py-2 rounded" onClick={() => navigate("/home/creator")}>
               Take me to Creator
-            </Button>
+            </button>
           </div>
         </div>
         <img
