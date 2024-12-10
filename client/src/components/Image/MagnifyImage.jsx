@@ -46,13 +46,13 @@ const MagnifyImage = ({ src, alt }) => {
         backgroundPosition: backgroundStyle.backgroundPosition,
         backgroundSize: backgroundStyle.backgroundSize,
         backgroundRepeat: "no-repeat",
-        transition: "background-size 0.5s ease, background-position 0.5s ease", // Smooth transitions
+        transition: "background-size 0.5s ease, background-position 0.5s ease",
       }}
     >
       <img
         src={src}
         alt={alt}
-        className="w-full h-full object-cover opacity-0" // Hidden but accessible for SEO
+        className="w-full h-full object-cover opacity-0"
       />
     </div>
   );

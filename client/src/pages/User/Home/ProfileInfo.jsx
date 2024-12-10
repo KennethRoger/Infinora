@@ -13,6 +13,7 @@ import OtpTimer from "@/components/OTPTimer/OtpTimer";
 import Modal from "@/components/Modal/Modal";
 import { useLoading } from "@/hooks/useLoading";
 import Spinner from "@/components/Spinner/Spinner";
+import toast from "react-hot-toast";
 
 export default function ProfileInfo() {
   const navigate = useNavigate();
@@ -69,11 +70,14 @@ export default function ProfileInfo() {
         console.log(response);
         if (response && response.success) {
           setIsEditing(false);
+          toast.success("User updated successfully");
         } else {
           setServerError(response?.message || "Failed to update profile");
+          toast.error("Failed to update user");
         }
       } catch (error) {
         console.error("Error updating profile:", error);
+        toast.error("Error updating user profile");
         setServerError(
           error?.response?.data?.message ||
             "Failed to update profile. Please try again."
@@ -88,23 +92,24 @@ export default function ProfileInfo() {
     e.preventDefault();
     try {
       const response = await verifyOTP({
+        userId: user._id,
+        name: userData.name || user.name,
         tempUserId: tempUser.tempUserId,
         otp: otp,
+        isUpdate: true,
       });
-
       if (response.success) {
+        toast.success("User updated successfully");
         setIsModalOpen(false);
-
-        const updateResponse = await updateProfile(userData);
-        if (updateResponse.success) {
-          setIsEditing(false);
-        }
+        setIsEditing(false);
       } else {
         setServerError(response.message || "Invalid OTP");
+        toast.error("Invalid OTP");
       }
     } catch (error) {
       console.error("Error on OTP verification: ", error);
       setServerError("Failed to verify OTP. Please try again.");
+      toast.error("Failed to verify OTP. Please try again.");
     }
   };
 
@@ -119,11 +124,13 @@ export default function ProfileInfo() {
 
       if (response.success) {
         setServerError("");
+        toast.success("OTP resend successfully");
       } else if (response.expired) {
         setIsModalOpen(false);
         navigate("/register");
       } else {
         setServerError(response.message || "Failed to resend OTP");
+        toast.error("Failed to resend OTP");
       }
     } catch (error) {
       console.error("Error on resend: ", error);
@@ -244,11 +251,7 @@ export default function ProfileInfo() {
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
               >
-                {loading ? (
-                  <Spinner />
-                ) : (
-                  "Submit"
-                )}
+                {loading ? <Spinner /> : "Submit"}
               </button>
               <button
                 type="button"

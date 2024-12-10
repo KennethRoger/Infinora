@@ -25,7 +25,7 @@ export default function ProductCard({ product }) {
   return (
     <>
       <div
-        className="w-[300px] border shadow-lg cursor-pointer"
+        className="w-[300px] border shadow-lg overflow-hidden cursor-pointer"
         onClick={handleProductClick}
       >
         <div>
