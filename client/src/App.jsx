@@ -26,6 +26,7 @@ import CreatorOverview from "./pages/Creator/CreatorOverview";
 import CreatorProductDashboard from "./pages/Creator/CreatorProduct/CreatorProductDashboard";
 import CreatorAddProduct from "./pages/Creator/CreatorProduct/CreatorAddProduct";
 import ProductViewPage from "./components/Product/ProductViewPage";
+import CreatorEditProduct from "./pages/Creator/CreatorProduct/CreatorEditProduct";
 
 export function App() {
   return (
@@ -125,6 +126,14 @@ export function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="edit-product/:productId"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <CreatorEditProduct />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Route>
         </Route>
@@ -174,7 +183,6 @@ export function App() {
           />
           <Route path="category-list" element={<CategoryListPage />} />
         </Route>
-
       </Routes>
     </>
   );

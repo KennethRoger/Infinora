@@ -48,15 +48,16 @@ export default function CreatorProductDashboard() {
     navigate("add");
   };
 
-  const handleToggleListing = (productId) => {
+  const handleToggleListing = async(productId) => {
     try {
-      axios
+      await axios
         .patch(
           `${import.meta.env.VITE_USERS_API_BASE_URL}/api/products/toggle-listing`,
           { productId }
         )
         .then(() => {
           dispatch(fetchVendorProducts());
+          console.log("Product listing toggled successfully");
         });
     } catch (error) {
       console.error("Error toggling listing:", error);
@@ -167,7 +168,7 @@ export default function CreatorProductDashboard() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem>View details</DropdownMenuItem>
-                      <DropdownMenuItem>Edit product</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/home/profile/creator/edit-product/${product._id}`)}>Edit product</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className={
