@@ -3,7 +3,7 @@ const { verifyToken } = require("../utils/tokenValidator");
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({isListed: true})
+    const products = await Product.find({ isListed: true })
       .populate("category", "name")
       .populate("vendor", "name email profileImagePath")
       .sort({ createdAt: -1 });
@@ -54,7 +54,7 @@ const getProductById = async (req, res) => {
 const getVendorProducts = async (req, res) => {
   try {
     const token = req.cookies.token;
-    
+
     if (!token)
       return res
         .status(401)
@@ -62,12 +62,12 @@ const getVendorProducts = async (req, res) => {
 
     const decoded = verifyToken(token);
     const vendorId = decoded.id;
-    
+
     const products = await Product.find({ vendor: vendorId })
       .populate("category", "name")
       .populate("vendor", "name email profileImagePath")
       .sort({ createdAt: -1 });
-    
+
     res.status(200).json({
       success: true,
       products,

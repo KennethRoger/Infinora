@@ -1,21 +1,37 @@
 import { addAddress } from "@/api/address/addressApi";
+import { useUser } from "@/context/UserContext";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function AddAddress() {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({ mode: "onChange" });
 
+  const { user, loading, error, refreshUser } = useUser();
+
   const onSubmit = async (data) => {
     try {
-        const response = await addAddress(data);
+      const dataObj = { userId: user._id, ...data };
+      const response = await addAddress(dataObj);
+      console.log("Response: " ,response)
+      if (response.success) {
+        toast.success("Address added successfully!");
+        navigate("/home/profile/address");
+      } else {
+        toast.error("Address adding failed");
+      }
     } catch (error) {
-        toast.error("Error occured")
+      toast.error(error.response.data.message);
     }
   };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <>
@@ -183,11 +199,10 @@ export default function AddAddress() {
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex justify-end gap-3 mt-6">
           <button
             type="button"
-            onClick={"handleCancel"}
+            onClick={() => console.log("Cancelled")}
             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
           >
             Cancel
