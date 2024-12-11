@@ -27,6 +27,8 @@ import CreatorProductDashboard from "./pages/Creator/CreatorProduct/CreatorProdu
 import CreatorAddProduct from "./pages/Creator/CreatorProduct/CreatorAddProduct";
 import ProductViewPage from "./components/Product/ProductViewPage";
 import CreatorEditProduct from "./pages/Creator/CreatorProduct/CreatorEditProduct";
+import AddressInfo from "./pages/User/Home/Address/AddressInfo";
+import AddAddress from "./pages/User/Home/Address/AddAddress";
 
 export function App() {
   return (
@@ -87,6 +89,24 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={["user", "vendor"]}>
                     <ProfileInfo />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+            <Route path="address" element={<ProfilePage />}>
+              <Route
+                index
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <AddressInfo />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="add-address"
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <AddAddress />
                   </ProtectedRoute>
                 }
               />

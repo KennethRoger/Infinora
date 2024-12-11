@@ -191,7 +191,7 @@ export default function ProfileInfo() {
               <p className="text-red-500 text-sm">{errors.name.message}</p>
             )}
           </div>
-
+          dasdf
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-700 font-medium">
               Email

@@ -12,19 +12,19 @@ export const profileSideMenu = [
     id: 1,
     label: "Cart",
     icon: <HiOutlineShoppingCart className="text-[#ff9500]" />,
-    path: "/home/cart",
+    path: "/home/profile/cart",
   },
   {
     id: 2,
     label: "Orders",
     icon: <FaListCheck className="text-[#ff9500]" />,
-    path: "/home/orders",
+    path: "/home/profile/orders",
   },
   {
     id: 3,
     label: "Favorites",
     icon: <BsCart3 className="text-[#ff9500]" />,
-    path: "/home/favorites",
+    path: "/home/profile/favorites",
   },
   {
     id: 4,
@@ -39,7 +39,7 @@ export const profileSideMenu = [
       {
         subId: 12,
         subLabel: "Address",
-        subPath: "/home/address",
+        subPath: "/home/profile/address",
       },
     ],
   },

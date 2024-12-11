@@ -37,11 +37,15 @@ export default function OTPVerificationPage() {
         setServerError("OTP has expired. Please register again.");
         navigate("/register");
       } else {
-        setServerError(response.message || "Verification failed. Please try again.");
+        setServerError(
+          response.message || "Verification failed. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error on verification: ", error);
-      setServerError(error.response?.data?.message || "An error occurred. Please try again.");
+      setServerError(
+        error.response?.data?.message || "An error occurred. Please try again."
+      );
     }
   };
 
@@ -50,18 +54,22 @@ export default function OTPVerificationPage() {
       tempUserId,
       email,
     };
-    try { 
+    try {
       const response = await resendOTP(resendReqData);
       if (response.success) {
         console.log("OTP resent successfully");
       } else if (response.expired) {
         navigate("/register");
       } else {
-        setServerError(response.message || "Failed to resend OTP. Please try again.");
+        setServerError(
+          response.message || "Failed to resend OTP. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error on resend: ", error);
-      setServerError(error.response?.data?.message || "An error occurred. Please try again.");
+      setServerError(
+        error.response?.data?.message || "An error occurred. Please try again."
+      );
     }
   };
 
@@ -78,7 +86,7 @@ export default function OTPVerificationPage() {
         <label className="text-black text-2xl font-semibold mb-5">
           Enter OTP
         </label>
-        <p className="text-lg py-2">Enter OTP sent to the number</p>
+        <p className="text-lg py-2">{`Enter OTP sent to the email ${email}`}</p>
         <InputOTP
           maxLength={6}
           pattern={REGEXP_ONLY_DIGITS}
@@ -94,10 +102,11 @@ export default function OTPVerificationPage() {
             <InputOTPSlot index={5} />
           </InputOTPGroup>
         </InputOTP>
-        {serverError && <p className="text-red-600 text-lg mt-4">{serverError}</p>}
+        {serverError && (
+          <p className="text-red-600 text-lg mt-4">{serverError}</p>
+        )}
         <OtpTimer onResend={handleResendOTP} />
         <Button
-        
           buttonType={"submit"}
           styles={`w-[80%] mt-14 bg-[#33A0FF] text-white`}
         >
