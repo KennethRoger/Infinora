@@ -6,10 +6,9 @@ export const addAddress = async (data) => {
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/address/add`,
       data
     );
-    console.log(response);
+    return response.data;
   } catch (error) {
     console.log("Error while requesting: ", error);
     throw error;
   }
 };
-
