@@ -1,5 +1,6 @@
 const { verifyToken } = require("../utils/tokenValidator");
 const User = require("../models/User");
+const bcryptjs = require("bcryptjs");
 
 const verifyUser = async (req, res) => {
   const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
@@ -83,4 +84,68 @@ const blockUserOrVendor = async (req, res) => {
   }
 };
 
-module.exports = { verifyUser, blockUserOrVendor };
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const { token } = req.cookies;
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized access" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid or expired token" });
+    }
+    const userId = decoded.id;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Old password and new password are required",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Unrecognized user access" });
+    }
+
+    const correctPassword = await bcryptjs.compare(oldPassword, user.password);
+    if (!correctPassword) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Entered password is incorrect" });
+    }
+
+    const isPasswordReused = await bcryptjs.compare(newPassword, user.password);
+    if (isPasswordReused) {
+      return res.status(400).json({
+        success: false,
+        message: "New password cannot be the same as the old password",
+      });
+    }
+
+    const hashedNewPassword = await bcryptjs.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server encountered error. Try again later.",
+    });
+  }
+};
+
+module.exports = { verifyUser, blockUserOrVendor, changePassword };

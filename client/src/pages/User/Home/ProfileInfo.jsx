@@ -14,6 +14,8 @@ import Modal from "@/components/Modal/Modal";
 import { useLoading } from "@/hooks/useLoading";
 import Spinner from "@/components/Spinner/Spinner";
 import toast from "react-hot-toast";
+import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
+import { changePassword } from "@/api/auth/verifyUser";
 
 export default function ProfileInfo() {
   const navigate = useNavigate();
@@ -33,17 +35,58 @@ export default function ProfileInfo() {
     otp: "",
   });
 
+  const [changePassClicked, setChangePassClicked] = useState(false);
+  const [passwordMatchError, setPasswordMatchError] = useState("");
+  useEffect(() => {});
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm({ mode: "onChange" });
+
+  const newPassword = watch("newPassword");
+  const confirmPassword = watch("confirmPassword");
+
+  const validateConfirmPassword = () => {
+    if (newPassword !== confirmPassword) {
+      setPasswordMatchError("Passwords do not match");
+    } else {
+      setPasswordMatchError("");
+    }
+  };
+
+  const onChangePassSubmit = async (data) => {
+    try {
+      const response = await changePassword(data);
+      if (response.success) {
+        toast.success("Password changed successfully");
+        setChangePassClicked(false);
+        reset()
+      } else {
+        toast.error(
+          response.message || "Failed to change the password. Try again later!"
+        );
+      }
+    } catch (error) {
+      console.error("Error during password change:", error);
+      const serverMessage =
+        error?.response?.data?.message ||
+        error.message ||
+        "An unexpected error occurred. Please try again later.";
+
+      toast.error(serverMessage);
+    }
+  };
 
   const onSubmit = async (formData) => {
     setUserData(formData);
     setServerError("");
-
+    useEffect(() => {
+      console.log(changePassClicked);
+    }, [changePassClicked]);
     if (formData.email !== user.email) {
       try {
         startLoading();
@@ -138,16 +181,6 @@ export default function ProfileInfo() {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      reset({
-        name: user.name || "",
-        email: user.email || "",
-        phoneNumber: user.phoneNumber || "",
-      });
-    }
-  }, [user, reset]);
-
   const handleCancel = () => {
     setIsEditing(false);
   };
@@ -166,104 +199,208 @@ export default function ProfileInfo() {
             </button>
           )}
         </div>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className={`${
-            isEditing
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-100 pointer-events-none"
-          } transition-opacity duration-300 w-[400px]`}
-        >
-          <div className="mb-4">
-            <label htmlFor="name" className="block text-gray-700 font-medium">
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 ${
-                isEditing ? "bg-white" : "bg-gray-200"
-              }`}
-              {...register("name")}
-              defaultValue={user?.name}
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm">{errors.name.message}</p>
-            )}
-          </div>
-          dasdf
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 ${
-                isEditing ? "bg-white" : "bg-gray-200"
-              }`}
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                  message: "Invalid email address",
-                },
-              })}
-              defaultValue={user?.email}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-gray-700 font-medium"
-            >
-              Phone Number
-            </label>
-            <input
-              type="text"
-              id="phoneNumber"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 ${
-                isEditing ? "bg-white" : "bg-gray-200"
-              }`}
-              {...register("phoneNumber", {
-                required: "Phone number is required",
-                pattern: {
-                  value: /^[0-9]{10}$/,
-                  message: "Invalid phone number",
-                },
-              })}
-              defaultValue={user?.phoneNumber}
-            />
-            {errors.phoneNumber && (
-              <p className="text-red-500 text-sm">
-                {errors.phoneNumber.message}
-              </p>
-            )}
-          </div>
-
-          {isEditing && (
-            <div className="flex gap-3 mt-4">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-              >
-                {loading ? <Spinner /> : "Submit"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
-              >
-                Cancel
-              </button>
+        <div className="flex gap-10">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className={`${
+              isEditing
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-100 pointer-events-none"
+            } transition-opacity duration-300 w-[400px]`}
+          >
+            <div className="mb-4">
+              <label htmlFor="name" className="block text-gray-700 font-medium">
+                Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 ${
+                  isEditing ? "bg-white" : "bg-gray-200"
+                }`}
+                {...register("name")}
+                defaultValue={user?.name}
+              />
+              {errors.name && (
+                <p className="text-red-500 text-sm">{errors.name.message}</p>
+              )}
             </div>
-          )}
-        </form>
 
+            <div className="mb-4">
+              <label
+                htmlFor="email"
+                className="block text-gray-700 font-medium"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 ${
+                  isEditing ? "bg-white" : "bg-gray-200"
+                }`}
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+                    message: "Invalid email address",
+                  },
+                })}
+                defaultValue={user?.email}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
+            </div>
+            <div className="mb-4">
+              <label
+                htmlFor="password"
+                className="block text-gray-700 font-medium"
+              >
+                Phone Number
+              </label>
+              <input
+                type="text"
+                id="phoneNumber"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 ${
+                  isEditing ? "bg-white" : "bg-gray-200"
+                }`}
+                {...register("phoneNumber", {
+                  required: "Phone number is required",
+                  pattern: {
+                    value: /^[0-9]{10}$/,
+                    message: "Invalid phone number",
+                  },
+                })}
+                defaultValue={user?.phoneNumber}
+              />
+              {errors.phoneNumber && (
+                <p className="text-red-500 text-sm">
+                  {errors.phoneNumber.message}
+                </p>
+              )}
+            </div>
+            {isEditing && (
+              <div className="flex gap-3 mt-4">
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+                >
+                  {loading ? <Spinner /> : "Submit"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </form>
+          <div className="">
+            {changePassClicked ? (
+              <form
+                className="p-6 w-full max-w-sm float-right"
+                onSubmit={handleSubmit(onChangePassSubmit)}
+              >
+                <h2 className="text-2xl font-bold mb-5">Change Password</h2>
+
+                {/* Old Password */}
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Old Password
+                  </label>
+                  <input
+                    type="password"
+                    className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring ${
+                      errors.oldPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                    {...register("oldPassword", {
+                      required: "Old password is required",
+                    })}
+                  />
+                  {errors.oldPassword && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.oldPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* New Password */}
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring ${
+                      errors.newPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                    {...register("newPassword", {
+                      required: "New password is required",
+                      pattern: {
+                        value:
+                          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                        message:
+                          "Password must be atleast 8 characters long and only include an uppercase, lowercase, number, and special character",
+                      },
+                    })}
+                    onChange={validateConfirmPassword}
+                  />
+                  {errors.newPassword && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.newPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring ${
+                      passwordMatchError || errors.confirmPassword
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    {...register("confirmPassword", {
+                      required: "Confirm password is required",
+                    })}
+                    onChange={validateConfirmPassword}
+                  />
+                  {passwordMatchError && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {passwordMatchError}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-5">
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
+                    disabled={!!passwordMatchError}
+                  >
+                    Update Password
+                  </button>
+                  <button
+                    className="w-full bg-gray-500 text-white py-2 px-4 rounde transition"
+                    onClick={() => setChangePassClicked(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <ButtonPrimary onClick={() => setChangePassClicked(true)}>
+                Change Password
+              </ButtonPrimary>
+            )}
+          </div>
+        </div>
         <Modal isOpen={isModalOpen}>
           <form onSubmit={handleVerifyOTP}>
             <label className="text-black text-2xl font-semibold mb-5">

@@ -2,7 +2,7 @@ const Address = require("../models/Address");
 const { verifyToken } = require("../utils/tokenValidator");
 
 const getUserAddress = async (req, res) => {
-  console.log("reached");
+  
   try {
     const { token } = req.cookies;
     if (!token)
@@ -10,10 +10,9 @@ const getUserAddress = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Unauthorized access" });
     const decoded = verifyToken(token);
-    console.log("Decoded", decoded);
 
     const addresses = await Address.find({ userId: decoded.id });
-    console.log("addresses: ", addresses);
+
     if (!addresses)
       return res
         .status(400)
