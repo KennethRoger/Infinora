@@ -14,9 +14,10 @@ export const register = async (data) => {
     console.error(
       "Error occurred sending generateOTP request: ",
       error.response?.data
-    );name
-    email
-    phoneNumber
+    );
+    name;
+    email;
+    phoneNumber;
     return error.response?.data;
   }
 };
@@ -59,7 +60,9 @@ export const login = async (data) => {
     return response.data;
   } catch (error) {
     console.error("Sign-In Error:", error);
-    throw error.response?.data?.message || "An error occurred. Please try again.";
+    throw (
+      error.response?.data?.message || "An error occurred. Please try again."
+    );
   }
 };
 
@@ -93,3 +96,4 @@ export const logout = async () => {
     console.error("Logout Error:", error);
   }
 };
+
