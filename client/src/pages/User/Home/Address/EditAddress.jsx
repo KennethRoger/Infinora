@@ -1,35 +1,67 @@
-import { addAddress } from "@/api/address/addressApi";
+import { editAddress, findAddressById } from "@/api/address/addressApi";
 import { useUser } from "@/context/UserContext";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
-export default function AddAddress() {
+export default function EditAddress() {
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const { addressId } = location.state || {};
+  console.log(addressId)
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({ mode: "onChange" });
 
-  const { user, loading, error, refreshUser } = useUser();
+  const { user, loading } = useUser();
 
   const onSubmit = async (data) => {
     try {
-      const dataObj = { userId: user._id, ...data };
-      const response = await addAddress(dataObj);
-      console.log("Response: " ,response)
+      const dataObj = { addressId, ...data };
+      const response = await editAddress(dataObj);
       if (response.success) {
-        toast.success("Address added successfully!");
+        toast.success("Address edited successfully!");
         navigate("/home/profile/address");
       } else {
-        toast.error("Address adding failed");
+        toast.error("Editing address failed");
       }
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(
+        error.response?.data?.message || "An error occurred. Please try again."
+      );
     }
   };
+
+  useEffect(() => {
+    if (addressId) {
+      const fetchAddress = async () => {
+        try {
+          console.log(addressId)
+          const response = await findAddressById({addressId});
+          console.log(response);
+          if (response.success) {
+            const addressData = response.data;
+            Object.keys(addressData).forEach((key) => {
+              setValue(key, addressData[key]);
+            });
+          } else {
+            toast.error("Failed to fetch address details");
+          }
+        } catch (error) {
+          toast.error(
+            error.response?.data?.message || "Failed to fetch address details"
+          );
+        }
+      };
+      fetchAddress();
+    }
+  }, [addressId, setValue]);
 
   if (loading) return <p>Loading...</p>;
 
@@ -40,7 +72,7 @@ export default function AddAddress() {
         className="mt-4 max-w-xl mx-auto p-6"
       >
         <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">
-          Add Address
+          Edit Address
         </h2>
 
         <div className="space-y-4">
@@ -202,7 +234,7 @@ export default function AddAddress() {
         <div className="flex justify-end gap-3 mt-6">
           <button
             type="button"
-            onClick={() => console.log("Cancelled")}
+            onClick={() => navigate("/home/profile/address")}
             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
           >
             Cancel
