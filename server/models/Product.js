@@ -27,7 +27,6 @@ const productSchema = new mongoose.Schema(
     isListed: { type: Boolean, default: true },
     vendor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     tags: { type: [String], default: [] },
-    brand: { type: String, default: null },
     salesCount: { type: Number, default: 0 },
     shipping: {
       weight: { type: Number },
