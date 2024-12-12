@@ -413,12 +413,14 @@ const generateOTPForForgotPass = async (req, res) => {
 const confirmOTP = async (req, res) => {
   try {
     const { tempUserId, otp } = req.body;
-    if (!tempUser || !otp)
+    
+    if (!tempUserId || !otp)
       return res
         .status(400)
         .json({ success: false, message: "Can't validate the data recieved" });
 
-    const tempUser = TempUser.findById(tempUserId);
+    const tempUser = await TempUser.findById(tempUserId);
+
     if (!tempUser)
       return res
         .status(400)
@@ -429,12 +431,44 @@ const confirmOTP = async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, message: "OTP is successfully verfified" });
+      .json({ success: true, message: "OTP is successfully verified" });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Some kind of unknown error has occured",
     });
+  }
+};
+
+const newPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and password are required" });
+    }
+
+    const hashedPassword = await bcryptjs.hash(password, 10);
+
+    const updatedUser = await User.findOneAndUpdate(
+      { email },
+      { password: hashedPassword },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    res
+      .status(200)
+      .json({ success: true, message: "Password updated successfully!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -450,4 +484,5 @@ module.exports = {
   updateUser,
   generateOTPForForgotPass,
   confirmOTP,
+  newPassword,
 };

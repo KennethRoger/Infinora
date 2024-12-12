@@ -13,6 +13,7 @@ const {
   updateUser,
   generateOTPForForgotPass,
   confirmOTP,
+  newPassword,
 } = require("../controllers/userController");
 
 router.post("/register", generateOTP);
@@ -26,5 +27,6 @@ router.get("/all", getAllUsers);
 router.post("/update-profile", updateUser);
 router.post("/generate-otp", generateOTPForForgotPass);
 router.post("/confirm-otp", confirmOTP);
+router.post("/new-password", newPassword);
 
 module.exports = router;

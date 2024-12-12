@@ -25,7 +25,9 @@ function RegisterPage() {
       }
     } catch (error) {
       console.error("Error generating OTP:", error);
-      setServerError(error.response?.data?.message || "An error occurred. Please try again.");
+      setServerError(
+        error.response?.data?.message || "An error occurred. Please try again."
+      );
     } finally {
       stopLoading();
     }

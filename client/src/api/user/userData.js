@@ -77,3 +77,17 @@ export const confirmOtp = async (data) => {
     throw error;
   }
 };
+
+export const changeToNewPassword = async (data) => {
+  try {
+    console.log("reached 2")
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/new-password`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to create new password:", error);
+    throw error;
+  }
+};
