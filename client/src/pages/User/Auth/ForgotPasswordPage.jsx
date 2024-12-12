@@ -10,15 +10,21 @@ import {
 import toast from "react-hot-toast";
 import { confirmOtp, generateOTPForPass } from "@/api/user/userData";
 import { resendOTP } from "@/api/user/userAuth";
+import OtpTimer from "@/components/OTPTimer/OtpTimer";
+import Spinner from "@/components/Spinner/Spinner";
+import { useLoading } from "@/hooks/useLoading";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { useNavigate } from "react-router-dom";
 
 export default function ForgotPasswordPage() {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm();
-
+  const { loading, startLoading, stopLoading } = useLoading();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [otp, setOtp] = useState("");
   const [email, setEmail] = useState("");
@@ -27,9 +33,11 @@ export default function ForgotPasswordPage() {
 
   const handleEmailSubmit = async (data) => {
     try {
+      startLoading();
       const response = await generateOTPForPass(data);
       setEmail(data);
       if (response.success) {
+        stopLoading();
         toast.success("OTP sent to your email!");
         setOtpData(response.data);
         setIsModalOpen(true);
@@ -38,16 +46,20 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Error sending OTP.");
+    } finally {
+      stopLoading();
     }
   };
 
-  const handleVerifyOTP = async (e, data) => {
+  const handleVerifyOTP = async (e) => {
     e.preventDefault();
     try {
-      const response = await confirmOtp({ ...data, ...otpData });
+      const response = await confirmOtp({ otp, ...otpData });
+      console.log({ otp, ...otpData });
       if (response.success) {
         toast.success("OTP verified! Proceed to reset your password.");
         setIsModalOpen(false);
+        navigate("/new-password", { state: { email } });
       } else {
         setServerError(response.message || "Invalid OTP.");
       }
@@ -58,17 +70,22 @@ export default function ForgotPasswordPage() {
 
   const handleResendOTP = async () => {
     try {
-      const response = await resendOTP({
-        email,
+      const data = {
+        ...email,
         tempUserId: otpData.tempUserId,
-      });
+      };
+      const response = await resendOTP(data);
       if (response.success) {
         toast.success("OTP resent to your email!");
       } else {
-        toast.error(response.message || "Failed to resend OTP.");
+        toast.error(
+          response.message || "Failed to resend OTP. Try again later"
+        );
+        navigate("/login");
       }
     } catch (error) {
       toast.error(error?.response?.data?.message || "Error resending OTP.");
+      navigate("/login");
     }
   };
 
@@ -80,13 +97,16 @@ export default function ForgotPasswordPage() {
       >
         <form onSubmit={handleSubmit(handleEmailSubmit)}>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 font-medium">
+            <label
+              htmlFor="email"
+              className="block text-gray-700 font-medium mb-3"
+            >
               Enter your email
             </label>
             <input
               type="email"
               id="email"
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-300 bg-white`}
+              className={`w-full px-3 py-2 border-b-2 focus:outline-none focus:ring focus:ring-blue-400 bg-white`}
               {...register("email", {
                 required: "Email is required",
               })}
@@ -99,7 +119,7 @@ export default function ForgotPasswordPage() {
             type="submit"
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
           >
-            Send OTP
+            {loading ? <Spinner /> : "Send OTP"}
           </button>
         </form>
       </LeftBox>
@@ -112,7 +132,7 @@ export default function ForgotPasswordPage() {
           <p className="text-lg py-2">Enter OTP sent to your email</p>
           <InputOTP
             maxLength={6}
-            pattern={/^\d{6}$/}
+            pattern={REGEXP_ONLY_DIGITS}
             onChange={(value) => setOtp(value)}
             className="bg-gray-400"
           >

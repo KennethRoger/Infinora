@@ -31,6 +31,7 @@ import AddressInfo from "./pages/User/Home/Address/AddressInfo";
 import AddAddress from "./pages/User/Home/Address/AddAddress";
 import EditAddress from "./pages/User/Home/Address/EditAddress";
 import ForgotPasswordPage from "./pages/User/Auth/ForgotPasswordPage";
+import NewPasswordPage from "./pages/User/Auth/NewPasswordPage";
 
 export function App() {
   return (
@@ -82,6 +83,14 @@ export function App() {
             element={
               <RedirectIfAuthenticated>
                 <ForgotPasswordPage />
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route
+            path="new-password"
+            element={
+              <RedirectIfAuthenticated>
+                <NewPasswordPage />
               </RedirectIfAuthenticated>
             }
           />

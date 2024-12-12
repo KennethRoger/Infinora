@@ -48,7 +48,7 @@ function LoginPage() {
           serverError={serverError}
         />
         <div className="mt-3">
-          <Link to={""} className="text-lg text-blue-500">Forgot Password?</Link>
+          <Link to={"/forgot-password"} className="text-lg text-blue-500">Forgot Password?</Link>
         </div>
         <div className="flex items-center justify-center my-4">
           <div className="h-px bg-gray-300 flex-1"></div>
