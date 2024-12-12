@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useOutletContext, useNavigate } from "react-router-dom"; // Added useNavigate
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { recieveOTPForUpdate, updateProfile } from "@/api/user/userData";
-import { verifyOTP, resendOTP } from "@/api/user/userAuth"; // Added resendOTP import
+import { verifyOTP, resendOTP } from "@/api/user/userAuth";
 import {
   InputOTP,
   InputOTPGroup,

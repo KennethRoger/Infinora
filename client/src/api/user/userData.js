@@ -51,3 +51,29 @@ export const updateProfile = async (data) => {
     throw error;
   }
 };
+
+export const generateOTPForPass = async (data) => {
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/generate-otp`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to send OTP:", error);
+    throw error;
+  }
+};
+
+export const confirmOtp = async (data) => {
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/user/confirm-otp`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to confirm OTP:", error);
+    throw error;
+  }
+};

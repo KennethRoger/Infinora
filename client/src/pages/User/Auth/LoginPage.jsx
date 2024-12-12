@@ -19,7 +19,7 @@ function LoginPage() {
       const { user, message } = await login(data);
 
       console.log("Login response:", user, message);
-  
+
       if (user) {
         const { id, email, role } = user;
         navigate("/home", { state: { id, role } });
@@ -47,6 +47,9 @@ function LoginPage() {
           buttonStyle={`w-full bg-[#33A0FF] text-white`}
           serverError={serverError}
         />
+        <div className="mt-3">
+          <Link to={""} className="text-lg text-blue-500">Forgot Password?</Link>
+        </div>
         <div className="flex items-center justify-center my-4">
           <div className="h-px bg-gray-300 flex-1"></div>
           <span className="px-3 text-sm text-gray-500 font-medium">OR</span>
