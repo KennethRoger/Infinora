@@ -30,6 +30,7 @@ import CreatorEditProduct from "./pages/Creator/CreatorProduct/CreatorEditProduc
 import AddressInfo from "./pages/User/Home/Address/AddressInfo";
 import AddAddress from "./pages/User/Home/Address/AddAddress";
 import EditAddress from "./pages/User/Home/Address/EditAddress";
+import ForgotPasswordPage from "./pages/User/Auth/ForgotPasswordPage";
 
 export function App() {
   return (
@@ -76,6 +77,14 @@ export function App() {
             }
           />
           <Route path="verify-otp" element={<OTPVerificationPage />} />
+          <Route
+            path="forgot-password"
+            element={
+              <RedirectIfAuthenticated>
+                <ForgotPasswordPage />
+              </RedirectIfAuthenticated>
+            }
+          />
         </Route>
 
         <Route path="/home" element={<HomeLayout />}>

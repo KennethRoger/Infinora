@@ -97,14 +97,12 @@ const verifyOTP = async (req, res) => {
         }
       );
     } else {
-
       newUser = await User.create({
         email: tempUser.email,
         phoneNumber: tempUser.phoneNumber,
         password: tempUser.password,
       });
     }
-
 
     await TempUser.findByIdAndDelete(tempUserId);
     const token = generateToken(newUser);
@@ -368,6 +366,78 @@ const updateUser = async (req, res) => {
   }
 };
 
+const generateOTPForForgotPass = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email does not exists",
+      });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    const tempUserData = {
+      email,
+      otp,
+    };
+
+    const tempUser = await TempUser.create(tempUserData);
+
+    await sendEmail(
+      email,
+      "Your OTP code to change your password of Infinora",
+      `Your OTP is ${otp}`
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully",
+      data: {
+        tempUserId: tempUser._id,
+        email: tempUser.email,
+      },
+    });
+  } catch (error) {
+    console.error("Error sending OTP: ", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to send OTP to email",
+    });
+  }
+};
+
+const confirmOTP = async (req, res) => {
+  try {
+    const { tempUserId, otp } = req.body;
+    if (!tempUser || !otp)
+      return res
+        .status(400)
+        .json({ success: false, message: "Can't validate the data recieved" });
+
+    const tempUser = TempUser.findById(tempUserId);
+    if (!tempUser)
+      return res
+        .status(400)
+        .json({ success: false, message: "User data was expired" });
+
+    if (tempUser.otp != otp)
+      res.status(400).json({ success: false, message: "OTP is not valid" });
+
+    res
+      .status(200)
+      .json({ success: true, message: "OTP is successfully verfified" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Some kind of unknown error has occured",
+    });
+  }
+};
+
 module.exports = {
   generateOTP,
   verifyOTP,
@@ -378,4 +448,6 @@ module.exports = {
   logout,
   getAllUsers,
   updateUser,
+  generateOTPForForgotPass,
+  confirmOTP,
 };

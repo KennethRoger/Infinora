@@ -10,7 +10,9 @@ const {
   getUserInfo,
   logout,
   getAllUsers,
-  updateUser
+  updateUser,
+  generateOTPForForgotPass,
+  confirmOTP,
 } = require("../controllers/userController");
 
 router.post("/register", generateOTP);
@@ -20,9 +22,9 @@ router.post("/login", login);
 router.post("/google-signin", googleSignIn);
 router.get("/me", getUserInfo);
 router.post("/logout", logout);
-
 router.get("/all", getAllUsers);
-
-router.post("/update-profile", updateUser)
+router.post("/update-profile", updateUser);
+router.post("/generate-otp", generateOTPForForgotPass);
+router.post("/confirm-otp", confirmOTP);
 
 module.exports = router;
