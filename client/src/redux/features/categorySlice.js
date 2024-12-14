@@ -5,7 +5,9 @@ export const fetchCategories = createAsyncThunk(
   "categories/fetchCategories",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_USERS_API_BASE_URL}/api/category/all`);
+      const response = await axios.get(
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/category/all`
+      );
       return response.data.categories;
     } catch (error) {
       return rejectWithValue(
