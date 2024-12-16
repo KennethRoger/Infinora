@@ -72,6 +72,7 @@ export default function CreatorAddProduct() {
       status: "available",
       tags: "",
       discount: 0,
+      customizable: false,
       variant: {
         variantName: "",
         variantTypes: [
@@ -257,42 +258,49 @@ export default function CreatorAddProduct() {
       const formData = new FormData();
 
       Object.keys(data).forEach((key) => {
-        formData.append(key, data[key]);
+        if (key === "variant") {
+          formData.append(key, JSON.stringify(data[key]));
+        } else {
+          formData.append(key, data[key]);
+        }
       });
 
       formData.append("images", imageFiles.main);
-
       imageFiles.additional.forEach((file) => {
         if (file) {
           formData.append("images", file);
         }
       });
-      console.log(formData);
-      // startLoading();
-      // const response = await axios.post("/api/vendor/product", formData, {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data",
-      //   },
-      //   withCredentials: true,
-      // });
 
-      // if (response.data.success) {
-      //   stopLoading();
-      //   toast.success("Product added successfully!");
-      //   reset();
-      //   setImageFiles({
-      //     main: null,
-      //     additional: [],
-      //   });
-      //   setImagePreview({
-      //     main: null,
-      //     additional: [],
-      //   });
-      //   navigate("/home/profile/creator/products");
-      // }
+      console.log("Form data being sent:", data);
+      startLoading();
+      const response = await axios.post("/api/vendor/product", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      });
+
+      if (response.data.success) {
+        stopLoading();
+        toast.success("Product added successfully!");
+        reset();
+        setImageFiles({
+          main: null,
+          additional: [],
+        });
+        setImagePreview({
+          main: null,
+          additional: [],
+        });
+        navigate("/home/profile/creator/products");
+      }
     } catch (error) {
       console.error("Error adding product:", error);
+      stopLoading();
       toast.error(error.response?.data?.message || "Failed to add product");
+    } finally {
+      stopLoading();
     }
   };
 
@@ -517,6 +525,24 @@ export default function CreatorAddProduct() {
                       </p>
                     )}
                   </div>
+                </div>
+
+                {/* Customizable Option */}
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      {...register("customizable")}
+                      className="form-checkbox h-4 w-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Allow product customization
+                    </span>
+                  </label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Enable this option if customers can have customization for
+                    this product
+                  </p>
                 </div>
               </div>
 
@@ -751,10 +777,13 @@ export default function CreatorAddProduct() {
                           className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">Select an image</option>
+                          {imagePreview.main && (
+                            <option value={0}>Main Image</option>
+                          )}
                           {imagePreview.additional.map(
                             (img, imgIndex) =>
                               img && (
-                                <option key={imgIndex} value={imgIndex}>
+                                <option key={imgIndex} value={imgIndex + 1}>
                                   Additional Image {imgIndex + 1}
                                 </option>
                               )

@@ -166,17 +166,44 @@ const registerVendorDetails = async (req, res) => {
 };
 
 const addVendorProducts = async (req, res) => {
+  console.log("Product addition initaited");
   try {
-    const {
+    let {
       name,
       description,
-      price,
-      stock,
-      discount,
       category,
+      subCategory,
       status,
       tags,
+      discount,
+      variant,
+      additionalDetails,
+      customizable,
     } = req.body;
+
+    if (typeof variant === "string") {
+      try {
+        variant = JSON.parse(variant);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid variant data format",
+          error: error.message,
+        });
+      }
+    }
+
+    if (
+      !variant ||
+      !variant.variantName ||
+      !Array.isArray(variant.variantTypes)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid variant data. Must include variantName and variantTypes array",
+      });
+    }
 
     const token = req.cookies.token;
     if (!token) {
@@ -221,16 +248,42 @@ const addVendorProducts = async (req, res) => {
       }
     }
 
+    const processedVariant = {
+      variantName: variant.variantName,
+      variantTypes: variant.variantTypes.map((type) => {
+        if (!type.name || !type.price || !type.stock || !type.shipping) {
+          throw new Error("Missing required fields in variant type");
+        }
+
+        return {
+          name: type.name,
+          price: Number(type.price),
+          imageIndex: type.imageIndex !== null ? Number(type.imageIndex) : null,
+          stock: Number(type.stock),
+          shipping: {
+            weight: type.shipping.weight,
+            dimensions: {
+              length: Number(type.shipping.dimensions?.length || 0),
+              width: Number(type.shipping.dimensions?.width || 0),
+              height: Number(type.shipping.dimensions?.height || 0),
+            },
+          },
+        };
+      }),
+    };
+
     const product = new Product({
       name,
       description,
       images: imageUrls,
-      price: Number(price),
-      stock: Number(stock),
-      discount: Number(discount),
+      variant: processedVariant,
+      discount: Number(discount || 0),
       category,
+      subCategory,
       status,
       tags: processedTags,
+      additionalDetails,
+      customizable: req.body.customizable === "true",
       vendor: user._id,
     });
 
@@ -253,27 +306,45 @@ const addVendorProducts = async (req, res) => {
 
 const editVendorProduct = async (req, res) => {
   try {
-    const { name, description, price, stock, discount, category, status, tags } = req.body;
+    const {
+      name,
+      description,
+      price,
+      stock,
+      discount,
+      category,
+      status,
+      tags,
+    } = req.body;
     const productId = req.params.productId;
 
     const token = req.cookies.token;
     if (!token) {
-      return res.status(401).json({ success: false, message: "No authentication token found." });
+      return res
+        .status(401)
+        .json({ success: false, message: "No authentication token found." });
     }
 
     const decoded = verifyToken(token);
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
     }
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found." });
     }
 
     if (product.vendor.toString() !== user._id.toString()) {
-      return res.status(403).json({ success: false, message: "You are not authorized to edit this product." });
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to edit this product.",
+      });
     }
 
     const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
@@ -300,7 +371,9 @@ const editVendorProduct = async (req, res) => {
 
           try {
             await cloudinary.uploader.destroy(publicId);
-            console.log(`Old image with public ID ${publicId} deleted from Cloudinary.`);
+            console.log(
+              `Old image with public ID ${publicId} deleted from Cloudinary.`
+            );
           } catch (error) {
             console.error("Error deleting old image from Cloudinary:", error);
             return res.status(500).json({
@@ -343,7 +416,7 @@ const editVendorProduct = async (req, res) => {
       updatedImages.push(null);
     }
     updatedImages = updatedImages.slice(0, 4);
-    
+
     product.name = name || product.name;
     product.description = description || product.description;
     product.price = price ? Number(price) : product.price;
@@ -372,5 +445,9 @@ const editVendorProduct = async (req, res) => {
   }
 };
 
-
-module.exports = { verifyVendor, registerVendorDetails, addVendorProducts, editVendorProduct };
+module.exports = {
+  verifyVendor,
+  registerVendorDetails,
+  addVendorProducts,
+  editVendorProduct,
+};
