@@ -5,6 +5,7 @@ const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find({ isListed: true })
       .populate("category", "name")
+      .populate("subCategory", "name")
       .populate("vendor", "name email profileImagePath")
       .sort({ createdAt: -1 });
 
@@ -28,6 +29,7 @@ const getProductById = async (req, res) => {
 
     const product = await Product.findById(productId)
       .populate("category", "name")
+      .populate("subCategory", "name")
       .populate("vendor", "name email profileImagePath");
 
     if (!product) {
@@ -65,6 +67,7 @@ const getVendorProducts = async (req, res) => {
 
     const products = await Product.find({ vendor: vendorId })
       .populate("category", "name")
+      .populate("subCategory", "name")
       .populate("vendor", "name email profileImagePath")
       .sort({ createdAt: -1 });
 

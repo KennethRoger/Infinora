@@ -8,10 +8,6 @@ export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const offerPrice = (price, discount) => {
-    return (price * (100 - discount)) / 100;
-  };
-
   const handleProductClick = async () => {
     try {
       window.scrollTo(0, 0);
@@ -41,14 +37,20 @@ export default function ProductCard({ product }) {
           <StarRating rating={product.rating} />
           <div className="flex items-center gap-2">
             <p className="font-bold text-xl text-black">
-              ₹{offerPrice(product.price, product.discount)}
+              ₹
+              {(
+                product.variant?.variantTypes[0]?.price *
+                (1 - product.discount / 100)
+              ).toFixed(2)}
             </p>
-            <div className="flex gap-2 text-sm">
-              <s className="text-gray-600">₹{product.price}</s>
-              <p className="text-green-600">
-                {product.discount != 0 && product.discount}% off
-              </p>
-            </div>
+            {product.discount > 0 && (
+              <div className="flex gap-2 text-sm">
+                <s className="text-gray-600">
+                  ₹{product.variant?.variantTypes[0]?.price}
+                </s>
+                <p className="text-green-600">{product.discount}% off</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

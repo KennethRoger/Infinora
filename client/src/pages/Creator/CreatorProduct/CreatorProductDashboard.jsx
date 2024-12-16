@@ -39,6 +39,11 @@ export default function CreatorProductDashboard() {
     (state) => state.vendorProducts
   );
 
+  const calculateTotalStock = (product) => {
+    if (!product.variant?.variantTypes) return 0;
+    return product.variant.variantTypes.reduce((total, variant) => total + (parseInt(variant.stock) || 0), 0);
+  };
+
   useEffect(() => {
     dispatch(fetchVendorProducts());
     console.log("products", products);
@@ -48,11 +53,13 @@ export default function CreatorProductDashboard() {
     navigate("add");
   };
 
-  const handleToggleListing = async(productId) => {
+  const handleToggleListing = async (productId) => {
     try {
       await axios
         .patch(
-          `${import.meta.env.VITE_USERS_API_BASE_URL}/api/products/toggle-listing`,
+          `${
+            import.meta.env.VITE_USERS_API_BASE_URL
+          }/api/products/toggle-listing`,
           { productId }
         )
         .then(() => {
@@ -100,8 +107,6 @@ export default function CreatorProductDashboard() {
             <SelectContent>
               <SelectItem value="newest">Newest First</SelectItem>
               <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
               <SelectItem value="stock-high">Stock: High to Low</SelectItem>
               <SelectItem value="stock-low">Stock: Low to High</SelectItem>
             </SelectContent>
@@ -116,8 +121,8 @@ export default function CreatorProductDashboard() {
               <TableHead className="w-[100px]">Image</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Subcategory</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Price</TableHead>
               <TableHead>Offer</TableHead>
               <TableHead>Rating</TableHead>
               <TableHead>Status</TableHead>
@@ -136,20 +141,20 @@ export default function CreatorProductDashboard() {
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.category?.name}</TableCell>
+                <TableCell>{product.subCategory?.name}</TableCell>
                 <TableCell>
                   <span
                     className={`${
-                      product.stock > 10
+                      calculateTotalStock(product) > 10
                         ? "text-green-600"
-                        : product.stock > 0
+                        : calculateTotalStock(product) > 0
                         ? "text-yellow-600"
                         : "text-red-600"
                     }`}
                   >
-                    {product.stock}
+                    {calculateTotalStock(product)}
                   </span>
                 </TableCell>
-                <TableCell>{formatPrice(product.price)}</TableCell>
                 <TableCell>{`${product.discount}%`}</TableCell>
                 <TableCell>{product.rating}</TableCell>
                 <TableCell>
@@ -168,7 +173,15 @@ export default function CreatorProductDashboard() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem>View details</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate(`/home/profile/creator/edit-product/${product._id}`)}>Edit product</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          navigate(
+                            `/home/profile/creator/edit-product/${product._id}`
+                          )
+                        }
+                      >
+                        Edit product
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className={
