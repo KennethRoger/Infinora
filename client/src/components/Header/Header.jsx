@@ -61,7 +61,7 @@ export default function Header() {
               )}
             </li>
             <li>
-              <Link className="flex items-center gap-1">
+              <Link to={"/home/profile/cart"} className="flex items-center gap-1">
                 <BsCart3 />
                 <p>Cart</p>
               </Link>

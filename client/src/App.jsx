@@ -32,6 +32,7 @@ import AddAddress from "./pages/User/Home/Address/AddAddress";
 import EditAddress from "./pages/User/Home/Address/EditAddress";
 import ForgotPasswordPage from "./pages/User/Auth/ForgotPasswordPage";
 import NewPasswordPage from "./pages/User/Auth/NewPasswordPage";
+import CartPage from "./pages/User/Home/Cart/CartPage";
 
 export function App() {
   return (
@@ -134,6 +135,17 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={["user", "vendor"]}>
                     <EditAddress />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+
+            <Route path="cart" element={<ProfilePage />}>
+              <Route
+                index
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <CartPage />
                   </ProtectedRoute>
                 }
               />

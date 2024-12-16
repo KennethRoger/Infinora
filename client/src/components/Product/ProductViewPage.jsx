@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Heart, Minus, Plus } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fetchProductById } from "@/redux/features/singleProductSlice";
 import { fetchVendorProducts } from "@/redux/features/vendorProductsSlice";
+import { addToCart } from "@/api/cart/cartApi";
 import Spinner from "@/components/Spinner/Spinner";
 import ProductCard from "./ProductCard";
 import MagnifyImage from "../Image/MagnifyImage";
 import { Star } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ProductViewPage = () => {
   const { productId } = useParams();
@@ -19,7 +21,6 @@ const ProductViewPage = () => {
   const { products: vendorProducts, loading: vendorProductsLoading } =
     useSelector((state) => state.vendorProducts);
 
-  const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(0);
 
@@ -43,16 +44,41 @@ const ProductViewPage = () => {
     }
   };
 
-  const handleQuantityChange = (type) => {
-    if (type === "increase") {
-      setQuantity((prev) => prev + 1);
-    } else if (type === "decrease" && quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
-  };
-
   const otherVendorProducts =
     vendorProducts?.filter((p) => p._id !== productId) || [];
+
+  const handleAddToCart = async () => {
+    console.log("initiated");
+    try {
+      const selectedVariantData =
+        product.variant?.variantTypes[selectedVariant];
+        console.log("selectedVariantData", selectedVariantData)
+      // Check if variant exists and has stock
+      if (!selectedVariantData) {
+        toast.error("Please select a variant");
+        return;
+      }
+
+      if (selectedVariantData.stock < 1) {
+        toast.error("Product is out of stock");
+        return;
+      }
+
+      const cartData = {
+        productId: product._id,
+        selectedVariant: selectedVariant,
+        quantity: 1,
+      };
+
+      await addToCart(cartData);
+      console.log("Data send");
+      toast.success("Product added to cart successfully!");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to add product to cart"
+      );
+    }
+  };
 
   if (loading)
     return (
@@ -159,6 +185,14 @@ const ProductViewPage = () => {
               </div>
             </div>
 
+            {/* Description */}
+            <div className="border-t pt-4">
+              <h3 className="font-medium mb-2">Description</h3>
+              <p className="text-gray-600 text-sm line-clamp-3">
+                {product.description}
+              </p>
+            </div>
+
             {/* Variants */}
             {product.variant && (
               <div className="space-y-4">
@@ -185,48 +219,67 @@ const ProductViewPage = () => {
               </div>
             )}
 
-            {/* Quantity */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quantity
-              </label>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center border rounded-lg">
-                  <button
-                    onClick={() => handleQuantityChange("decrease")}
-                    className="p-2 hover:bg-gray-100"
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="w-12 text-center">{quantity}</span>
-                  <button
-                    onClick={() => handleQuantityChange("increase")}
-                    className="p-2 hover:bg-gray-100"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-                <span className="text-gray-500">
-                  {product.variant?.variantTypes[selectedVariant]?.stock}{" "}
-                  available
-                </span>
-              </div>
-            </div>
-
             {/* Buttons */}
             <div className="flex gap-4">
-              <button className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600">
+              <button
+                className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600"
+                onClick={() => {
+                  // Add buy now functionality
+                }}
+              >
                 Buy it now
               </button>
-              <button className="flex-1 border border-orange-500 text-orange-500 py-3 rounded-lg hover:bg-orange-50">
-                Add to cart
+              <button
+                className="flex-1 border border-orange-500 text-orange-500 py-3 rounded-lg hover:bg-orange-50"
+                onClick={handleAddToCart}
+                disabled={loading}
+              >
+                {loading ? "Adding..." : "Add to cart"}
               </button>
+            </div>
+
+            {/* Additional Details */}
+            {product.additionalDetails && (
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-2">Additional Details</h3>
+                <div className="text-sm text-gray-600 space-y-2">
+                  <p className="whitespace-pre-wrap">
+                    {product.additionalDetails}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Product Info */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-4">Product Information</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-gray-600">Category:</span>
+                <div className="font-medium">{product.category?.name}</div>
+              </div>
+              <div>
+                <span className="text-gray-600">Subcategory:</span>
+                <div className="font-medium">{product.subCategory?.name}</div>
+              </div>
+              <div>
+                <span className="text-gray-600">Status:</span>
+                <div className="font-medium capitalize">{product.status}</div>
+              </div>
+              <div>
+                <span className="text-gray-600">Customizable:</span>
+                <div className="font-medium">
+                  {product.customizationOptions ? "Yes" : "No"}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Description and other sections */}
+        {/* Reviews section */}
         <div className="mt-12 bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-2xl font-semibold mb-6">Customer Reviews</h2>
 

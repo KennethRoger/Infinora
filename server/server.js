@@ -18,6 +18,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const creatorRoutes = require("./routes/vendorRoutes");
 const productRoutes = require("./routes/productRoutes");
 const addressRoutes = require("./routes/addressRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -41,7 +42,8 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/vendor", creatorRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/address", addressRoutes);
+app.use("/api/cart", cartRoutes);
 
 app.listen(port, () => {
-  console.log(`Server is running`);
+  console.log(`Server is running on port ${port}`);
 });
