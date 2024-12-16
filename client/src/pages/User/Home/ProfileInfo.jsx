@@ -37,7 +37,6 @@ export default function ProfileInfo() {
 
   const [changePassClicked, setChangePassClicked] = useState(false);
   const [passwordMatchError, setPasswordMatchError] = useState("");
-  useEffect(() => {});
 
   const {
     register,
@@ -84,9 +83,6 @@ export default function ProfileInfo() {
   const onSubmit = async (formData) => {
     setUserData(formData);
     setServerError("");
-    useEffect(() => {
-      console.log(changePassClicked);
-    }, [changePassClicked]);
     if (formData.email !== user.email) {
       try {
         startLoading();
