@@ -33,6 +33,11 @@ import EditAddress from "./pages/User/Home/Address/EditAddress";
 import ForgotPasswordPage from "./pages/User/Auth/ForgotPasswordPage";
 import NewPasswordPage from "./pages/User/Auth/NewPasswordPage";
 import CartPage from "./pages/User/Home/Cart/CartPage";
+import OrderPage from "./pages/User/Home/Order/OrderPage";
+import CheckoutLayout from "./pages/User/Home/Checkout/CheckoutLayout";
+import DeliveryPage from "./pages/User/Home/Checkout/DeliveryPage";
+import PaymentPage from "./pages/User/Home/Checkout/PaymentPage";
+import ReviewPage from "./pages/User/Home/Checkout/ReviewPage";
 
 export function App() {
   return (
@@ -150,6 +155,16 @@ export function App() {
                 }
               />
             </Route>
+            <Route path="orders" element={<ProfilePage />}>
+              <Route
+                index
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <OrderPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
 
             {/* Creator Routes */}
             <Route
@@ -194,6 +209,20 @@ export function App() {
                 }
               />
             </Route>
+          </Route>
+          {/* Checkout Routes */}
+          <Route
+            path="checkout"
+            element={
+              <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                <CheckoutLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="delivery" replace />} />
+            <Route path="delivery" element={<DeliveryPage />} />
+            <Route path="payment" element={<PaymentPage />} />
+            <Route path="review" element={<ReviewPage />} />
           </Route>
         </Route>
 

@@ -10,8 +10,10 @@ import { useDispatch } from "react-redux";
 import { fetchUserCart } from "@/redux/features/userCartSlice";
 import toast from "react-hot-toast";
 import Modal from "@/components/Modal/Modal";
+import { useNavigate } from "react-router-dom";
 
 export default function CartCard({ item }) {
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(item.quantity);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const dispatch = useDispatch();
@@ -21,6 +23,7 @@ export default function CartCard({ item }) {
   const discountedPrice = originalPrice * (1 - item.product.discount / 100);
 
   const handleQuantityChange = async (type) => {
+    console.log(item);
     try {
       const data = {
         productId: item.product._id,
@@ -72,9 +75,12 @@ export default function CartCard({ item }) {
     <>
       <div className="flex gap-6 bg-white p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-all">
         {/* Product Image */}
-        <div className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0">
+        <div
+          className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+          onClick={() => navigate(`/home/product/${item.product._id}`)}
+        >
           <img
-            src={item.product.images[0]}
+            src={item.product.images[item.selectedVariant] || item.product.images[0]}
             alt={item.product.name}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />
@@ -118,7 +124,7 @@ export default function CartCard({ item }) {
           <div className="flex items-center justify-between pt-2">
             <div className="space-y-2">
               <div className="text-sm text-gray-600">
-                Variant:{" "}
+                {`${item.product.variant.variantName}: `}
                 <span className="font-medium">
                   {item.product.variant.variantTypes[item.selectedVariant].name}
                 </span>

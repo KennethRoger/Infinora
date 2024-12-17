@@ -67,7 +67,7 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <Link className="flex items-center gap-1">
+              <Link to={"/home/profile/orders"} className="flex items-center gap-1">
                 <FiPackage />
                 <p>Orders</p>
               </Link>

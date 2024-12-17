@@ -1,12 +1,15 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { fetchUserCart } from "@/redux/features/userCartSlice";
 import CartCard from "@/components/Cart/CartCard";
 import Spinner from "@/components/Spinner/Spinner";
+import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
 
 export default function CartPage() {
   const dispatch = useDispatch();
   const { cart, loading, error } = useSelector((state) => state.userCart || {});
+  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(fetchUserCart());
@@ -73,9 +76,12 @@ export default function CartPage() {
               </div>
             </div>
 
-            <button className="w-full bg-primary text-white py-2 rounded-lg mt-4">
+            <ButtonPrimary
+              onClick={() => navigate("/home/checkout")}
+              className="w-full mt-4"
+            >
               Proceed to Checkout
-            </button>
+            </ButtonPrimary>
           </div>
         </div>
       </div>
