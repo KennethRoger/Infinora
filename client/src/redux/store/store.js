@@ -6,6 +6,7 @@ import vendorProductsReducer from "../features/vendorProductsSlice";
 import singleProductReducer from "../features/singleProductSlice";
 import userAddressesReducer from "../features/userAddressSlice";
 import userCartReducer from "../features/userCartSlice";
+import userOrderReducer from "../features/userOrderSlice";
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     singleProduct: singleProductReducer,
     userAddresses: userAddressesReducer,
     userCart: userCartReducer,
+    order: userOrderReducer,
   },
 });
 
