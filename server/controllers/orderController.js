@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const Cart = require("../models/Cart"); // Import Cart model
 const { verifyToken } = require("../utils/tokenValidator");
 
 // Create new order
@@ -73,7 +74,6 @@ const createOrder = async (req, res) => {
     const populatedOrders = await Promise.all(
       orders.map((order) =>
         Order.findById(order._id)
-          .populate("user", "name email")
           .populate("address")
           .populate({
             path: "product",
@@ -85,6 +85,9 @@ const createOrder = async (req, res) => {
           })
       )
     );
+
+    // Clear the user's cart after successful order creation
+    await Cart.findOneAndUpdate({ user: userId }, { items: [] }, { new: true });
 
     res.status(201).json({
       success: true,
@@ -115,9 +118,10 @@ const getUserOrders = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const orders = await Order.find({ user: userId })
+    console.log("Finding orders for user:", userId); // Debug log
+
+    const orders = await Order.find({ user: userId }) // Changed from user._id to user
       .sort({ createdAt: -1 })
-      .populate("user", "name email")
       .populate("address")
       .populate({
         path: "product",
@@ -128,11 +132,15 @@ const getUserOrders = async (req, res) => {
         },
       });
 
+    console.log("Found orders:", orders); // Debug log
+
     res.status(200).json({
       success: true,
-      orders,
+      orders: orders,
+      message: orders.length ? null : "No orders found",
     });
   } catch (error) {
+    console.error("Error fetching orders:", error); // Debug log
     res.status(500).json({
       success: false,
       message: "Failed to fetch orders",
@@ -157,8 +165,7 @@ const getOrderById = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId })
-      .populate("user", "name email")
+    const order = await Order.findOne({ _id: id, "user._id": userId })
       .populate("address")
       .populate({
         path: "product",
@@ -206,7 +213,7 @@ const updateOrderStatus = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId });
+    const order = await Order.findOne({ _id: id, "user._id": userId });
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -230,7 +237,6 @@ const updateOrderStatus = async (req, res) => {
     await order.save();
 
     const updatedOrder = await Order.findById(id)
-      .populate("user", "name email")
       .populate("address")
       .populate({
         path: "product",

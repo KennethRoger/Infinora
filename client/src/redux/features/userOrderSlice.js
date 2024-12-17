@@ -17,8 +17,9 @@ export const fetchUserOrders = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getUserOrders();
-      return response.data;
+      return response; // Return the entire response
     } catch (error) {
+      console.error("Error in fetchUserOrders:", error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch orders"
       );
@@ -53,14 +54,22 @@ const userOrderSlice = createSlice({
       })
       .addCase(fetchUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.orders = action.payload.orders || [];
+        state.error = null;
       })
       .addCase(fetchUserOrders.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.orders = [];
+        state.error = action.payload || "Failed to fetch orders";
       });
   },
 });
+
+// Selectors
+export const selectUserOrders = (state) => state.userOrder.orders;
+export const selectUserOrdersLoading = (state) => state.userOrder.loading;
+export const selectUserOrdersError = (state) => state.userOrder.error;
+export const selectCheckout = (state) => state.userOrder.checkout;
 
 export const {
   clearOrders,
@@ -68,4 +77,5 @@ export const {
   setSelectedPayment,
   clearCheckout,
 } = userOrderSlice.actions;
+
 export default userOrderSlice.reducer;

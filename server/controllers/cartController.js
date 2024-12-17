@@ -338,10 +338,52 @@ const decrementCartItem = async (req, res) => {
   }
 };
 
+// Clear cart
+const clearCart = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+    const decoded = verifyToken(token);
+    const userId = decoded.id;
+
+    const cart = await Cart.findOneAndUpdate(
+      { user: userId },
+      { items: [] },
+      { new: true }
+    );
+
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Cart cleared successfully",
+      cart,
+    });
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to clear cart",
+    });
+  }
+};
+
 module.exports = {
   addToCart,
   getCart,
   incrementCartItem,
   decrementCartItem,
   removeFromCart,
+  clearCart,
 };

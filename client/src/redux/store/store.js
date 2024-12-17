@@ -17,7 +17,7 @@ const store = configureStore({
     singleProduct: singleProductReducer,
     userAddresses: userAddressesReducer,
     userCart: userCartReducer,
-    order: userOrderReducer,
+    userOrder: userOrderReducer,
   },
 });
 
