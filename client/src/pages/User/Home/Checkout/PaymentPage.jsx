@@ -17,7 +17,7 @@ const paymentMethods = [
 export default function PaymentPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { checkout } = useSelector((state) => state.order);
+  const { checkout } = useSelector((state) => state.userOrder);
 
   const handleMethodSelect = (methodId) => {
     dispatch(setSelectedPayment(methodId));

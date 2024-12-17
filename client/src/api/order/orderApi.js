@@ -20,9 +20,9 @@ export const getUserOrders = async () => {
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order`,
       { withCredentials: true }
     );
-    return response.data;
+    return response.data; // This returns { success: true, orders: [...] }
   } catch (error) {
     console.error("Failed to fetch user orders:", error);
-    throw error;
+    throw error.response?.data || error; // Return the error response data if available
   }
 };

@@ -10,13 +10,14 @@ import { clearCheckout } from "@/redux/features/userOrderSlice";
 import Spinner from "@/components/Spinner/Spinner";
 import { createOrder } from "@/api/order/orderApi";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 export default function ReviewPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { cart } = useSelector((state) => state.userCart);
   const { addresses } = useSelector((state) => state.userAddresses);
-  const { checkout } = useSelector((state) => state.order);
+  const { checkout } = useSelector((state) => state.userOrder);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [orderProcessing, setOrderProcessing] = useState(false);
 
@@ -80,13 +81,21 @@ export default function ReviewPage() {
       const response = await createOrder(orderData);
 
       // Clear cart and checkout state
-      await dispatch(clearCart());
+      dispatch(clearCart());
       dispatch(clearCheckout());
+
+      // Clear the cart on server (updated endpoint)
+      await axios.delete(
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
+        {
+          withCredentials: true,
+        }
+      );
 
       toast.success("Orders placed successfully!");
 
-      // Navigate to orders page
-      navigate("/home/profile/orders");
+      // Navigate to orders page and force a refresh
+      navigate("/home/profile/orders", { replace: true });
     } catch (error) {
       console.error("Failed to place order:", error);
       toast.error(error.response?.data?.message || "Failed to place order");

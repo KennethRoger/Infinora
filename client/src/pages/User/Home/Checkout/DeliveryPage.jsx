@@ -11,7 +11,7 @@ export default function DeliveryPage() {
   const { addresses, loading, error } = useSelector(
     (state) => state.userAddresses
   );
-  const { checkout } = useSelector((state) => state.order);
+  const { checkout } = useSelector((state) => state.userOrder);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
