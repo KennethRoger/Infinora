@@ -37,7 +37,7 @@ export default function CheckoutProgress({ currentStep }) {
                 )}
               >
                 {step.id < currentStep ? (
-                  // Completed step
+                  
                   <>
                     <div
                       className="absolute inset-0 flex items-center"
@@ -54,7 +54,6 @@ export default function CheckoutProgress({ currentStep }) {
                     </div>
                   </>
                 ) : step.id === currentStep ? (
-                  // Current step
                   <>
                     <div
                       className="absolute inset-0 flex items-center"
@@ -71,7 +70,6 @@ export default function CheckoutProgress({ currentStep }) {
                     </div>
                   </>
                 ) : (
-                  // Upcoming step
                   <>
                     <div
                       className="absolute inset-0 flex items-center"
@@ -89,7 +87,6 @@ export default function CheckoutProgress({ currentStep }) {
                   </>
                 )}
 
-                {/* Step name and line */}
                 <div className="absolute left-1/2 -translate-x-1/2 mt-3">
                   <span
                     className={cn(

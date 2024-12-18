@@ -223,7 +223,7 @@ const ProductViewPage = () => {
               <button
                 className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600"
                 onClick={() => {
-                  // Add buy now functionality
+                  // Buy now functionality
                 }}
               >
                 Buy it now
@@ -304,9 +304,6 @@ const ProductViewPage = () => {
                 </div>
               </div>
             </div>
-            <button className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600">
-              Write a Review
-            </button>
           </div>
 
           {/* Review List */}

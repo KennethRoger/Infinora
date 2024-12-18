@@ -1,9 +1,8 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
-const Cart = require("../models/Cart"); // Import Cart model
+const Cart = require("../models/Cart");
 const { verifyToken } = require("../utils/tokenValidator");
 
-// Create new order
 const createOrder = async (req, res) => {
   try {
     const { addressId, paymentMethod, items } = req.body;
@@ -19,13 +18,11 @@ const createOrder = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    // Get current date for orderId generation
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
 
-    // Get the count of orders for today
     const todayStart = new Date(date.setHours(0, 0, 0, 0));
     const todayEnd = new Date(date.setHours(23, 59, 59, 999));
     const orderCount = await Order.countDocuments({
@@ -35,9 +32,7 @@ const createOrder = async (req, res) => {
       },
     });
 
-    // Create separate orders for each item
     const orderPromises = items.map(async (item, index) => {
-      // Get product to get vendor information
       const product = await Product.findById(item.productId).populate("vendor");
       if (!product) {
         throw new Error(`Product not found: ${item.productId}`);
@@ -46,7 +41,6 @@ const createOrder = async (req, res) => {
       const totalAmount =
         item.price * item.quantity * (1 - item.discount / 100);
 
-      // Generate orderId: INF-YYMMDD-XXXX
       const orderId = `INF-${year}${month}${day}-${(orderCount + index + 1)
         .toString()
         .padStart(4, "0")}`;
@@ -70,7 +64,6 @@ const createOrder = async (req, res) => {
 
     const orders = await Promise.all(orderPromises);
 
-    // Populate necessary fields for response
     const populatedOrders = await Promise.all(
       orders.map((order) =>
         Order.findById(order._id)
@@ -86,7 +79,6 @@ const createOrder = async (req, res) => {
       )
     );
 
-    // Clear the user's cart after successful order creation
     await Cart.findOneAndUpdate({ user: userId }, { items: [] }, { new: true });
 
     res.status(201).json({
@@ -103,7 +95,6 @@ const createOrder = async (req, res) => {
   }
 };
 
-// Get user orders
 const getUserOrders = async (req, res) => {
   try {
     const token = req.cookies.token;
@@ -118,9 +109,7 @@ const getUserOrders = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    console.log("Finding orders for user:", userId); // Debug log
-
-    const orders = await Order.find({ user: userId }) // Changed from user._id to user
+    const orders = await Order.find({ user: userId })
       .sort({ createdAt: -1 })
       .populate("address")
       .populate({
@@ -132,7 +121,7 @@ const getUserOrders = async (req, res) => {
         },
       });
 
-    console.log("Found orders:", orders); // Debug log
+    console.log("Found orders:", orders);
 
     res.status(200).json({
       success: true,
@@ -140,7 +129,7 @@ const getUserOrders = async (req, res) => {
       message: orders.length ? null : "No orders found",
     });
   } catch (error) {
-    console.error("Error fetching orders:", error); // Debug log
+    console.error("Error fetching orders:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch orders",
@@ -149,7 +138,6 @@ const getUserOrders = async (req, res) => {
   }
 };
 
-// Get single order
 const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -196,7 +184,6 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// Update order status
 const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -221,7 +208,6 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Prevent cancellation of delivered orders
     if (status === "cancelled" && order.status === "delivered") {
       return res.status(400).json({
         success: false,
@@ -261,7 +247,6 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// Cancel order
 const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -285,7 +270,6 @@ const cancelOrder = async (req, res) => {
       });
     }
 
-    // Only allow cancellation of pending orders
     if (order.status !== "pending") {
       return res.status(400).json({
         success: false,
@@ -322,7 +306,6 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-// Get vendor orders
 const getVendorOrders = async (req, res) => {
   try {
     const token = req.cookies.token;

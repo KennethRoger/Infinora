@@ -31,7 +31,6 @@ export default function OrderPage() {
     };
   }, [dispatch]);
 
-  // Show loading spinner
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -40,7 +39,6 @@ export default function OrderPage() {
     );
   }
 
-  // Show error message
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -50,7 +48,6 @@ export default function OrderPage() {
     );
   }
 
-  // Show empty state if no orders
   if (!orders || orders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
