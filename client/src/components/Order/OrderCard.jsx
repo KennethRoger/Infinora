@@ -7,8 +7,14 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  AlertCircle,
 } from "lucide-react";
 import { useState } from "react";
+import Modal from "@/components/Modal/Modal";
+import { cancelOrder } from "@/api/order/orderApi";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { fetchUserOrders } from "@/redux/features/userOrderSlice";
 
 const orderStatusIcons = {
   pending: <Clock className="h-5 w-5 text-yellow-500" />,
@@ -28,6 +34,23 @@ const orderStatusColors = {
 
 export default function OrderCard({ order }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const dispatch = useDispatch();
+
+  const handleCancel = async () => {
+    try {
+      setCancelling(true);
+      await cancelOrder(order._id);
+      toast.success("Order cancelled successfully");
+      setShowCancelModal(false);
+      dispatch(fetchUserOrders());
+    } catch (error) {
+      toast.error(error.message || "Failed to cancel order");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border">
@@ -164,6 +187,48 @@ export default function OrderCard({ order }) {
           </div>
         </div>
       )}
+
+      {/* Cancel Button - Only show for pending orders */}
+      {order.status === "pending" && (
+        <div className="p-4 border-t">
+          <button
+            onClick={() => setShowCancelModal(true)}
+            className="w-full py-2 px-4 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
+          >
+            Cancel Order
+          </button>
+        </div>
+      )}
+
+      {/* Cancel Modal */}
+      <Modal isOpen={showCancelModal}>
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Cancel Order?
+          </h3>
+          <p className="text-sm text-gray-500 mb-6">
+            Are you sure you want to cancel this order? This action cannot be
+            undone.
+          </p>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => setShowCancelModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              disabled={cancelling}
+            >
+              No, Keep Order
+            </button>
+            <button
+              onClick={handleCancel}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+              disabled={cancelling}
+            >
+              {cancelling ? "Cancelling..." : "Yes, Cancel Order"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

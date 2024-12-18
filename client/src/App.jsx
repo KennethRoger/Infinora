@@ -38,6 +38,7 @@ import CheckoutLayout from "./pages/User/Home/Checkout/CheckoutLayout";
 import DeliveryPage from "./pages/User/Home/Checkout/DeliveryPage";
 import PaymentPage from "./pages/User/Home/Checkout/PaymentPage";
 import ReviewPage from "./pages/User/Home/Checkout/ReviewPage";
+import UserOrderDashboard from "./pages/Creator/UserOrder/UserOrderDashboard";
 
 export function App() {
   return (
@@ -205,6 +206,14 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={["vendor"]}>
                     <CreatorEditProduct />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="customer-orders"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <UserOrderDashboard />
                   </ProtectedRoute>
                 }
               />

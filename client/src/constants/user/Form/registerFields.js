@@ -37,4 +37,14 @@ export const registerFields = [
       },
     },
   },
+  {
+    label: "Confirm Password",
+    name: "confirmPassword",
+    type: "password",
+    validations: {
+      required: "Please confirm your password",
+      validate: (value, formValues) =>
+        value === formValues.password || "Passwords do not match",
+    },
+  },
 ];

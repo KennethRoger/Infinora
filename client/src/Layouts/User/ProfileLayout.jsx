@@ -32,7 +32,7 @@ export default function ProfileLayout() {
 
   return (
     <>
-      <div className="flex bg-[#f1f3f6] pt-[80px]">
+      <div className="flex bg-[#f1f3f6] pt-[80px] relative z-20">
         <button
           onClick={() => handleClick("/home/profile/profile-info")}
           className={`px-8 border-black/50 border-l-2 font-semibold border-t-[1px] border-r-2 rounded-tl-xl ${

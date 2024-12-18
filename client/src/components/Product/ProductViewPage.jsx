@@ -52,8 +52,7 @@ const ProductViewPage = () => {
     try {
       const selectedVariantData =
         product.variant?.variantTypes[selectedVariant];
-        console.log("selectedVariantData", selectedVariantData)
-      // Check if variant exists and has stock
+        
       if (!selectedVariantData) {
         toast.error("Please select a variant");
         return;

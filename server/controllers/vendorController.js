@@ -283,7 +283,7 @@ const addVendorProducts = async (req, res) => {
       status,
       tags: processedTags,
       additionalDetails,
-      customizable: req.body.customizable === "true",
+      customizable: customizable === "true",
       vendor: user._id,
     });
 

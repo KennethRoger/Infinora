@@ -28,7 +28,7 @@ export const creatorSideMenu = [
     id: 4,
     label: "Customer Orders",
     icon: <FaBoxesStacked className="text-[#ff9500]" />,
-    path: "#",
+    path: "/home/profile/creator/customer-orders",
   },
   {
     id: 5,

@@ -272,7 +272,6 @@ export default function CreatorAddProduct() {
         }
       });
 
-      console.log("Form data being sent:", data);
       startLoading();
       const response = await axios.post("/api/vendor/product", formData, {
         headers: {
@@ -431,7 +430,7 @@ export default function CreatorAddProduct() {
                       )}
                     </div>
 
-                    {/* Subcategory Selection - Only show if parent category is selected */}
+                    {/* Subcategory Selection */}
                     {selectedCategory && subcategories.length > 0 && (
                       <div>
                         <label className="block text-sm text-gray-700 mb-1">

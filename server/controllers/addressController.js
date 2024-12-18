@@ -74,7 +74,6 @@ const addAddress = async (req, res) => {
       state,
     } = req.body;
 
-    console.log("Req body for add password: ", req.body);
     if (
       !userId ||
       !fullName ||
