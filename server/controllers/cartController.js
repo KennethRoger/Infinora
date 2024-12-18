@@ -338,7 +338,6 @@ const decrementCartItem = async (req, res) => {
   }
 };
 
-// Clear cart
 const clearCart = async (req, res) => {
   try {
     const token = req.cookies.token;

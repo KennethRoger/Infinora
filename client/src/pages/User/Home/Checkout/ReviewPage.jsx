@@ -32,7 +32,6 @@ export default function ReviewPage() {
     setSelectedAddress(address);
   }, [addresses, checkout.selectedAddressId]);
 
-  // Calculate totals
   const totals = cart?.items?.reduce(
     (acc, item) => {
       const originalPrice =
@@ -54,7 +53,7 @@ export default function ReviewPage() {
 
     setOrderProcessing(true);
     try {
-      // Create order items array with individual prices and totals
+
       const orderItems = cart.items.map((item) => {
         const itemPrice =
           item.product.variant.variantTypes[item.selectedVariant].price;
@@ -71,7 +70,6 @@ export default function ReviewPage() {
         };
       });
 
-      // Create order using API
       const orderData = {
         addressId: selectedAddress._id,
         paymentMethod: checkout.selectedPaymentMethod,
@@ -80,11 +78,9 @@ export default function ReviewPage() {
 
       const response = await createOrder(orderData);
 
-      // Clear cart and checkout state
       dispatch(clearCart());
       dispatch(clearCheckout());
 
-      // Clear the cart on server (updated endpoint)
       await axios.delete(
         `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
         {
@@ -94,7 +90,6 @@ export default function ReviewPage() {
 
       toast.success("Orders placed successfully!");
 
-      // Navigate to orders page and force a refresh
       navigate("/home/profile/orders", { replace: true });
     } catch (error) {
       console.error("Failed to place order:", error);

@@ -14,25 +14,20 @@ export default function CheckoutLayout() {
   const location = useLocation();
   const { cart } = useSelector((state) => state.userCart);
 
-  // Get current step based on path
   const currentStep = stepPaths[location.pathname] || 1;
 
-  // Protect checkout routes
   useEffect(() => {
-    // Redirect to cart if no items
     if (!cart?.items?.length) {
-      navigate("/home/cart");
+      navigate("/home/profile/cart");
       return;
     }
 
-    // Prevent skipping steps
     const currentPathStep = stepPaths[location.pathname];
     if (!currentPathStep) {
       navigate("/home/checkout/delivery");
       return;
     }
 
-    // Check if previous step is completed
     const selectedAddress = localStorage.getItem("selectedAddress");
     const selectedPayment = localStorage.getItem("selectedPayment");
 
@@ -52,16 +47,9 @@ export default function CheckoutLayout() {
       <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <CheckoutProgress currentStep={currentStep} />
-          
-          {/* Main Content */}
           <div className="mt-8">
             <Outlet />
           </div>
-
-          {/* Order Summary (can be added later) */}
-          {/* <div className="mt-8 bg-white p-6 rounded-lg shadow-sm">
-            Order summary component here
-          </div> */}
         </div>
       </div>
     </div>

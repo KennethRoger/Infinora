@@ -11,7 +11,7 @@ const paymentMethods = [
     description: "Pay with cash when your order arrives",
     icon: Banknote,
   },
-  // Add more payment methods here later
+  
 ];
 
 export default function PaymentPage() {
