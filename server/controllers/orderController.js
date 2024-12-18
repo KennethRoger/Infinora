@@ -261,9 +261,114 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// Cancel order
+const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    const userId = decoded.id;
+
+    const order = await Order.findOne({ _id: id, user: userId });
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Only allow cancellation of pending orders
+    if (order.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Only pending orders can be cancelled",
+      });
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    const updatedOrder = await Order.findById(id)
+      .populate("address")
+      .populate({
+        path: "product",
+        select: "name images variant",
+        populate: {
+          path: "vendor",
+          select: "name",
+        },
+      });
+
+    res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel order",
+      error: error.message,
+    });
+  }
+};
+
+// Get vendor orders
+const getVendorOrders = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    const vendorId = decoded.id;
+
+    const orders = await Order.find({ vendor: vendorId })
+      .sort({ createdAt: -1 })
+      .populate("address")
+      .populate("user", "name email")
+      .populate({
+        path: "product",
+        select: "name images variant",
+        populate: {
+          path: "vendor",
+          select: "name",
+        },
+      });
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    console.error("Error fetching vendor orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch vendor orders",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
   getOrderById,
   updateOrderStatus,
+  cancelOrder,
+  getVendorOrders,
 };

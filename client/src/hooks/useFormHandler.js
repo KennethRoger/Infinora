@@ -27,6 +27,13 @@ const useFormHandler = (inititalFields) => {
       return validations.length.message;
     }
 
+    if (validations.validate) {
+      const result = validations.validate(value, inputData);
+      if (typeof result === "string") {
+        return result;
+      }
+    }
+
     return null;
   };
 
@@ -64,7 +71,7 @@ const useFormHandler = (inititalFields) => {
     if (hasErrorOrEmptyFields()) {
       return;
     }
-    
+
     console.log("Form Data:", inputData);
     callback(inputData);
   };
