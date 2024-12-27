@@ -166,7 +166,7 @@ const registerVendorDetails = async (req, res) => {
 };
 
 const addVendorProducts = async (req, res) => {
-  console.log("Product addition initaited");
+  console.log("Product addition initiated");
   try {
     let {
       name,
@@ -176,14 +176,24 @@ const addVendorProducts = async (req, res) => {
       status,
       tags,
       discount,
-      variant,
+      productVariants,
       additionalDetails,
       customizable,
+      price,
+      stock,
+      shipping,
     } = req.body;
 
-    if (typeof variant === "string") {
+    if (!name || !description || !category || !subCategory) {
+      return res.status(400).json({
+        success: false,
+        message: "Required fields are missing",
+      });
+    }
+
+    if (productVariants && typeof productVariants === "string") {
       try {
-        variant = JSON.parse(variant);
+        productVariants = JSON.parse(productVariants);
       } catch (error) {
         return res.status(400).json({
           success: false,
@@ -193,31 +203,42 @@ const addVendorProducts = async (req, res) => {
       }
     }
 
-    if (
-      !variant ||
-      !variant.variantName ||
-      !Array.isArray(variant.variantTypes)
-    ) {
+    if (productVariants.length > 0 && (price || stock)) {
       return res.status(400).json({
         success: false,
-        message:
-          "Invalid variant data. Must include variantName and variantTypes array",
+        message: "Invalid. Can't have both variants and single product details",
+      });
+    }
+
+    if (!productVariants.length && (!price || !stock || !shipping)) {
+      return res.status(400).json({
+        success: false,
+        message: "Either variants or product details are required",
       });
     }
 
     const token = req.cookies.token;
     if (!token) {
-      return res
-        .status(401)
-        .json({ success: false, message: "No authentication token found." });
+      return res.status(401).json({
+        success: false,
+        message: "No authentication token found.",
+      });
     }
 
     const decoded = verifyToken(token);
+    if (decoded.role !== "vendor") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized access.",
+      });
+    }
+
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
     }
 
     const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
@@ -228,7 +249,6 @@ const addVendorProducts = async (req, res) => {
         try {
           const b64 = Buffer.from(file.buffer).toString("base64");
           const dataURI = "data:" + file.mimetype + ";base64," + b64;
-
           const result = await cloudinary.uploader.upload(dataURI, {
             folder: "infinora/products",
             width: 800,
@@ -248,35 +268,10 @@ const addVendorProducts = async (req, res) => {
       }
     }
 
-    const processedVariant = {
-      variantName: variant.variantName,
-      variantTypes: variant.variantTypes.map((type) => {
-        if (!type.name || !type.price || !type.stock || !type.shipping) {
-          throw new Error("Missing required fields in variant type");
-        }
-
-        return {
-          name: type.name,
-          price: Number(type.price),
-          imageIndex: type.imageIndex !== null ? Number(type.imageIndex) : null,
-          stock: Number(type.stock),
-          shipping: {
-            weight: type.shipping.weight,
-            dimensions: {
-              length: Number(type.shipping.dimensions?.length || 0),
-              width: Number(type.shipping.dimensions?.width || 0),
-              height: Number(type.shipping.dimensions?.height || 0),
-            },
-          },
-        };
-      }),
-    };
-
-    const product = new Product({
+    const productData = {
       name,
       description,
       images: imageUrls,
-      variant: processedVariant,
       discount: Number(discount || 0),
       category,
       subCategory,
@@ -285,18 +280,51 @@ const addVendorProducts = async (req, res) => {
       additionalDetails,
       customizable: customizable === "true",
       vendor: user._id,
-    });
+    };
 
+    if (productVariants.length > 0) {
+      for (const variant of productVariants) {
+        if (!variant.variantName || !Array.isArray(variant.variantTypes)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid variant structure",
+          });
+        }
+        for (const type of variant.variantTypes) {
+          if (!type.name || type.price === undefined || !type.stock || !type.shipping) {
+            return res.status(400).json({
+              success: false,
+              message: "Missing required fields in variant type",
+            });
+          }
+        }
+      }
+      productData.productVariants = productVariants;
+    } else {
+      if (!shipping.weight || !shipping.dimensions || 
+          !shipping.dimensions.length || !shipping.dimensions.width || !shipping.dimensions.height) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid shipping details",
+        });
+      }
+      productData.price = Number(price);
+      productData.stock = Number(stock);
+      productData.shipping = shipping;
+    }
+
+    const product = new Product(productData);
     await product.save();
-    console.log("Product added successfully:", product);
-    res.status(201).json({
+
+    return res.status(201).json({
       success: true,
       message: "Product added successfully",
       product,
     });
+
   } catch (error) {
     console.error("Error adding product:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to add product",
       error: error.message,
@@ -348,7 +376,7 @@ const editVendorProduct = async (req, res) => {
     }
 
     const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
-    let updatedImages = product.images.slice(); // Clone current images to update
+    let updatedImages = product.images.slice();
 
     if (req.files && req.files.length > 0) {
       const imagePositions = req.body.imagePositions
