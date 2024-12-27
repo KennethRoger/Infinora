@@ -9,25 +9,22 @@ const shippingSchema = new mongoose.Schema({
   },
 });
 
-const variantTypeSchema = new mongoose.Schema({
+const variantTypesSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  price: { type: String, required: true },
-  imageIndex: { type: Number },
   stock: { type: Number, required: true },
-  shipping: { type: shippingSchema, required: true },
+  price: { type: Number, required: true },
+  imageIndex: { type: Number, required: false },
+  shipping: { type: shippingSchema, required: false },
 });
 
-const productVariantSchema = new mongoose.Schema({
-  variantName: { type: String, required: true },
-  variantTypes: {
-    type: [variantTypeSchema],
+const productVariantsSchema = new mongoose.Schema({
+  variantName: {
+    type: String,
     required: true,
-    validate: {
-      validator: function (types) {
-        return types.length > 0 && types.length <= 5;
-      },
-      message: "Must have at least 1 and no more than 5 variant types",
-    },
+  },
+  variantTypes: {
+    type: [variantTypesSchema],
+    required: true,
   },
 });
 
@@ -43,10 +40,13 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true },
     description: { type: String, required: true },
     images: { type: [String], default: [] },
-    variant: {
-      type: productVariantSchema,
-      required: true,
+    productVariants: {
+      type: [productVariantsSchema],
+      default: [],
     },
+    price: { type: Number },
+    stock: { type: Number },
+    shipping: { type: shippingSchema },
     discount: { type: Number, default: 0 },
     category: {
       type: mongoose.Schema.Types.ObjectId,
@@ -70,7 +70,7 @@ const productSchema = new mongoose.Schema(
     salesCount: { type: Number, default: 0 },
     taxRate: { type: Number, default: 0 },
     isFeatured: { type: Boolean, default: false },
-    customizationOptions: { type: Boolean, default: false },
+    customizable: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
