@@ -12,6 +12,7 @@ import {
 import Button from "@/components/Form/Button";
 import SearchBar from "@/components/Form/SearchBar";
 import ProductCard from "@/components/Product/ProductCard";
+import ProductScroll from "../../../components/Product/ProductScroll";
 import CreatorBanner from "@/components/Section/CreatorBanner";
 import CraftIdeaSection from "@/components/Section/CraftIdeaSection";
 import Footer from "@/components/Footer/Footer";
@@ -125,17 +126,11 @@ const LandingPage = () => {
                 time
               </p>
             </div>
-            <div className="text-end mt-8">
-              <Button styles="border border-black text-black px-4 py-2 rounded">
-                View more
-              </Button>
-            </div>
           </div>
-          <div className="flex space-x-4 overflow-x-scroll whitespace-nowrap py-3 no-scrollbar w-full">
-            {products.map((product, i) => (
-              <ProductCard key={i} product={product} />
-            ))}
-          </div>
+          <ProductScroll 
+            products={products} 
+            title="Featured Products" 
+          />
         </section>
         <CreatorBanner />
         <section className="py-12 px-10">
