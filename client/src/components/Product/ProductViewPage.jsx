@@ -22,7 +22,8 @@ const ProductViewPage = () => {
     useSelector((state) => state.vendorProducts);
 
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedVariant, setSelectedVariant] = useState(0);
+  const [selectedVariants, setSelectedVariants] = useState({});
+  const [totalPrice, setTotalPrice] = useState(0);
 
   useEffect(() => {
     if (productId) {
@@ -36,41 +37,101 @@ const ProductViewPage = () => {
     }
   }, [dispatch, product?.vendor?._id]);
 
-  const handleVariantSelect = (index) => {
-    setSelectedVariant(index);
-    const variant = product.variant?.variantTypes[index];
-    if (variant?.imageIndex !== undefined && variant.imageIndex !== null) {
-      setSelectedImage(variant.imageIndex);
+  useEffect(() => {
+    if (product?.productVariants?.length > 0) {
+      let initialTotal = 0;
+      product.productVariants.forEach((variant) => {
+        if (variant.variantTypes.length > 0) {
+          initialTotal += variant.variantTypes[0].price;
+        }
+      });
+      setTotalPrice(initialTotal);
+    } else if (product?.price) {
+      setTotalPrice(product.price);
     }
+  }, [product]);
+
+  const handleVariantChange = (variantName, typeName) => {
+    const updatedSelections = { ...selectedVariants, [variantName]: typeName };
+    setSelectedVariants(updatedSelections);
+
+    const variant = product.productVariants.find(
+      (v) => v.variantName === variantName
+    );
+    const selectedType = variant?.variantTypes.find(
+      (type) => type.name === typeName
+    );
+
+    if (
+      selectedType?.imageIndex !== undefined &&
+      selectedType.imageIndex !== null
+    ) {
+      setSelectedImage(selectedType.imageIndex);
+    }
+
+    const newTotal = product.productVariants.reduce((total, variant) => {
+      const selectedType = variant.variantTypes.find(
+        (type) => type.name === updatedSelections[variant.variantName]
+      );
+      return total + (selectedType?.price || 0);
+    }, 0);
+
+    setTotalPrice(newTotal);
   };
 
   const otherVendorProducts =
     vendorProducts?.filter((p) => p._id !== productId) || [];
 
   const handleAddToCart = async () => {
-    console.log("initiated");
     try {
-      const selectedVariantData =
-        product.variant?.variantTypes[selectedVariant];
-        
-      if (!selectedVariantData) {
-        toast.error("Please select a variant");
-        return;
+      if (product.productVariants?.length > 0) {
+
+        const allVariantsSelected = product.productVariants.every(
+          (variant) => selectedVariants[variant.variantName]
+        );
+
+        if (!allVariantsSelected) {
+          toast.error("Please select all variants");
+          return;
+        }
+
+        const hasLowStock = product.productVariants.some((variant) => {
+          const selectedType = variant.variantTypes.find(
+            (type) => type.name === selectedVariants[variant.variantName]
+          );
+          return selectedType?.stock < 1;
+        });
+
+        if (hasLowStock) {
+          toast.error("Some selected variants are out of stock");
+          return;
+        }
+
+        const cartData = {
+          productId: product._id,
+          selectedVariants: Object.entries(selectedVariants).map(
+            ([variantName, typeName]) => ({
+              variantName,
+              typeName,
+            })
+          ),
+          quantity: 1,
+        };
+        await addToCart(cartData);
+      } else {
+        // Handle non-variant product
+        if (product.stock < 1) {
+          toast.error("Product is out of stock");
+          return;
+        }
+
+        const cartData = {
+          productId: product._id,
+          quantity: 1,
+        };
+        await addToCart(cartData);
       }
 
-      if (selectedVariantData.stock < 1) {
-        toast.error("Product is out of stock");
-        return;
-      }
-
-      const cartData = {
-        productId: product._id,
-        selectedVariant: selectedVariant,
-        quantity: 1,
-      };
-
-      await addToCart(cartData);
-      console.log("Data send");
       toast.success("Product added to cart successfully!");
     } catch (error) {
       toast.error(
@@ -78,6 +139,8 @@ const ProductViewPage = () => {
       );
     }
   };
+
+  const finalPrice = totalPrice * (1 - (product?.discount || 0) / 100);
 
   if (loading)
     return (
@@ -112,7 +175,6 @@ const ProductViewPage = () => {
             ))}
           </div>
 
-          {/* Center - Main image */}
           <div className="md:col-span-6 order-1 md:order-2">
             <div className="aspect-square rounded-lg overflow-hidden">
               <MagnifyImage
@@ -122,7 +184,6 @@ const ProductViewPage = () => {
             </div>
           </div>
 
-          {/* Right side - Product info */}
           <div className="md:col-span-5 space-y-6 order-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -157,24 +218,44 @@ const ProductViewPage = () => {
 
             {/* Price and Stock */}
             <div>
-              {product.variant?.variantTypes[selectedVariant]?.stock <= 10 && (
-                <div className="text-red-500 text-sm mb-1">
-                  Low in stock, only{" "}
-                  {product.variant?.variantTypes[selectedVariant]?.stock} left
-                </div>
+              {product.productVariants?.length > 0 ? (
+                // Show stock for variant products
+                product.productVariants?.some((variant) => {
+                  const selectedType = variant.variantTypes.find(
+                    (type) => type.name === selectedVariants[variant.variantName]
+                  );
+                  return selectedType && selectedType.stock <= 10;
+                }) && (
+                  <div className="text-red-500 text-sm mb-1">
+                    Low in stock, only{" "}
+                    {product.productVariants
+                      ?.map((variant) => {
+                        const selectedType = variant.variantTypes.find(
+                          (type) => type.name === selectedVariants[variant.variantName]
+                        );
+                        return selectedType?.stock;
+                      })
+                      .filter((stock) => stock !== undefined)
+                      .sort((a, b) => a - b)[0]}{" "}
+                    left
+                  </div>
+                )
+              ) : (
+                // Show stock for non-variant products
+                product.stock <= 10 && (
+                  <div className="text-red-500 text-sm mb-1">
+                    Low in stock, only {product.stock} left
+                  </div>
+                )
               )}
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-semibold">
-                  ₹
-                  {(
-                    product.variant?.variantTypes[selectedVariant]?.price *
-                    (1 - product.discount / 100)
-                  ).toFixed(2)}
+                  ₹{finalPrice.toFixed(2)}
                 </span>
                 {product.discount > 0 && (
                   <>
                     <span className="text-gray-500 line-through">
-                      ₹{product.variant?.variantTypes[selectedVariant]?.price}
+                      ₹{totalPrice.toFixed(2)}
                     </span>
                     <span className="text-green-600">
                       {product.discount}% off
@@ -193,30 +274,30 @@ const ProductViewPage = () => {
             </div>
 
             {/* Variants */}
-            {product.variant && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {product.variant.variantName}
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {product.variant.variantTypes.map((variant, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleVariantSelect(index)}
-                        className={`px-4 py-2 rounded-lg border ${
-                          selectedVariant === index
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-200 hover:border-orange-200"
-                        }`}
-                      >
-                        {variant.name}
-                      </button>
-                    ))}
+            {product.productVariants?.length > 0 &&
+              product.productVariants?.map((variant) => (
+                <div key={variant._id} className="space-y-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {variant.variantName}
+                    </label>
+                    <select
+                      className="w-full p-2 border rounded-md"
+                      value={selectedVariants[variant.variantName] || ""}
+                      onChange={(e) =>
+                        handleVariantChange(variant.variantName, e.target.value)
+                      }
+                    >
+                      <option value="">Select {variant.variantName}</option>
+                      {variant.variantTypes.map((type) => (
+                        <option key={type._id} value={type.name}>
+                          {type.name} {type.price > 0 && `(₹${type.price})`}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-              </div>
-            )}
+              ))}
 
             {/* Buttons */}
             <div className="flex gap-4">

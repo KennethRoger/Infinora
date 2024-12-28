@@ -19,6 +19,39 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scroll-behavior: smooth;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Smooth scrolling for product scroll */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.smooth-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Snap scrolling */
+.snap-x {
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 8px;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -272,7 +272,7 @@ export default function CreatorAddProduct() {
       const formData = new FormData();
 
       Object.keys(data).forEach((key) => {
-        if (key === "productVariants") {
+        if (key === "productVariants" || key === "shipping") {
           formData.append(key, JSON.stringify(data[key]));
         } else {
           formData.append(key, data[key]);

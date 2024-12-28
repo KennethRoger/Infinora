@@ -187,8 +187,20 @@ const addVendorProducts = async (req, res) => {
     if (!name || !description || !category || !subCategory) {
       return res.status(400).json({
         success: false,
-        message: "Required fields are missing",
+        message:
+          "Required fields are missing: name, description, category, and subCategory are mandatory",
       });
+    }
+
+    if (discount) {
+      const discountValue = Number(discount);
+      if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
+        return res.status(400).json({
+          success: false,
+          message: "Discount must be a number between 0 and 100",
+        });
+      }
+      discount = discountValue;
     }
 
     if (productVariants && typeof productVariants === "string") {
@@ -203,17 +215,23 @@ const addVendorProducts = async (req, res) => {
       }
     }
 
+    if (!Array.isArray(productVariants)) {
+      productVariants = [];
+    }
+
     if (productVariants.length > 0 && (price || stock)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid. Can't have both variants and single product details",
+        message:
+          "Invalid configuration: Cannot have both variants and single product details",
       });
     }
 
     if (!productVariants.length && (!price || !stock || !shipping)) {
       return res.status(400).json({
         success: false,
-        message: "Either variants or product details are required",
+        message:
+          "Either product variants or single product details (price, stock, shipping) are required",
       });
     }
 
@@ -229,7 +247,7 @@ const addVendorProducts = async (req, res) => {
     if (decoded.role !== "vendor") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized access.",
+        message: "Unauthorized access. Only vendors can add products.",
       });
     }
 
@@ -237,14 +255,23 @@ const addVendorProducts = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "Vendor account not found.",
       });
     }
 
-    const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
+    const processedTags = tags
+      ? (Array.isArray(tags)
+          ? tags
+          : typeof tags === "string"
+          ? tags.split(",")
+          : []
+        )
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0)
+      : [];
 
     const imageUrls = [];
-    if (req.files) {
+    if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         try {
           const b64 = Buffer.from(file.buffer).toString("base64");
@@ -261,7 +288,7 @@ const addVendorProducts = async (req, res) => {
           console.error("Error uploading image:", error);
           return res.status(500).json({
             success: false,
-            message: "Failed to upload image",
+            message: "Failed to upload product images",
             error: error.message,
           });
         }
@@ -269,16 +296,16 @@ const addVendorProducts = async (req, res) => {
     }
 
     const productData = {
-      name,
-      description,
+      name: name.trim(),
+      description: description.trim(),
       images: imageUrls,
-      discount: Number(discount || 0),
+      discount: discount || 0,
       category,
       subCategory,
-      status,
+      status: status || "available",
       tags: processedTags,
-      additionalDetails,
-      customizable: customizable === "true",
+      additionalDetails: additionalDetails ? additionalDetails.trim() : "",
+      customizable: Boolean(customizable),
       vendor: user._id,
     };
 
@@ -287,30 +314,129 @@ const addVendorProducts = async (req, res) => {
         if (!variant.variantName || !Array.isArray(variant.variantTypes)) {
           return res.status(400).json({
             success: false,
-            message: "Invalid variant structure",
+            message: `Invalid variant structure for variant: ${
+              variant.variantName || "unnamed"
+            }`,
           });
         }
+
         for (const type of variant.variantTypes) {
-          if (!type.name || type.price === undefined || !type.stock || !type.shipping) {
+          if (!type.name || type.price === undefined || !type.stock) {
             return res.status(400).json({
               success: false,
-              message: "Missing required fields in variant type",
+              message: `Missing required fields in variant type for ${variant.variantName}`,
             });
+          }
+          type.price = Number(type.price);
+          type.stock = Number(type.stock);
+
+          if (isNaN(type.price) || type.price < 0) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid price for variant ${variant.variantName} - ${type.name}`,
+            });
+          }
+
+          if (isNaN(type.stock) || type.stock < 0) {
+            return res.status(400).json({
+              success: false,
+              message: `Invalid stock for variant ${variant.variantName} - ${type.name}`,
+            });
+          }
+
+          if (type.shipping) {
+            if (
+              !type.shipping.weight ||
+              !type.shipping.dimensions ||
+              !type.shipping.dimensions.length ||
+              !type.shipping.dimensions.width ||
+              !type.shipping.dimensions.height
+            ) {
+              return res.status(400).json({
+                success: false,
+                message: `Invalid shipping details for variant ${variant.variantName} - ${type.name}`,
+              });
+            }
           }
         }
       }
       productData.productVariants = productVariants;
     } else {
-      if (!shipping.weight || !shipping.dimensions || 
-          !shipping.dimensions.length || !shipping.dimensions.width || !shipping.dimensions.height) {
+      console.log("Shipping data type:", typeof shipping);
+      let shippingData;
+
+      try {
+        shippingData =
+          typeof shipping === "string" ? JSON.parse(shipping) : shipping;
+        console.log("Parsed shipping data:", shippingData);
+      } catch (error) {
+        console.error("Error parsing shipping data:", error);
         return res.status(400).json({
           success: false,
-          message: "Invalid shipping details",
+          message: "Invalid shipping data format",
         });
       }
-      productData.price = Number(price);
-      productData.stock = Number(stock);
-      productData.shipping = shipping;
+
+      if (
+        !shippingData ||
+        typeof shippingData !== "object" ||
+        !shippingData.weight ||
+        !shippingData.dimensions ||
+        typeof shippingData.dimensions !== "object" ||
+        !shippingData.dimensions.length ||
+        !shippingData.dimensions.width ||
+        !shippingData.dimensions.height
+      ) {
+        console.log("Invalid shipping data structure:", shippingData);
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid shipping details. Weight and all dimensions (length, width, height) are required",
+        });
+      }
+
+      const dimensions = {
+        length: Number(shippingData.dimensions.length),
+        width: Number(shippingData.dimensions.width),
+        height: Number(shippingData.dimensions.height),
+      };
+
+      if (
+        isNaN(dimensions.length) ||
+        isNaN(dimensions.width) ||
+        isNaN(dimensions.height) ||
+        dimensions.length <= 0 ||
+        dimensions.width <= 0 ||
+        dimensions.height <= 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "All dimensions must be valid positive numbers",
+        });
+      }
+
+      shippingData.dimensions = dimensions;
+
+      const parsedPrice = Number(price);
+      const parsedStock = Number(stock);
+
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid price value",
+        });
+      }
+
+      if (isNaN(parsedStock) || parsedStock < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid stock value",
+        });
+      }
+
+      productData.price = parsedPrice;
+      productData.stock = parsedStock;
+      productData.shipping = shippingData;
     }
 
     const product = new Product(productData);
@@ -321,7 +447,6 @@ const addVendorProducts = async (req, res) => {
       message: "Product added successfully",
       product,
     });
-
   } catch (error) {
     console.error("Error adding product:", error);
     return res.status(500).json({
