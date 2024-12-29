@@ -1,87 +1,140 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { fetchUserCart } from "@/redux/features/userCartSlice";
 import CartCard from "@/components/Cart/CartCard";
-import Spinner from "@/components/Spinner/Spinner";
-import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function CartPage() {
   const dispatch = useDispatch();
-  const { cart, loading, error } = useSelector((state) => state.userCart || {});
   const navigate = useNavigate();
+  const { cart, loading, error } = useSelector((state) => state.userCart);
 
   useEffect(() => {
     dispatch(fetchUserCart());
   }, [dispatch]);
 
-  if (loading) return <Spinner />;
-  if (error) return <div className="text-red-500">{error}</div>;
-  if (!cart?.items?.length) {
-    return <div className="text-center py-8">Your cart is empty</div>;
-  }
+  const calculateItemTotal = (item) => {
+    if (!item.productId) return 0;
 
-  const totals = cart.items.reduce(
-    (acc, item) => {
-      const originalPrice =
-        item.product.variant.variantTypes[item.selectedVariant].price *
-        item.quantity;
-      const discountedPrice = originalPrice * (1 - item.product.discount / 100);
+    let basePrice = 0;
+
+    if (item.selectedVariants?.length > 0) {
+      basePrice = item.selectedVariants.reduce((total, selectedVariant) => {
+        const variant = item.productId.productVariants.find(
+          v => v.variantName === selectedVariant.variantName
+        );
+        const variantType = variant?.variantTypes.find(
+          t => t.name === selectedVariant.typeName
+        );
+        return total + (variantType?.price || 0);
+      }, 0);
+    } else {
+      basePrice = item.productId.price || 0;
+    }
+
+    const discountedPrice = basePrice * (1 - (item.productId.discount || 0) / 100);
+    return discountedPrice * item.quantity;
+  };
+
+  const calculateTotals = () => {
+    if (!cart?.items?.length) return { subtotal: 0, discount: 0, total: 0 };
+
+    return cart.items.reduce((acc, item) => {
+      if (!item.productId) return acc;
+
+      let itemBasePrice = 0;
+
+      if (item.selectedVariants?.length > 0) {
+        itemBasePrice = item.selectedVariants.reduce((total, selectedVariant) => {
+          const variant = item.productId.productVariants.find(
+            v => v.variantName === selectedVariant.variantName
+          );
+          const variantType = variant?.variantTypes.find(
+            t => t.name === selectedVariant.typeName
+          );
+          return total + (variantType?.price || 0);
+        }, 0);
+      } else {
+        itemBasePrice = item.productId.price || 0;
+      }
+
+      const itemTotalBasePrice = itemBasePrice * item.quantity;
+      const itemDiscount = itemTotalBasePrice * (item.productId.discount || 0) / 100;
+      const itemFinalPrice = itemTotalBasePrice - itemDiscount;
 
       return {
-        originalTotal: acc.originalTotal + originalPrice,
-        discountedTotal: acc.discountedTotal + discountedPrice,
+        subtotal: acc.subtotal + itemTotalBasePrice,
+        discount: acc.discount + itemDiscount,
+        total: acc.total + itemFinalPrice
       };
-    },
-    { originalTotal: 0, discountedTotal: 0 }
-  );
+    }, { subtotal: 0, discount: 0, total: 0 });
+  };
 
-  const totalDiscount = totals.originalTotal - totals.discountedTotal;
+  const { subtotal, discount, total } = calculateTotals();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-4">
+        <p className="text-red-500">{error}</p>
+        <Button onClick={() => dispatch(fetchUserCart())}>Try Again</Button>
+      </div>
+    );
+  }
+
+  if (!cart?.items?.length) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-4">
+        <p className="text-gray-500">Your cart is empty</p>
+        <Button onClick={() => navigate("/home")}>Continue Shopping</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 pt-[75px]">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
+    <div className="container py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Cart Items */}
+        <div className="lg:col-span-2 space-y-4">
           <h1 className="text-2xl font-semibold">Shopping Cart</h1>
-
           <div className="space-y-4">
-            <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
-              <div className="space-y-4">
-                {cart.items.map((item) => (
-                  <CartCard key={item._id} item={item} />
-                ))}
-              </div>
-            </div>
+            {cart.items.map((item, index) => (
+              <CartCard key={index} item={item} />
+            ))}
           </div>
         </div>
 
-        <div className="lg:col-span-4">
-          <div className="bg-white rounded-lg shadow-sm p-6 sticky top-20">
-            <h2 className="text-xl font-semibold">Order Summary</h2>
-
-            <div className="space-y-3">
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 rounded-lg border border-gray-100">
+            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+            <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Items Total</span>
-                <span>₹{totals.originalTotal.toFixed(2)}</span>
+                <span className="text-gray-600">Subtotal</span>
+                <span>₹{subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-green-600">
-                <span>Shop Discount</span>
-                <span>-₹{totalDiscount.toFixed(2)}</span>
-              </div>
-              <div className="border-t pt-2 mt-2">
+              {discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount</span>
+                  <span>-₹{discount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="pt-3 border-t border-gray-100">
                 <div className="flex justify-between font-semibold">
-                  <span>Total Amount</span>
-                  <span>₹{totals.discountedTotal.toFixed(2)}</span>
+                  <span>Total</span>
+                  <span>₹{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
-
-            <ButtonPrimary
-              onClick={() => navigate("/home/checkout")}
-              className="w-full mt-4"
-            >
-              Proceed to Checkout
-            </ButtonPrimary>
+            <Button className="w-full mt-6" onClick={() => navigate("/home/checkout")}>Proceed to Checkout</Button>
           </div>
         </div>
       </div>

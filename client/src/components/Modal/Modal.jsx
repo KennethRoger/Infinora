@@ -11,7 +11,7 @@ const Modal = ({ isOpen, children }) => {
     return () => {
       document.body.classList.remove("overflow-hidden");
     };
-  });
+  }, [isOpen]);
 
   if (!isOpen) return null;
   return (

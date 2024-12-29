@@ -4,24 +4,18 @@ const { verifyToken } = require("../utils/tokenValidator");
 
 const addToCart = async (req, res) => {
   try {
-    const { productId, selectedVariant, quantity } = req.body;
+    const { productId, selectedVariants, quantity } = req.body;
     const token = req.cookies.token;
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized access",
+        message: "Please login to add items to cart",
       });
     }
+
     const decoded = verifyToken(token);
     const userId = decoded.id;
-
-    if (quantity !== 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Quantity must be 1 for adding to cart",
-      });
-    }
 
     const product = await Product.findById(productId);
     if (!product) {
@@ -31,59 +25,111 @@ const addToCart = async (req, res) => {
       });
     }
 
-    const variant = product.variant?.variantTypes[selectedVariant];
-    if (!variant) {
-      return res.status(404).json({
-        success: false,
-        message: "Invalid variant selected",
-      });
+    let cart = await Cart.findOne({ userId });
+    if (!cart) {
+      cart = await Cart.create({ userId, items: [] });
     }
 
-    if (variant.stock < 1) {
+    const existingItemIndex = cart.items.findIndex((item) => {
+      if (product.productVariants && product.productVariants.length > 0) {
+        if (item.productId.toString() !== productId) return false;
+        if (
+          !item.selectedVariants ||
+          item.selectedVariants.length !== selectedVariants.length
+        )
+          return false;
+
+        return selectedVariants.every((variant) =>
+          item.selectedVariants.some(
+            (itemVariant) =>
+              itemVariant.variantName === variant.variantName &&
+              itemVariant.typeName === variant.typeName
+          )
+        );
+      } else {
+        return item.productId.toString() === productId;
+      }
+    });
+
+    const currentQuantity =
+      existingItemIndex > -1 ? cart.items[existingItemIndex].quantity : 0;
+    const newTotalQuantity = currentQuantity + quantity;
+
+    if (newTotalQuantity > 5) {
       return res.status(400).json({
         success: false,
-        message: "Product is out of stock",
+        message: "Cannot add more than 5 quantities of the same product",
       });
     }
 
-    let cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      cart = new Cart({ user: userId, items: [] });
-    }
-
-    const existingItem = cart.items.find(
-      (item) =>
-        item.product.toString() === productId &&
-        item.selectedVariant === selectedVariant
-    );
-
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + quantity;
-      if (newQuantity > 5) {
+    if (product.productVariants && product.productVariants.length > 0) {
+      if (
+        !selectedVariants ||
+        selectedVariants.length !== product.productVariants.length
+      ) {
         return res.status(400).json({
           success: false,
-          message: "Cannot exceed maximum quantity of 5 per item",
+          message: "Please select all variants",
         });
       }
-      existingItem.quantity = newQuantity;
+
+      for (const variant of selectedVariants) {
+        const productVariant = product.productVariants.find(
+          (v) => v.variantName === variant.variantName
+        );
+        if (!productVariant) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid variant: ${variant.variantName}`,
+          });
+        }
+
+        const variantType = productVariant.variantTypes.find(
+          (t) => t.name === variant.typeName
+        );
+        if (!variantType) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid variant type: ${variant.typeName}`,
+          });
+        }
+
+        if (variantType.stock < quantity) {
+          return res.status(400).json({
+            success: false,
+            message: `${productVariant.variantName}: ${variantType.name} is out of stock`,
+          });
+        }
+      }
+
+      if (existingItemIndex > -1) {
+        cart.items[existingItemIndex].quantity += quantity;
+      } else {
+        cart.items.push({
+          productId,
+          selectedVariants,
+          quantity,
+        });
+      }
     } else {
-      cart.items.push({
-        product: productId,
-        selectedVariant,
-        quantity,
-      });
+      if (product.stock < quantity) {
+        return res.status(400).json({
+          success: false,
+          message: "Product is out of stock",
+        });
+      }
+
+      if (existingItemIndex > -1) {
+        cart.items[existingItemIndex].quantity += quantity;
+      } else {
+        cart.items.push({
+          productId,
+          quantity,
+        });
+      }
     }
 
     await cart.save();
-
-    await cart.populate({
-      path: "items.product",
-      select: "name images variant vendor discount",
-      populate: {
-        path: "vendor",
-        select: "name profileImagePath",
-      },
-    });
 
     res.status(200).json({
       success: true,
@@ -91,11 +137,10 @@ const addToCart = async (req, res) => {
       cart,
     });
   } catch (error) {
-    console.error("Error adding to cart:", error);
+    console.error("Add to cart error:", error);
     res.status(500).json({
       success: false,
-      message: "Error adding item to cart",
-      error: error.message,
+      message: "Failed to add item to cart",
     });
   }
 };
@@ -113,9 +158,9 @@ const getCart = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const cart = await Cart.findOne({ user: userId }).populate({
-      path: "items.product",
-      select: "name images variant vendor discount",
+    const cart = await Cart.findOne({ userId }).populate({
+      path: "items.productId",
+      select: "name images productVariants price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
@@ -134,18 +179,17 @@ const getCart = async (req, res) => {
       cart,
     });
   } catch (error) {
-    console.error("Error fetching cart:", error);
+    console.error("Get cart error:", error);
     res.status(500).json({
       success: false,
-      message: "Error fetching cart",
-      error: error.message,
+      message: "Failed to get cart",
     });
   }
 };
 
 const removeFromCart = async (req, res) => {
   try {
-    const { productId, selectedVariant } = req.body;
+    const { productId, selectedVariants } = req.body;
     const token = req.cookies.token;
 
     if (!token) {
@@ -157,7 +201,7 @@ const removeFromCart = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const cart = await Cart.findOne({ user: userId });
+    const cart = await Cart.findOne({ userId });
     if (!cart) {
       return res.status(404).json({
         success: false,
@@ -165,11 +209,28 @@ const removeFromCart = async (req, res) => {
       });
     }
 
-    const itemIndex = cart.items.findIndex(
-      (item) =>
-        item.product.toString() === productId &&
-        item.selectedVariant === selectedVariant
-    );
+    const itemIndex = cart.items.findIndex((item) => {
+      if (item.productId.toString() !== productId) return false;
+
+      // If product has variants, check if selected variants match
+      if (selectedVariants?.length > 0) {
+        if (
+          !item.selectedVariants ||
+          item.selectedVariants.length !== selectedVariants.length
+        )
+          return false;
+        return selectedVariants.every((variant) =>
+          item.selectedVariants.some(
+            (itemVariant) =>
+              itemVariant.variantName === variant.variantName &&
+              itemVariant.typeName === variant.typeName
+          )
+        );
+      }
+
+      // For non-variant products, just match the productId
+      return true;
+    });
 
     if (itemIndex === -1) {
       return res.status(404).json({
@@ -182,8 +243,8 @@ const removeFromCart = async (req, res) => {
     await cart.save();
 
     await cart.populate({
-      path: "items.product",
-      select: "name images variant vendor discount",
+      path: "items.productId",
+      select: "name images productVariants price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
@@ -192,21 +253,21 @@ const removeFromCart = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Item removed from cart",
       cart,
     });
   } catch (error) {
     console.error("Error removing cart item:", error);
     res.status(500).json({
       success: false,
-      message: "Error removing cart item",
-      error: error.message,
+      message: "Failed to remove item from cart",
     });
   }
 };
 
 const incrementCartItem = async (req, res) => {
   try {
-    const { productId, selectedVariant } = req.body;
+    const { productId, selectedVariants } = req.body;
     const token = req.cookies.token;
 
     if (!token) {
@@ -218,7 +279,7 @@ const incrementCartItem = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const cart = await Cart.findOne({ user: userId });
+    const cart = await Cart.findOne({ userId });
     if (!cart) {
       return res.status(404).json({
         success: false,
@@ -226,16 +287,61 @@ const incrementCartItem = async (req, res) => {
       });
     }
 
-    const itemIndex = cart.items.findIndex(
-      (item) =>
-        item.product.toString() === productId &&
-        item.selectedVariant === selectedVariant
-    );
+    const itemIndex = cart.items.findIndex((item) => {
+      if (item.productId.toString() !== productId) return false;
+
+      // If product has variants, check if selected variants match
+      if (selectedVariants?.length > 0) {
+        if (
+          !item.selectedVariants ||
+          item.selectedVariants.length !== selectedVariants.length
+        )
+          return false;
+        return selectedVariants.every((variant) =>
+          item.selectedVariants.some(
+            (itemVariant) =>
+              itemVariant.variantName === variant.variantName &&
+              itemVariant.typeName === variant.typeName
+          )
+        );
+      }
+
+      // For non-variant products, just match the productId
+      return true;
+    });
 
     if (itemIndex === -1) {
       return res.status(404).json({
         success: false,
         message: "Item not found in cart",
+      });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    let hasStock = false;
+    if (selectedVariants?.length > 0) {
+      const selectedVariant = selectedVariants[0];
+      const variantType = product.productVariants
+        .find((v) => v.variantName === selectedVariant.variantName)
+        ?.variantTypes.find((t) => t.name === selectedVariant.typeName);
+
+      hasStock =
+        variantType && variantType.stock > cart.items[itemIndex].quantity;
+    } else {
+      hasStock = product.stock > cart.items[itemIndex].quantity;
+    }
+
+    if (!hasStock) {
+      return res.status(400).json({
+        success: false,
+        message: "Product is out of stock",
       });
     }
 
@@ -250,8 +356,8 @@ const incrementCartItem = async (req, res) => {
     await cart.save();
 
     await cart.populate({
-      path: "items.product",
-      select: "name images variant vendor discount",
+      path: "items.productId",
+      select: "name images productVariants price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
@@ -260,21 +366,21 @@ const incrementCartItem = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Item quantity increased",
       cart,
     });
   } catch (error) {
     console.error("Error incrementing cart item:", error);
     res.status(500).json({
       success: false,
-      message: "Error incrementing cart item",
-      error: error.message,
+      message: "Failed to increase item quantity",
     });
   }
 };
 
 const decrementCartItem = async (req, res) => {
   try {
-    const { productId, selectedVariant } = req.body;
+    const { productId, selectedVariants } = req.body;
     const token = req.cookies.token;
 
     if (!token) {
@@ -286,7 +392,7 @@ const decrementCartItem = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const cart = await Cart.findOne({ user: userId });
+    const cart = await Cart.findOne({ userId });
     if (!cart) {
       return res.status(404).json({
         success: false,
@@ -294,11 +400,28 @@ const decrementCartItem = async (req, res) => {
       });
     }
 
-    const itemIndex = cart.items.findIndex(
-      (item) =>
-        item.product.toString() === productId &&
-        item.selectedVariant === selectedVariant
-    );
+    const itemIndex = cart.items.findIndex((item) => {
+      if (item.productId.toString() !== productId) return false;
+
+      // If product has variants, check if selected variants match
+      if (selectedVariants?.length > 0) {
+        if (
+          !item.selectedVariants ||
+          item.selectedVariants.length !== selectedVariants.length
+        )
+          return false;
+        return selectedVariants.every((variant) =>
+          item.selectedVariants.some(
+            (itemVariant) =>
+              itemVariant.variantName === variant.variantName &&
+              itemVariant.typeName === variant.typeName
+          )
+        );
+      }
+
+      // For non-variant products, just match the productId
+      return true;
+    });
 
     if (itemIndex === -1) {
       return res.status(404).json({
@@ -316,8 +439,8 @@ const decrementCartItem = async (req, res) => {
     await cart.save();
 
     await cart.populate({
-      path: "items.product",
-      select: "name images variant vendor discount",
+      path: "items.productId",
+      select: "name images productVariants price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
@@ -326,14 +449,16 @@ const decrementCartItem = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: cart.items[itemIndex]
+        ? "Item quantity decreased"
+        : "Item removed from cart",
       cart,
     });
   } catch (error) {
     console.error("Error decrementing cart item:", error);
     res.status(500).json({
       success: false,
-      message: "Error decrementing cart item",
-      error: error.message,
+      message: "Failed to decrease item quantity",
     });
   }
 };
@@ -352,7 +477,7 @@ const clearCart = async (req, res) => {
     const userId = decoded.id;
 
     const cart = await Cart.findOneAndUpdate(
-      { user: userId },
+      { userId },
       { items: [] },
       { new: true }
     );
@@ -373,7 +498,7 @@ const clearCart = async (req, res) => {
     console.error("Error clearing cart:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to clear cart",
+      message: "Error clearing cart",
     });
   }
 };
