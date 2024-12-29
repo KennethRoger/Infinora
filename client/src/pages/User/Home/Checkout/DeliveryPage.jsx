@@ -1,10 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserAddresses } from "@/redux/features/userAddressSlice";
 import { setSelectedAddress } from "@/redux/features/userOrderSlice";
 import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
 import AddedAddress from "@/components/Address/AddedAddress";
+import Modal from "@/components/Modal/Modal";
+import AddAddress from "@/pages/User/Home/Address/AddAddress";
+import EditAddress from "@/pages/User/Home/Address/EditAddress";
 import { MapPin, Plus } from "lucide-react";
 
 export default function DeliveryPage() {
@@ -14,6 +17,9 @@ export default function DeliveryPage() {
   const { checkout } = useSelector((state) => state.userOrder);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchUserAddresses());
@@ -27,6 +33,18 @@ export default function DeliveryPage() {
     if (checkout.selectedAddressId) {
       navigate("/home/checkout/payment");
     }
+  };
+
+  const handleEditAddress = (addressId) => {
+    setSelectedAddressId(addressId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsAddModalOpen(false);
+    setIsEditModalOpen(false);
+    setSelectedAddressId(null);
+    dispatch(fetchUserAddresses());
   };
 
   if (loading)
@@ -44,7 +62,7 @@ export default function DeliveryPage() {
           </h2>
           {addresses.length < 5 && (
             <button
-              onClick={() => navigate("/home/profile/address/add-address")}
+              onClick={() => setIsAddModalOpen(true)}
               className="flex items-center gap-2 text-primary hover:text-primary/80 text-sm font-medium"
             >
               <Plus className="h-4 w-4" />
@@ -56,9 +74,7 @@ export default function DeliveryPage() {
         {addresses.length === 0 ? (
           <div className="text-center py-8 bg-gray-50 rounded-lg">
             <p className="text-gray-500 mb-4">No addresses found</p>
-            <ButtonPrimary
-              onClick={() => navigate("/home/profile/address/add-address")}
-            >
+            <ButtonPrimary onClick={() => setIsAddModalOpen(true)}>
               Add New Address
             </ButtonPrimary>
           </div>
@@ -83,7 +99,12 @@ export default function DeliveryPage() {
                     className="mt-1"
                   />
                   <div className="flex-1">
-                    <AddedAddress address={address} hideActions />
+                    <div className="flex justify-between">
+                      <AddedAddress 
+                        address={address}
+                        onEdit={() => handleEditAddress(address._id)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -101,6 +122,16 @@ export default function DeliveryPage() {
           Continue to Payment
         </ButtonPrimary>
       </div>
+
+      {/* Add Address Modal */}
+      <Modal isOpen={isAddModalOpen} onClose={handleModalClose}>
+        <AddAddress onSuccess={handleModalClose} />
+      </Modal>
+
+      {/* Edit Address Modal */}
+      <Modal isOpen={isEditModalOpen} onClose={handleModalClose}>
+          <EditAddress addressData={selectedAddressId} onSuccess={handleModalClose} />
+      </Modal>
     </div>
   );
 }

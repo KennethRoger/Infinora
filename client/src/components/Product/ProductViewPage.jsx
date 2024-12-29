@@ -119,7 +119,6 @@ const ProductViewPage = () => {
         };
         await addToCart(cartData);
       } else {
-        // Handle non-variant product
         if (product.stock < 1) {
           toast.error("Product is out of stock");
           return;

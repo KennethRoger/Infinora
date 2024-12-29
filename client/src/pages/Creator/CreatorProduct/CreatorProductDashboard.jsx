@@ -2,14 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import SearchBarAdmin from "@/components/Form/SearchBarAdmin";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import DataTable from "@/components/Table/DataTable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +24,7 @@ import { formatPrice } from "@/lib/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVendorProducts } from "@/redux/features/vendorProductsSlice";
 import axios from "axios";
+import { PRODUCT_TABLE_COLUMNS } from "@/constants/creator/tableColumns";
 
 export default function CreatorProductDashboard() {
   const navigate = useNavigate();
@@ -40,8 +34,16 @@ export default function CreatorProductDashboard() {
   );
 
   const calculateTotalStock = (product) => {
-    if (!product.variant?.variantTypes) return 0;
-    return product.variant.variantTypes.reduce((total, variant) => total + (parseInt(variant.stock) || 0), 0);
+    if (!product) return 0;
+    
+    if (product.productVariants?.[0]?.variantTypes?.length > 0) {
+      return product.productVariants[0].variantTypes.reduce(
+        (sum, type) => sum + (parseInt(type.stock) || 0),
+        0
+      );
+    }
+    
+    return parseInt(product.stock) || 0;
   };
 
   useEffect(() => {
@@ -68,6 +70,78 @@ export default function CreatorProductDashboard() {
         });
     } catch (error) {
       console.error("Error toggling listing:", error);
+    }
+  };
+
+  const renderCell = (key, product) => {
+    switch (key) {
+      case "image":
+        return (
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            className="h-12 w-12 rounded-md object-cover"
+          />
+        );
+      case "category":
+        return product.category?.name;
+      case "subCategory":
+        return product.subCategory?.name;
+      case "stock":
+        return (
+          <span
+            className={`${
+              calculateTotalStock(product) > 10
+                ? "text-green-600"
+                : calculateTotalStock(product) > 0
+                ? "text-yellow-600"
+                : "text-red-600"
+            }`}
+          >
+            {calculateTotalStock(product)}
+          </span>
+        );
+      case "variants":
+        return product.productVariants?.length;
+      case "offer":
+        return `${product.discount}%`;
+      case "status":
+        return (
+          <Badge variant={product.isListed ? "success" : "destructive"}>
+            {product.isListed ? "active" : "inactive"}
+          </Badge>
+        );
+      case "actions":
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem>View details</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(`/home/profile/creator/edit-product/${product._id}`)
+                }
+              >
+                Edit product
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className={product.isListed ? "text-red-600" : "text-green-600"}
+                onClick={() => handleToggleListing(product._id)}
+              >
+                {product.isListed ? "Unlist product" : "List product"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      default:
+        return product[key];
     }
   };
 
@@ -114,91 +188,11 @@ export default function CreatorProductDashboard() {
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-100 hover:bg-gray-100">
-              <TableHead className="w-[100px]">Image</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Subcategory</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Offer</TableHead>
-              <TableHead>Rating</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.map((product) => (
-              <TableRow key={product._id}>
-                <TableCell>
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="h-12 w-12 rounded-md object-cover"
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.category?.name}</TableCell>
-                <TableCell>{product.subCategory?.name}</TableCell>
-                <TableCell>
-                  <span
-                    className={`${
-                      calculateTotalStock(product) > 10
-                        ? "text-green-600"
-                        : calculateTotalStock(product) > 0
-                        ? "text-yellow-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {calculateTotalStock(product)}
-                  </span>
-                </TableCell>
-                <TableCell>{`${product.discount}%`}</TableCell>
-                <TableCell>{product.rating}</TableCell>
-                <TableCell>
-                  <Badge variant={product.isListed ? "success" : "destructive"}>
-                    {product.isListed ? "active" : "inactive"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>View details</DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          navigate(
-                            `/home/profile/creator/edit-product/${product._id}`
-                          )
-                        }
-                      >
-                        Edit product
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className={
-                          product.isListed ? "text-red-600" : "text-green-600"
-                        }
-                        onClick={() => handleToggleListing(product._id)}
-                      >
-                        {product.isListed ? "Unlist product" : "List product"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={PRODUCT_TABLE_COLUMNS}
+        data={products}
+        renderCell={renderCell}
+      />
     </div>
   );
 }
