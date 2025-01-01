@@ -138,25 +138,25 @@ export default function ReviewPage() {
       const response = await createOrder(orderData);
       console.log(response);
 
-      // if (response.success) {
-      //   localStorage.removeItem("selectedAddress");
-      //   localStorage.removeItem("selectedPayment");
+      if (response.success) {
+        localStorage.removeItem("selectedAddress");
+        localStorage.removeItem("selectedPayment");
 
-      //   dispatch(clearCart());
-      //   dispatch(clearCheckout());
+        dispatch(clearCart());
+        dispatch(clearCheckout());
 
-      //   await axios.delete(
-      //     `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
-      //     {
-      //       withCredentials: true,
-      //     }
-      //   );
+        await axios.delete(
+          `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
+          {
+            withCredentials: true,
+          }
+        );
 
-      //   toast.success("Order placed successfully!");
-      //   navigate("/home/profile/orders", { replace: true });
-      // } else {
-      //   toast.error(response.message || "Failed to place order");
-      // }
+        toast.success("Order placed successfully!");
+        navigate("/home/profile/orders", { replace: true });
+      } else {
+        toast.error(response.message || "Failed to place order");
+      }
     } catch (error) {
       console.error("Failed to place order:", error);
       toast.error(error.response?.data?.message || "Failed to place order");

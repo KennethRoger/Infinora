@@ -27,15 +27,32 @@ const createOrder = async (req, res) => {
         throw new Error(`Product not found: ${item.productId}`);
       }
 
-      if (product.stock < item.quantity) {
-        throw new Error(`Insufficient stock for product: ${item.productId}`);
-      }
+      if (product.productVariants.length === item.selectedVariants?.length) {
+        item.selectedVariants.forEach(selectedVariant => {
+          const variant = product.productVariants.find(
+            v => v.variantName === selectedVariant.variantName
+          );
+          if (!variant) {
+            throw new Error(`Variant not found: ${selectedVariant.variantName}`);
+          }
 
-      const orderId = generateOrderId(userId);
+          const variantType = variant.variantTypes.find(
+            type => type.name === selectedVariant.typeName
+          );
+          if (!variantType) {
+            throw new Error(`Variant type not found: ${selectedVariant.typeName}`);
+          }
 
-      let totalAmount, variantPrice;
-      if (product.productVariants.length === item.selectedVariants.length) {
-        variantPrice = product.productVariants.reduce((price, variant) => {
+          if (Number(variantType.stock) < Number(item.quantity)) {
+            throw new Error(
+              `Insufficient stock for variant ${variant.variantName} - ${variantType.name}. Available: ${variantType.stock}, Requested: ${item.quantity}`
+            );
+          }
+        });
+
+        const orderId = generateOrderId(userId);
+
+        let variantPrice = product.productVariants.reduce((price, variant) => {
           const currVariant = item.selectedVariants.find(
             (selectedVariant) =>
               selectedVariant.variantName === variant.variantName
@@ -46,10 +63,9 @@ const createOrder = async (req, res) => {
           return (price += currVariantType.price);
         }, 0);
 
-        totalAmount =
-          variantPrice * (1 - product.discount / 100) * item.quantity;
+        let totalAmount = variantPrice * (1 - product.discount / 100) * item.quantity;
 
-        Order.create({
+        const order = await Order.create({
           orderId,
           user: userId,
           product: item.productId,
@@ -64,16 +80,47 @@ const createOrder = async (req, res) => {
           status: "pending",
         });
 
-        Product.findByIdAndUpdate(item.productId, {
-          stock: stock - item.quantity,
+        const updatedProductVariants = product.productVariants.map((variant) => {
+          const selectedVariant = item.selectedVariants.find(
+            (sv) => sv.variantName === variant.variantName
+          );
+
+          if (selectedVariant) {
+            return {
+              ...variant,
+              variantTypes: variant.variantTypes.map((type) => {
+                if (type.name === selectedVariant.typeName) {
+                  const newStock = Number(type.stock) - Number(item.quantity);
+                  if (isNaN(newStock) || newStock < 0) {
+                    throw new Error(
+                      `Invalid stock calculation for variant: ${variant.variantName} - ${type.name}`
+                    );
+                  }
+                  return { ...type, stock: newStock };
+                }
+                return type;
+              }),
+            };
+          }
+          return variant;
         });
 
-        return;
-      } else if (product.price) {
-        totalAmount =
-          product.price * (1 - product.discount / 100) * item.quantity;
+        await Product.findByIdAndUpdate(item.productId, {
+          productVariants: updatedProductVariants,
+        });
 
-        Order.create({
+        return order;
+      } else if (product.price) {
+        if (Number(product.stock) < Number(item.quantity)) {
+          throw new Error(
+            `Insufficient stock for product: ${item.productId}. Available: ${product.stock}, Requested: ${item.quantity}`
+          );
+        }
+
+        const orderId = generateOrderId(userId);
+        let totalAmount = product.price * (1 - product.discount / 100) * item.quantity;
+
+        const order = await Order.create({
           orderId,
           user: userId,
           product: item.productId,
@@ -88,12 +135,18 @@ const createOrder = async (req, res) => {
           status: "pending",
         });
 
-        Product.findByIdAndUpdate(item.productId, {
-          stock: stock - item.quantity,
+        const newStock = Number(product.stock) - Number(item.quantity);
+        if (isNaN(newStock) || newStock < 0) {
+          throw new Error(`Invalid stock calculation for product: ${item.productId}`);
+        }
+        
+        await Product.findByIdAndUpdate(item.productId, {
+          stock: newStock
         });
-        return;
+
+        return order;
       } else {
-        throw new Error(`Product variant not found: ${item.productId}`);
+        throw new Error(`Invalid product configuration: ${item.productId}`);
       }
     });
 

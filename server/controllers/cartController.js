@@ -212,7 +212,6 @@ const removeFromCart = async (req, res) => {
     const itemIndex = cart.items.findIndex((item) => {
       if (item.productId.toString() !== productId) return false;
 
-      // If product has variants, check if selected variants match
       if (selectedVariants?.length > 0) {
         if (
           !item.selectedVariants ||
@@ -227,8 +226,6 @@ const removeFromCart = async (req, res) => {
           )
         );
       }
-
-      // For non-variant products, just match the productId
       return true;
     });
 
@@ -306,8 +303,7 @@ const incrementCartItem = async (req, res) => {
         );
       }
 
-      // For non-variant products, just match the productId
-      return true;
+      return true;// For non-variant products, just match the productId
     });
 
     if (itemIndex === -1) {
@@ -418,8 +414,6 @@ const decrementCartItem = async (req, res) => {
           )
         );
       }
-
-      // For non-variant products, just match the productId
       return true;
     });
 
