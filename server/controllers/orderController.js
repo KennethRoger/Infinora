@@ -2,6 +2,7 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Cart = require("../models/Cart");
 const { verifyToken } = require("../utils/tokenValidator");
+const { generateOrderId } = require("../utils/generateOrderId");
 
 const createOrder = async (req, res) => {
   try {
@@ -14,52 +15,86 @@ const createOrder = async (req, res) => {
         message: "Unauthorized access",
       });
     }
+    console.log(req.body);
 
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-
-    const todayStart = new Date(date.setHours(0, 0, 0, 0));
-    const todayEnd = new Date(date.setHours(23, 59, 59, 999));
-    const orderCount = await Order.countDocuments({
-      createdAt: {
-        $gte: todayStart,
-        $lt: todayEnd,
-      },
-    });
-
-    const orderPromises = items.map(async (item, index) => {
+    const orderPromises = items.map(async (item) => {
+      console.log("Selected variant: ", item.selectedVariants);
       const product = await Product.findById(item.productId).populate("vendor");
       if (!product) {
         throw new Error(`Product not found: ${item.productId}`);
       }
 
-      const totalAmount =
-        item.price * item.quantity * (1 - item.discount / 100);
+      if (product.stock < item.quantity) {
+        throw new Error(`Insufficient stock for product: ${item.productId}`);
+      }
 
-      const orderId = `INF-${year}${month}${day}-${(orderCount + index + 1)
-        .toString()
-        .padStart(4, "0")}`;
+      const orderId = generateOrderId(userId);
 
-      return Order.create({
-        orderId,
-        user: userId,
-        product: item.productId,
-        variant: product.variant._id,
-        selectedVariant: item.selectedVariant,
-        quantity: item.quantity,
-        price: item.price,
-        discount: item.discount,
-        address: addressId,
-        paymentMethod,
-        vendor: product.vendor._id,
-        totalAmount,
-        status: "pending",
-      });
+      let totalAmount, variantPrice;
+      if (product.productVariants.length === item.selectedVariants.length) {
+        variantPrice = product.productVariants.reduce((price, variant) => {
+          const currVariant = item.selectedVariants.find(
+            (selectedVariant) =>
+              selectedVariant.variantName === variant.variantName
+          );
+          const currVariantType = variant.variantTypes.find(
+            (type) => type.name === currVariant.typeName
+          );
+          return (price += currVariantType.price);
+        }, 0);
+
+        totalAmount =
+          variantPrice * (1 - product.discount / 100) * item.quantity;
+
+        Order.create({
+          orderId,
+          user: userId,
+          product: item.productId,
+          selectedVariants: item.selectedVariants,
+          quantity: item.quantity,
+          price: variantPrice,
+          discount: product.discount,
+          address: addressId,
+          paymentMethod,
+          vendor: product.vendor._id,
+          totalAmount,
+          status: "pending",
+        });
+
+        Product.findByIdAndUpdate(item.productId, {
+          stock: stock - item.quantity,
+        });
+
+        return;
+      } else if (product.price) {
+        totalAmount =
+          product.price * (1 - product.discount / 100) * item.quantity;
+
+        Order.create({
+          orderId,
+          user: userId,
+          product: item.productId,
+          selectedVariants: [],
+          quantity: item.quantity,
+          price: product.price,
+          discount: product.discount,
+          address: addressId,
+          paymentMethod,
+          vendor: product.vendor._id,
+          totalAmount,
+          status: "pending",
+        });
+
+        Product.findByIdAndUpdate(item.productId, {
+          stock: stock - item.quantity,
+        });
+        return;
+      } else {
+        throw new Error(`Product variant not found: ${item.productId}`);
+      }
     });
 
     const orders = await Promise.all(orderPromises);
@@ -70,7 +105,7 @@ const createOrder = async (req, res) => {
           .populate("address")
           .populate({
             path: "product",
-            select: "name images variant",
+            select: "name images productVariants",
             populate: {
               path: "vendor",
               select: "name",

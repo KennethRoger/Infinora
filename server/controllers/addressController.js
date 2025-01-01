@@ -90,14 +90,6 @@ const addAddress = async (req, res) => {
       });
     }
 
-    const addressCount = await Address.countDocuments({ userId });
-    if (addressCount >= 5) {
-      return res.status(400).json({
-        success: false,
-        message: "Address limit for the user has been exceeded.",
-      });
-    }
-
     const newAddress = new Address({
       userId,
       fullName,
@@ -138,7 +130,6 @@ const editAddress = async (req, res) => {
       state,
     } = req.body;
 
-    console.log("req body: ", req.body);
 
     if (
       !addressId ||

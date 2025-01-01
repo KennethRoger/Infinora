@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { setSelectedPayment } from "@/redux/features/userOrderSlice";
 import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
 import { Banknote } from "lucide-react";
+import toast from "react-hot-toast";
 
 const paymentMethods = [
   {
@@ -11,22 +11,44 @@ const paymentMethods = [
     description: "Pay with cash when your order arrives",
     icon: Banknote,
   },
-  
 ];
 
 export default function PaymentPage() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { checkout } = useSelector((state) => state.userOrder);
+  const [selectedPayment, setSelectedPayment] = useState(
+    localStorage.getItem("selectedPayment")
+  );
+
+  useEffect(() => {
+    // Validate previous step
+    const selectedAddress = localStorage.getItem("selectedAddress");
+    if (!selectedAddress) {
+      toast.error("Please select a delivery address first");
+      navigate("/home/checkout/delivery");
+      return;
+    }
+
+    // Validate current selection
+    if (
+      selectedPayment &&
+      !paymentMethods.some((method) => method.id === selectedPayment)
+    ) {
+      localStorage.removeItem("selectedPayment");
+      setSelectedPayment(null);
+    }
+  }, [navigate, selectedPayment]);
 
   const handleMethodSelect = (methodId) => {
-    dispatch(setSelectedPayment(methodId));
+    localStorage.setItem("selectedPayment", methodId);
+    setSelectedPayment(methodId);
   };
 
   const handleContinue = () => {
-    if (checkout.selectedPaymentMethod) {
-      navigate("/home/checkout/review");
+    if (!selectedPayment) {
+      toast.error("Please select a payment method");
+      return;
     }
+    navigate("/home/checkout/review");
   };
 
   return (
@@ -39,7 +61,7 @@ export default function PaymentPage() {
             <div
               key={method.id}
               className={`relative border rounded-lg p-4 cursor-pointer transition-all ${
-                checkout.selectedPaymentMethod === method.id
+                selectedPayment === method.id
                   ? "border-primary bg-primary/5"
                   : "border-gray-200 hover:border-gray-300"
               }`}
@@ -49,7 +71,7 @@ export default function PaymentPage() {
                 <input
                   type="radio"
                   name="payment-method"
-                  checked={checkout.selectedPaymentMethod === method.id}
+                  checked={selectedPayment === method.id}
                   onChange={() => handleMethodSelect(method.id)}
                   className="mt-1"
                 />
@@ -69,7 +91,7 @@ export default function PaymentPage() {
       <div className="flex justify-end">
         <ButtonPrimary
           onClick={handleContinue}
-          disabled={!checkout.selectedPaymentMethod}
+          disabled={!selectedPayment}
           className="w-full sm:w-auto"
         >
           Continue to Review

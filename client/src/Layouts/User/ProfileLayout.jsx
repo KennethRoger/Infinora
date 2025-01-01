@@ -54,7 +54,9 @@ export default function ProfileLayout() {
           <p>Creator Studio</p>
         </button>
       </div>
-      <Outlet />
+      <div className="min-h-screen">
+        <Outlet />
+      </div>
     </>
   );
 }

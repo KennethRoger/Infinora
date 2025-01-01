@@ -11,13 +11,12 @@ const initialState = {
   },
 };
 
-// Fetch user orders
 export const fetchUserOrders = createAsyncThunk(
   "userOrder/fetchUserOrders",
   async (_, { rejectWithValue }) => {
     try {
       const response = await getUserOrders();
-      return response; // Return the entire response
+      return response;
     } catch (error) {
       console.error("Error in fetchUserOrders:", error);
       return rejectWithValue(
@@ -65,7 +64,6 @@ const userOrderSlice = createSlice({
   },
 });
 
-// Selectors
 export const selectUserOrders = (state) => state.userOrder.orders;
 export const selectUserOrdersLoading = (state) => state.userOrder.loading;
 export const selectUserOrdersError = (state) => state.userOrder.error;
