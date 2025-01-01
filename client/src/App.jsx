@@ -29,7 +29,6 @@ import ProductViewPage from "./components/Product/ProductViewPage";
 import CreatorEditProduct from "./pages/Creator/CreatorProduct/CreatorEditProduct";
 import AddressInfo from "./pages/User/Home/Address/AddressInfo";
 import AddAddress from "./pages/User/Home/Address/AddAddress";
-import EditAddress from "./pages/User/Home/Address/EditAddress";
 import ForgotPasswordPage from "./pages/User/Auth/ForgotPasswordPage";
 import NewPasswordPage from "./pages/User/Auth/NewPasswordPage";
 import CartPage from "./pages/User/Home/Cart/CartPage";
@@ -133,14 +132,6 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={["user", "vendor"]}>
                     <AddAddress />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="edit-address"
-                element={
-                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
-                    <EditAddress />
                   </ProtectedRoute>
                 }
               />

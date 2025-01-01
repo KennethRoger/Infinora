@@ -18,14 +18,15 @@ export default function ProductCard({ product }) {
     }
   };
 
-  // Calculate initial price (first variant type from each variant)
   const calculateInitialPrice = () => {
-    if (!product.productVariants?.length) return 0;
-    
-    return product.productVariants.reduce((total, variant) => {
-      const firstType = variant.variantTypes[0];
-      return total + (firstType?.price || 0);
-    }, 0);
+    if (product.productVariants?.length > 0) {
+      return product.productVariants.reduce((total, variant) => {
+        const firstType = variant.variantTypes[0];
+        return total + (firstType?.price || 0);
+      }, 0);
+    }
+    return product.price;
+
   };
 
   const initialPrice = calculateInitialPrice();
@@ -45,7 +46,9 @@ export default function ProductCard({ product }) {
       </div>
       <div className="flex flex-col justify-between flex-grow p-4">
         <div>
-          <p className="text-gray-600 text-sm truncate">{product.vendor.name}</p>
+          <p className="text-gray-600 text-sm truncate">
+            {product.vendor.name}
+          </p>
           <h3 className="font-bold text-base truncate">{product.name}</h3>
           <StarRating rating={product.rating} />
         </div>

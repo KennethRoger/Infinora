@@ -66,7 +66,6 @@ export default function AddedAddress({ address, onEdit }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Delete Confirmation Modal */}
       <Modal isOpen={isDeleteModalOpen}>
         <div className="p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">

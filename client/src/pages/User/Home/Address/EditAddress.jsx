@@ -95,6 +95,7 @@ export default function EditAddress({ addressData, onSuccess }) {
       className="mt-4 max-w-xl mx-auto"
     >
       <div className="space-y-4">
+      <h1 className="text-center text-2xl font-semibold pb-5">Edit Address</h1>
         {/* Full Name and Mobile Number */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

@@ -17,27 +17,42 @@ export default function CheckoutLayout() {
   const currentStep = stepPaths[location.pathname] || 1;
 
   useEffect(() => {
+    if (stepPaths[location.pathname]) {
+      return;
+    }
+
     if (!cart?.items?.length) {
       navigate("/home/profile/cart");
       return;
     }
 
-    const currentPathStep = stepPaths[location.pathname];
-    if (!currentPathStep) {
-      navigate("/home/checkout/delivery");
+    if (location.pathname === "/home/checkout") {
+      const selectedAddress = localStorage.getItem("selectedAddress");
+      const selectedPayment = localStorage.getItem("selectedPayment");
+
+      if (!selectedAddress) {
+        navigate("/home/checkout/delivery");
+      } else if (!selectedPayment) {
+        navigate("/home/checkout/payment");
+      } else {
+        navigate("/home/checkout/review");
+      }
       return;
     }
 
+    const currentPathStep = stepPaths[location.pathname];
     const selectedAddress = localStorage.getItem("selectedAddress");
     const selectedPayment = localStorage.getItem("selectedPayment");
-
+    
     if (currentPathStep === 2 && !selectedAddress) {
       navigate("/home/checkout/delivery");
       return;
     }
 
     if (currentPathStep === 3 && (!selectedAddress || !selectedPayment)) {
-      navigate(selectedAddress ? "/home/checkout/payment" : "/home/checkout/delivery");
+      navigate(
+        selectedAddress ? "/home/checkout/payment" : "/home/checkout/delivery"
+      );
       return;
     }
   }, [cart, location.pathname, navigate]);

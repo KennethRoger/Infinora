@@ -14,61 +14,45 @@ export default function CartPage() {
     dispatch(fetchUserCart());
   }, [dispatch]);
 
-  const calculateItemTotal = (item) => {
-    if (!item.productId) return 0;
-
-    let basePrice = 0;
-
-    if (item.selectedVariants?.length > 0) {
-      basePrice = item.selectedVariants.reduce((total, selectedVariant) => {
-        const variant = item.productId.productVariants.find(
-          v => v.variantName === selectedVariant.variantName
-        );
-        const variantType = variant?.variantTypes.find(
-          t => t.name === selectedVariant.typeName
-        );
-        return total + (variantType?.price || 0);
-      }, 0);
-    } else {
-      basePrice = item.productId.price || 0;
-    }
-
-    const discountedPrice = basePrice * (1 - (item.productId.discount || 0) / 100);
-    return discountedPrice * item.quantity;
-  };
-
   const calculateTotals = () => {
     if (!cart?.items?.length) return { subtotal: 0, discount: 0, total: 0 };
 
-    return cart.items.reduce((acc, item) => {
-      if (!item.productId) return acc;
+    return cart.items.reduce(
+      (acc, item) => {
+        if (!item.productId) return acc;
 
-      let itemBasePrice = 0;
+        let itemBasePrice = 0;
 
-      if (item.selectedVariants?.length > 0) {
-        itemBasePrice = item.selectedVariants.reduce((total, selectedVariant) => {
-          const variant = item.productId.productVariants.find(
-            v => v.variantName === selectedVariant.variantName
+        if (item.selectedVariants?.length > 0) {
+          itemBasePrice = item.selectedVariants.reduce(
+            (total, selectedVariant) => {
+              const variant = item.productId.productVariants.find(
+                (v) => v.variantName === selectedVariant.variantName
+              );
+              const variantType = variant?.variantTypes.find(
+                (t) => t.name === selectedVariant.typeName
+              );
+              return total + (variantType?.price || 0);
+            },
+            0
           );
-          const variantType = variant?.variantTypes.find(
-            t => t.name === selectedVariant.typeName
-          );
-          return total + (variantType?.price || 0);
-        }, 0);
-      } else {
-        itemBasePrice = item.productId.price || 0;
-      }
+        } else {
+          itemBasePrice = item.productId.price || 0;
+        }
 
-      const itemTotalBasePrice = itemBasePrice * item.quantity;
-      const itemDiscount = itemTotalBasePrice * (item.productId.discount || 0) / 100;
-      const itemFinalPrice = itemTotalBasePrice - itemDiscount;
+        const itemTotalBasePrice = itemBasePrice * item.quantity;
+        const itemDiscount =
+          (itemTotalBasePrice * (item.productId.discount || 0)) / 100;
+        const itemFinalPrice = itemTotalBasePrice - itemDiscount;
 
-      return {
-        subtotal: acc.subtotal + itemTotalBasePrice,
-        discount: acc.discount + itemDiscount,
-        total: acc.total + itemFinalPrice
-      };
-    }, { subtotal: 0, discount: 0, total: 0 });
+        return {
+          subtotal: acc.subtotal + itemTotalBasePrice,
+          discount: acc.discount + itemDiscount,
+          total: acc.total + itemFinalPrice,
+        };
+      },
+      { subtotal: 0, discount: 0, total: 0 }
+    );
   };
 
   const { subtotal, discount, total } = calculateTotals();
@@ -134,7 +118,12 @@ export default function CartPage() {
                 </div>
               </div>
             </div>
-            <Button className="w-full mt-6" onClick={() => navigate("/home/checkout")}>Proceed to Checkout</Button>
+            <Button
+              className="w-full mt-6"
+              onClick={() => navigate("/home/checkout/delivery")}
+            >
+              Proceed to Checkout
+            </Button>
           </div>
         </div>
       </div>

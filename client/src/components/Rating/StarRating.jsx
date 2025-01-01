@@ -7,7 +7,7 @@ export default function StarRating({ rating, onChange }) {
         count={5}
         value={rating}
         onChange={onChange}
-        size={20}
+        size={15}
         color2={"#ffd700"}
       />
       <p className="text-xl">{rating}</p>
