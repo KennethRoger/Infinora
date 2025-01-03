@@ -127,10 +127,7 @@ export default function CreatorAddProduct() {
       tags: "",
       discount: 0,
       customizable: false,
-      variants: [{ variantName: "", variantTypes: [] }],
-      variantCombinations: [],
       price: "",
-      stock: "",
       shipping: {
         weight: "",
         dimensions: {
@@ -139,6 +136,9 @@ export default function CreatorAddProduct() {
           height: "",
         },
       },
+      variants: [{ variantName: "", variantTypes: [] }],
+      variantCombinations: [],
+      stock: "",
       additionalDetails: "",
     },
   });
@@ -315,8 +315,26 @@ export default function CreatorAddProduct() {
     try {
       const formData = new FormData();
 
+      // Clean up variant combinations before serializing
+      if (data.variantCombinations) {
+        const cleanCombinations = data.variantCombinations.map((combo) => ({
+          variants: Object.fromEntries(
+            Object.entries(combo.variants).filter(([key]) =>
+              data.variants.some((v) => v.variantName === key)
+            )
+          ),
+          stock: combo.stock,
+          priceAdjustment: combo.priceAdjustment,
+        }));
+        data.variantCombinations = cleanCombinations;
+      }
+
       Object.keys(data).forEach((key) => {
-        if (key === "productVariants" || key === "shipping") {
+        if (
+          key === "variants" ||
+          key === "variantCombinations" ||
+          key === "shipping"
+        ) {
           formData.append(key, JSON.stringify(data[key]));
         } else {
           formData.append(key, data[key]);
@@ -331,28 +349,28 @@ export default function CreatorAddProduct() {
       });
       console.log("FormData: ", formData);
 
-      startLoading();
-      const response = await axios.post("/api/vendor/product", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        withCredentials: true,
-      });
+      // startLoading();
+      // const response = await axios.post("/api/vendor/product", formData, {
+      //   headers: {
+      //     "Content-Type": "multipart/form-data",
+      //   },
+      //   withCredentials: true,
+      // });
 
-      if (response.data.success) {
-        stopLoading();
-        toast.success("Product added successfully!");
-        reset();
-        setImageFiles({
-          main: null,
-          additional: [],
-        });
-        setImagePreview({
-          main: null,
-          additional: [],
-        });
-        navigate("/home/profile/creator/products");
-      }
+      // if (response.data.success) {
+      //   stopLoading();
+      //   toast.success("Product added successfully!");
+      //   reset();
+      //   setImageFiles({
+      //     main: null,
+      //     additional: [],
+      //   });
+      //   setImagePreview({
+      //     main: null,
+      //     additional: [],
+      //   });
+      //   navigate("/home/profile/creator/products");
+      // }
     } catch (error) {
       console.error("Error adding product:", error);
       stopLoading();
@@ -697,6 +715,133 @@ export default function CreatorAddProduct() {
                   </div>
                 )}
               </div>
+              <div className="bg-gray-50 p-6 rounded-lg space-y-6">
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Price
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      {...register("price", {
+                        required: "Price is required",
+                        min: {
+                          value: 0,
+                          message: "Price must be greater than 0",
+                        },
+                      })}
+                      className="w-full pl-8 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  {errors.price && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.price.message}
+                    </p>
+                  )}
+                </div>
+                {/* Shipping */}
+                <div className="space-y-4">
+                  {/* Weight */}
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">
+                      Weight
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        {...register("shipping.weight", {
+                          required: "Weight is required",
+                        })}
+                        placeholder="0.5"
+                        className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                        kg
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Dimensions */}
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">
+                      Dimensions (L × W × H)
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          {...register("shipping.dimensions.length", {
+                            required: "Length is required",
+                            min: {
+                              value: 0,
+                              message: "Length must be positive",
+                            },
+                          })}
+                          placeholder="Length"
+                          className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                          cm
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          {...register("shipping.dimensions.width", {
+                            required: "Width is required",
+                            min: {
+                              value: 0,
+                              message: "Width must be positive",
+                            },
+                          })}
+                          placeholder="Width"
+                          className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                          cm
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          {...register("shipping.dimensions.height", {
+                            required: "Height is required",
+                            min: {
+                              value: 0,
+                              message: "Height must be positive",
+                            },
+                          })}
+                          placeholder="Height"
+                          className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                          cm
+                        </span>
+                      </div>
+                    </div>
+                    {(errors.shipping?.dimensions?.length ||
+                      errors.shipping?.dimensions?.width ||
+                      errors.shipping?.dimensions?.height) && (
+                      <p className="text-red-500 text-sm mt-1">
+                        All dimensions are required and must be positive
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter dimensions in centimeters
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Variant Section */}
               <div className="bg-gray-50 p-6 rounded-lg space-y-6">
@@ -715,8 +860,12 @@ export default function CreatorAddProduct() {
                   <>
                     <div className="flex justify-between items-center mb-6">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800">Product Variants</h3>
-                        <p className="text-sm text-gray-600">Define different variations of your product</p>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          Product Variants
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Define different variations of your product
+                        </p>
                       </div>
                       <button
                         type="button"
@@ -756,7 +905,9 @@ export default function CreatorAddProduct() {
                                 title="Remove this variant and its combinations"
                               >
                                 <FiTrash2 className="h-4 w-4" />
-                                <span className="text-sm font-medium">Remove Variant</span>
+                                <span className="text-sm font-medium">
+                                  Remove Variant
+                                </span>
                               </button>
                             </div>
 
@@ -768,16 +919,28 @@ export default function CreatorAddProduct() {
                               <div className="relative">
                                 <input
                                   type="text"
-                                  {...register(`variants.${index}.variantName`, {
-                                    required: "Variant name is required",
-                                    validate: value => {
-                                      // Check for duplicate variant names
-                                      const otherVariants = variantFields
-                                        .map((f, i) => i !== index ? watch(`variants.${i}.variantName`) : null)
-                                        .filter(Boolean);
-                                      return !otherVariants.includes(value) || "This variant type already exists";
+                                  {...register(
+                                    `variants.${index}.variantName`,
+                                    {
+                                      required: "Variant name is required",
+                                      validate: (value) => {
+                                        // Check for duplicate variant names
+                                        const otherVariants = variantFields
+                                          .map((f, i) =>
+                                            i !== index
+                                              ? watch(
+                                                  `variants.${i}.variantName`
+                                                )
+                                              : null
+                                          )
+                                          .filter(Boolean);
+                                        return (
+                                          !otherVariants.includes(value) ||
+                                          "This variant type already exists"
+                                        );
+                                      },
                                     }
-                                  })}
+                                  )}
                                   className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
                                   placeholder="e.g., Size, Color, Material"
                                 />
@@ -831,8 +994,12 @@ export default function CreatorAddProduct() {
                     <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                       <div className="flex justify-between items-center mb-6">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-800">Variant Combinations</h3>
-                          <p className="text-sm text-gray-600">Define stock and pricing for each combination</p>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            Variant Combinations
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            Define stock and pricing for each combination
+                          </p>
                         </div>
                       </div>
 
@@ -842,120 +1009,166 @@ export default function CreatorAddProduct() {
                         </div>
                       ) : (
                         <div className="space-y-6">
-                          {variantCombinationFields.map((combinationField, combinationIndex) => (
-                            <div 
-                              key={combinationField.id}
-                              className="bg-gray-50 p-4 rounded-lg border border-gray-200"
-                            >
-                              <div className="flex justify-between items-center mb-4 pb-3 border-b">
-                                <h4 className="font-medium text-gray-700">Combination {combinationIndex + 1}</h4>
-                                <button
-                                  type="button"
-                                  onClick={() => removeVariantCombination(combinationIndex)}
-                                  className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
-                                >
-                                  <FiTrash2 className="h-4 w-4" />
-                                  Remove
-                                </button>
-                              </div>
+                          {variantCombinationFields.map(
+                            (combinationField, combinationIndex) => (
+                              <div
+                                key={combinationField.id}
+                                className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                              >
+                                <div className="flex justify-between items-center mb-4 pb-3 border-b">
+                                  <h4 className="font-medium text-gray-700">
+                                    Combination {combinationIndex + 1}
+                                  </h4>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeVariantCombination(combinationIndex)
+                                    }
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm"
+                                  >
+                                    <FiTrash2 className="h-4 w-4" />
+                                    Remove
+                                  </button>
+                                </div>
 
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                                {watchVariants.map((variant, variantIndex) => (
-                                  <div key={variantIndex}>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                      {variant.variantName || 'Variant'}
-                                    </label>
-                                    <select
-                                      {...register(
-                                        `variantCombinations.${combinationIndex}.variants.${variant.variantName}`,
-                                        {
-                                          required: "Please select a value"
-                                        }
-                                      )}
-                                      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                                    >
-                                      <option value="">Select {variant.variantName}</option>
-                                      {variant.variantTypes &&
-                                        variant.variantTypes.map((type, typeIndex) => (
-                                          <option key={typeIndex} value={type}>
-                                            {type}
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                                  {watchVariants.map(
+                                    (variant, variantIndex) => (
+                                      <div key={variantIndex}>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                          {variant.variantName || "Variant"}
+                                        </label>
+                                        <select
+                                          {...register(
+                                            `variantCombinations.${combinationIndex}.variants.${variant.variantName}`,
+                                            {
+                                              required: "Please select a value",
+                                              shouldUnregister: true,
+                                            }
+                                          )}
+                                          className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                                        >
+                                          <option value="">
+                                            Select {variant.variantName}
                                           </option>
-                                        ))}
-                                    </select>
-                                    {errors.variantCombinations?.[combinationIndex]?.variants?.[variant.variantName] && (
-                                      <p className="text-red-500 text-xs mt-1">
-                                        {errors.variantCombinations[combinationIndex].variants[variant.variantName].message}
-                                      </p>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Stock
-                                  </label>
-                                  <input
-                                    type="number"
-                                    {...register(
-                                      `variantCombinations.${combinationIndex}.stock`,
-                                      {
-                                        required: "Stock is required",
-                                        min: { value: 0, message: "Stock cannot be negative" }
-                                      }
-                                    )}
-                                    className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                                    placeholder="0"
-                                  />
-                                  {errors.variantCombinations?.[combinationIndex]?.stock && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                      {errors.variantCombinations[combinationIndex].stock.message}
-                                    </p>
+                                          {variant.variantTypes &&
+                                            variant.variantTypes.map(
+                                              (type, typeIndex) => (
+                                                <option
+                                                  key={typeIndex}
+                                                  value={type}
+                                                >
+                                                  {type}
+                                                </option>
+                                              )
+                                            )}
+                                        </select>
+                                        {errors.variantCombinations?.[
+                                          combinationIndex
+                                        ]?.variants?.[variant.variantName] && (
+                                          <p className="text-red-500 text-xs mt-1">
+                                            {
+                                              errors.variantCombinations[
+                                                combinationIndex
+                                              ].variants[variant.variantName]
+                                                .message
+                                            }
+                                          </p>
+                                        )}
+                                      </div>
+                                    )
                                   )}
                                 </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Price Adjustment
-                                  </label>
-                                  <div className="relative">
-                                    <span className="absolute left-3 top-2 text-gray-500">₹</span>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      Stock
+                                    </label>
                                     <input
                                       type="number"
                                       {...register(
-                                        `variantCombinations.${combinationIndex}.priceAdjustment`,
+                                        `variantCombinations.${combinationIndex}.stock`,
                                         {
-                                          required: "Price adjustment is required",
-                                          validate: value => !isNaN(value) || "Must be a valid number"
+                                          required: "Stock is required",
+                                          min: {
+                                            value: 0,
+                                            message: "Stock cannot be negative",
+                                          },
                                         }
                                       )}
-                                      className="w-full pl-8 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                                      placeholder="0.00"
+                                      className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                                      placeholder="0"
                                     />
+                                    {errors.variantCombinations?.[
+                                      combinationIndex
+                                    ]?.stock && (
+                                      <p className="text-red-500 text-xs mt-1">
+                                        {
+                                          errors.variantCombinations[
+                                            combinationIndex
+                                          ].stock.message
+                                        }
+                                      </p>
+                                    )}
                                   </div>
-                                  {errors.variantCombinations?.[combinationIndex]?.priceAdjustment && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                      {errors.variantCombinations[combinationIndex].priceAdjustment.message}
-                                    </p>
-                                  )}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      Price Adjustment
+                                    </label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-2 text-gray-500">
+                                        ₹
+                                      </span>
+                                      <input
+                                        type="number"
+                                        {...register(
+                                          `variantCombinations.${combinationIndex}.priceAdjustment`,
+                                          {
+                                            required:
+                                              "Price adjustment is required",
+                                            validate: (value) =>
+                                              !isNaN(value) ||
+                                              "Must be a valid number",
+                                          }
+                                        )}
+                                        className="w-full pl-8 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                                        placeholder="0.00"
+                                      />
+                                    </div>
+                                    {errors.variantCombinations?.[
+                                      combinationIndex
+                                    ]?.priceAdjustment && (
+                                      <p className="text-red-500 text-xs mt-1">
+                                        {
+                                          errors.variantCombinations[
+                                            combinationIndex
+                                          ].priceAdjustment.message
+                                        }
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          )}
 
                           <button
                             type="button"
                             onClick={() => {
                               // Check if all variants have at least one type
                               const hasEmptyVariants = variantFields.some(
-                                (_, idx) => !watch(`variants.${idx}.variantTypes`)?.length
+                                (_, idx) =>
+                                  !watch(`variants.${idx}.variantTypes`)?.length
                               );
-                              
+
                               if (hasEmptyVariants) {
-                                toast.error("All variants must have at least one type before creating combinations");
+                                toast.error(
+                                  "All variants must have at least one type before creating combinations"
+                                );
                                 return;
                               }
-                              
+
                               addVariantCombination({
                                 variants: {},
                                 stock: 0,
@@ -987,38 +1200,11 @@ export default function CreatorAddProduct() {
                     {[].length === 0 && (
                       <div className="bg-gray-50 rounded-lg space-y-6">
                         <h1 className="text-xl font-semibold text-gray-800 mb-4">
-                          Product Details
+                          Product Details (For No Variants)
                         </h1>
                         <span className="text-sm font-medium text-gray-700">
                           Fill in if the product have no variants
                         </span>
-                        <div>
-                          <label className="block text-sm text-gray-700 mb-1">
-                            Price
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-2 text-gray-500">
-                              ₹
-                            </span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              {...register("price", {
-                                required: "Price is required",
-                                min: {
-                                  value: 0,
-                                  message: "Price must be greater than 0",
-                                },
-                              })}
-                              className="w-full pl-8 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
-                          {errors.price && (
-                            <p className="text-red-500 text-sm mt-1">
-                              {errors.price.message}
-                            </p>
-                          )}
-                        </div>
 
                         {/* Stock */}
                         <div>
@@ -1046,105 +1232,6 @@ export default function CreatorAddProduct() {
                               {errors.stock.message}
                             </p>
                           )}
-                        </div>
-
-                        {/* Shipping */}
-                        <div className="space-y-4">
-                          {/* Weight */}
-                          <div>
-                            <label className="block text-sm text-gray-700 mb-1">
-                              Weight
-                            </label>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                {...register("shipping.weight", {
-                                  required: "Weight is required",
-                                })}
-                                placeholder="0.5"
-                                className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                              />
-                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
-                                kg
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Dimensions */}
-                          <div>
-                            <label className="block text-sm text-gray-700 mb-1">
-                              Dimensions (L × W × H)
-                            </label>
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="relative">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  min="0"
-                                  {...register("shipping.dimensions.length", {
-                                    required: "Length is required",
-                                    min: {
-                                      value: 0,
-                                      message: "Length must be positive",
-                                    },
-                                  })}
-                                  placeholder="Length"
-                                  className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
-                                  cm
-                                </span>
-                              </div>
-                              <div className="relative">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  min="0"
-                                  {...register("shipping.dimensions.width", {
-                                    required: "Width is required",
-                                    min: {
-                                      value: 0,
-                                      message: "Width must be positive",
-                                    },
-                                  })}
-                                  placeholder="Width"
-                                  className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
-                                  cm
-                                </span>
-                              </div>
-                              <div className="relative">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  min="0"
-                                  {...register("shipping.dimensions.height", {
-                                    required: "Height is required",
-                                    min: {
-                                      value: 0,
-                                      message: "Height must be positive",
-                                    },
-                                  })}
-                                  placeholder="Height"
-                                  className="w-full px-4 pr-12 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
-                                  cm
-                                </span>
-                              </div>
-                            </div>
-                            {(errors.shipping?.dimensions?.length ||
-                              errors.shipping?.dimensions?.width ||
-                              errors.shipping?.dimensions?.height) && (
-                              <p className="text-red-500 text-sm mt-1">
-                                All dimensions are required and must be positive
-                              </p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                              Enter dimensions in centimeters
-                            </p>
-                          </div>
                         </div>
                       </div>
                     )}
@@ -1209,9 +1296,12 @@ export default function CreatorAddProduct() {
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
             <FiAlertTriangle className="h-6 w-6 text-red-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Variant</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Delete Variant
+          </h3>
           <p className="text-sm text-gray-500 mb-6">
-            Are you sure you want to delete this variant? This will also remove all combinations using this variant.
+            Are you sure you want to delete this variant? This will also remove
+            all combinations using this variant.
           </p>
           <div className="flex justify-end gap-3">
             <button
