@@ -1,7 +1,7 @@
 import RegisterPage from "./pages/User/Auth/RegisterPage";
 import LoginPage from "./pages/User/Auth/LoginPage";
 import LoginPageAdmin from "./pages/Admin/Auth/LoginPageAdmin";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import OTPVerificationPage from "./pages/User/Auth/OTPVerificationPage";
 import ProductListPage from "./pages/Admin/Home/ProductListPage";
@@ -38,8 +38,15 @@ import DeliveryPage from "./pages/User/Home/Checkout/DeliveryPage";
 import PaymentPage from "./pages/User/Home/Checkout/PaymentPage";
 import ReviewPage from "./pages/User/Home/Checkout/ReviewPage";
 import UserOrderDashboard from "./pages/Creator/UserOrder/UserOrderDashboard";
+import { useEffect } from "react";
 
 export function App() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <>
       <Toaster

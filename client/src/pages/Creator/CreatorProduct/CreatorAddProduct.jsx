@@ -32,7 +32,13 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
 }
 
 // Component for variant type input fields
-const VariantTypesForm = ({ control, register, variantIndex, errors }) => {
+const VariantTypesForm = ({
+  control,
+  register,
+  variantIndex,
+  errors,
+  imagePreview,
+}) => {
   const {
     fields: variantTypes,
     append: addVariantType,
@@ -45,21 +51,41 @@ const VariantTypesForm = ({ control, register, variantIndex, errors }) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       {variantTypes.map((field, typeIndex) => (
-        <div key={field.id} className="relative">
-          <input
-            type="text"
-            {...register(`variants.${variantIndex}.variantTypes.${typeIndex}`)}
-            className="w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Small, Red"
-          />
-          <button
-            type="button"
-            onClick={() => removeVariantType(typeIndex)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-            title="Remove Type"
+        <div key={field.id} className="relative space-y-2">
+          <div className="relative">
+            <input
+              type="text"
+              {...register(
+                `variants.${variantIndex}.variantTypes.${typeIndex}.name`
+              )}
+              className="w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., Small, Red"
+            />
+            <button
+              type="button"
+              onClick={() => removeVariantType(typeIndex)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+              title="Remove Type"
+            >
+              <FiTrash2 className="h-4 w-4" />
+            </button>
+          </div>
+          <select
+            {...register(
+              `variants.${variantIndex}.variantTypes.${typeIndex}.imageIndex`
+            )}
+            className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
           >
-            <FiTrash2 className="h-4 w-4" />
-          </button>
+            <option value="">Select an image</option>
+            {imagePreview?.main && <option value="0">Main Image</option>}
+            {imagePreview?.additional?.map((img, idx) =>
+              img ? (
+                <option key={idx} value={idx + 1}>
+                  Additional Image {idx + 1}
+                </option>
+              ) : null
+            )}
+          </select>
           {errors.variants?.[variantIndex]?.variantTypes?.[typeIndex] && (
             <p className="text-red-500 text-xs mt-1">
               {errors.variants[variantIndex].variantTypes[typeIndex].message}
@@ -69,7 +95,7 @@ const VariantTypesForm = ({ control, register, variantIndex, errors }) => {
       ))}
       <button
         type="button"
-        onClick={() => addVariantType("")}
+        onClick={() => addVariantType({ name: "", imageIndex: "" })}
         className="px-4 py-2 border border-dashed border-gray-300 rounded-md text-gray-500 hover:border-indigo-500 hover:text-indigo-600 transition-colors flex items-center justify-center gap-1"
       >
         <span className="text-lg">+</span>
@@ -136,7 +162,9 @@ export default function CreatorAddProduct() {
           height: "",
         },
       },
-      variants: [{ variantName: "", variantTypes: [] }],
+      variants: [
+        { variantName: "", variantTypes: [{ name: "", imageIndex: "" }] },
+      ],
       variantCombinations: [],
       stock: "",
       additionalDetails: "",
@@ -173,6 +201,15 @@ export default function CreatorAddProduct() {
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (variantSections) {
+      setValue("stock", 0);
+    } else {
+      setValue("variants", []);
+      setValue("variantCombinations", []);
+    }
+  }, [variantSections, setValue]);
 
   const handleImageChange = (e, type, index = null) => {
     const file = e.target.files[0];
@@ -329,6 +366,11 @@ export default function CreatorAddProduct() {
         data.variantCombinations = cleanCombinations;
       }
 
+      if (data.variants.length > 0 && data.variantCombinations.length === 0) {
+        toast.error("Please add at least one variant combination");
+        return;
+      }
+
       Object.keys(data).forEach((key) => {
         if (
           key === "variants" ||
@@ -349,28 +391,28 @@ export default function CreatorAddProduct() {
       });
       console.log("FormData: ", formData);
 
-      // startLoading();
-      // const response = await axios.post("/api/vendor/product", formData, {
-      //   headers: {
-      //     "Content-Type": "multipart/form-data",
-      //   },
-      //   withCredentials: true,
-      // });
+      startLoading();
+      const response = await axios.post("/api/vendor/product", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      });
 
-      // if (response.data.success) {
-      //   stopLoading();
-      //   toast.success("Product added successfully!");
-      //   reset();
-      //   setImageFiles({
-      //     main: null,
-      //     additional: [],
-      //   });
-      //   setImagePreview({
-      //     main: null,
-      //     additional: [],
-      //   });
-      //   navigate("/home/profile/creator/products");
-      // }
+      if (response.data.success) {
+        stopLoading();
+        toast.success("Product added successfully!");
+        reset();
+        setImageFiles({
+          main: null,
+          additional: [],
+        });
+        setImagePreview({
+          main: null,
+          additional: [],
+        });
+        navigate("/home/profile/creator/products");
+      }
     } catch (error) {
       console.error("Error adding product:", error);
       stopLoading();
@@ -845,17 +887,19 @@ export default function CreatorAddProduct() {
 
               {/* Variant Section */}
               <div className="bg-gray-50 p-6 rounded-lg space-y-6">
-                <div className="flex justify-between items-center border-b pb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800">
-                      Product Variants
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Add variants if your product comes in different options
-                      (e.g., sizes, colors)
-                    </p>
+                {!variantSections && (
+                  <div className="flex justify-between items-center border-b pb-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-800">
+                        Product Variants
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Add variants if your product comes in different options
+                        (e.g., sizes, colors)
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
                 {variantSections ? (
                   <>
                     <div className="flex justify-between items-center mb-6">
@@ -964,6 +1008,7 @@ export default function CreatorAddProduct() {
                                     register={register}
                                     variantIndex={index}
                                     errors={errors}
+                                    imagePreview={imagePreview}
                                   />
                                 </div>
                               </div>
@@ -1056,9 +1101,9 @@ export default function CreatorAddProduct() {
                                               (type, typeIndex) => (
                                                 <option
                                                   key={typeIndex}
-                                                  value={type}
+                                                  value={type.name}
                                                 >
-                                                  {type}
+                                                  {type.name}
                                                 </option>
                                               )
                                             )}
@@ -1214,17 +1259,18 @@ export default function CreatorAddProduct() {
                           <input
                             type="number"
                             {...register("stock", {
-                              required: "Stock is required",
-                              min: {
+                              required: !variantSections ? "Stock is required" : false,
+                              min: !variantSections ? {
                                 value: 0,
                                 message: "Stock must be 0 or greater",
-                              },
-                              validate: {
+                              } : undefined,
+                              validate: !variantSections ? {
                                 integer: (v) =>
                                   Number.isInteger(Number(v)) ||
                                   "Stock must be a whole number",
-                              },
+                              } : undefined,
                             })}
+                            disabled={variantSections}
                             className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
                           />
                           {errors.stock && (

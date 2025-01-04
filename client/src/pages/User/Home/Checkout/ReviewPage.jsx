@@ -21,47 +21,46 @@ export default function ReviewPage() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [orderProcessing, setOrderProcessing] = useState(false);
 
+  const calculateItemPrice = (item) => {
+    if (!item?.productId) return { basePrice: 0, totalPrice: 0, discountedPrice: 0 };
+
+    try {
+      // Start with base product price
+      let basePrice = item.productId.price || 0;
+
+      // Add variant prices if any
+      if (item.variants && item.productId.variants?.length > 0) {
+        for (const [variantName, typeName] of Object.entries(item.variants)) {
+          const variant = item.productId.variants.find(v => v.variantName === variantName);
+          const variantType = variant?.variantTypes.find(t => t.name === typeName);
+          if (variantType?.price) {
+            basePrice += variantType.price;
+          }
+        }
+      }
+
+      const totalPrice = basePrice * item.quantity;
+      const discount = (totalPrice * (item.productId.discount || 0)) / 100;
+      const discountedPrice = totalPrice - discount;
+
+      return { basePrice, totalPrice, discountedPrice };
+    } catch (error) {
+      console.error("Error calculating item price:", error);
+      return { basePrice: 0, totalPrice: 0, discountedPrice: 0 };
+    }
+  };
+
   const calculateTotals = () => {
     if (!cart?.items?.length) return { subtotal: 0, discount: 0, total: 0 };
 
     return cart.items.reduce(
       (acc, item) => {
-        if (!item.productId) return acc;
-
-        try {
-          let itemBasePrice = 0;
-
-          if (item.selectedVariants?.length > 0) {
-            itemBasePrice = item.selectedVariants.reduce(
-              (total, selectedVariant) => {
-                const variant = item.productId.productVariants.find(
-                  (v) => v.variantName === selectedVariant.variantName
-                );
-                const variantType = variant?.variantTypes.find(
-                  (t) => t.name === selectedVariant.typeName
-                );
-                return total + (variantType?.price || 0);
-              },
-              0
-            );
-          } else {
-            itemBasePrice = item.productId.price || 0;
-          }
-
-          const itemTotalBasePrice = itemBasePrice * item.quantity;
-          const itemDiscount =
-            (itemTotalBasePrice * (item.productId.discount || 0)) / 100;
-          const itemFinalPrice = itemTotalBasePrice - itemDiscount;
-
-          return {
-            subtotal: acc.subtotal + itemTotalBasePrice,
-            discount: acc.discount + itemDiscount,
-            total: acc.total + itemFinalPrice,
-          };
-        } catch (error) {
-          console.error("Error calculating totals:", error);
-          return acc;
-        }
+        const { totalPrice, discountedPrice } = calculateItemPrice(item);
+        return {
+          subtotal: acc.subtotal + totalPrice,
+          discount: acc.discount + (totalPrice - discountedPrice),
+          total: acc.total + discountedPrice,
+        };
       },
       { subtotal: 0, discount: 0, total: 0 }
     );
@@ -106,19 +105,13 @@ export default function ReviewPage() {
 
     setOrderProcessing(true);
     try {
-      console.log(cart.items);
       const orderItems = cart.items
         .map((item) => {
           if (!item.productId) return null;
           return {
             productId: item.productId._id,
             quantity: item.quantity,
-            selectedVariants: item.selectedVariants
-              ? item.selectedVariants.map((variant) => ({
-                  variantName: variant.variantName,
-                  typeName: variant.typeName,
-                }))
-              : [],
+            variants: item.variants || {},
           };
         })
         .filter(Boolean);
@@ -133,10 +126,8 @@ export default function ReviewPage() {
         paymentMethod: selectedPaymentMethod,
         items: orderItems,
       };
-      console.log(orderData);
 
       const response = await createOrder(orderData);
-      console.log(response);
 
       if (response.success) {
         localStorage.removeItem("selectedAddress");
@@ -211,28 +202,20 @@ export default function ReviewPage() {
           {cart?.items?.map((item, index) => {
             if (!item.productId) return null;
 
-            let itemBasePrice = 0;
+            const { basePrice, totalPrice, discountedPrice } = calculateItemPrice(item);
 
-            if (item?.selectedVariants?.length > 0) {
-              itemBasePrice = item.selectedVariants.reduce(
-                (total, selectedVariant) => {
-                  const variant = item.productId.productVariants.find(
-                    (v) => v.variantName === selectedVariant.variantName
-                  );
-                  const variantType = variant?.variantTypes.find(
-                    (t) => t.name === selectedVariant.typeName
-                  );
-                  return total + (variantType?.price || 0);
-                },
-                0
-              );
-            } else {
-              itemBasePrice = item.productId.price || 0;
-            }
-
-            const totalPrice = itemBasePrice * item.quantity;
-            const discountedPrice =
-              totalPrice * (1 - (item.productId.discount || 0) / 100);
+            const getVariantImage = () => {
+              if (item.variants && item.productId.variants?.length > 0) {
+                for (const [variantName, typeName] of Object.entries(item.variants)) {
+                  const variant = item.productId.variants.find(v => v.variantName === variantName);
+                  const variantType = variant?.variantTypes.find(t => t.name === typeName);
+                  if (typeof variantType?.imageIndex === 'number') {
+                    return item.productId.images[variantType.imageIndex] || item.productId.images[0];
+                  }
+                }
+              }
+              return item.productId.images[0];
+            };
 
             return (
               <div
@@ -240,19 +223,20 @@ export default function ReviewPage() {
                 className="flex items-center gap-4 p-4 border rounded-lg"
               >
                 <img
-                  src={item.productId.images[0]}
+                  src={getVariantImage()}
                   alt={item.productId.name}
                   className="w-20 h-20 object-cover rounded-md"
                 />
                 <div className="flex-1">
                   <h3 className="font-medium">{item.productId.name}</h3>
                   <div className="text-sm text-gray-500 space-y-1">
-                    {item.selectedVariants && item.selectedVariants.map((variant) => (
-                      <p key={variant._id}>
-                        {variant.variantName}: {variant.typeName}
+                    {item.variants && Object.entries(item.variants).map(([variantName, typeName]) => (
+                      <p key={variantName}>
+                        {variantName}: {typeName}
                       </p>
                     ))}
                     <p>Quantity: {item.quantity}</p>
+                    <p className="text-xs">Base Price: ₹{basePrice.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <p className="text-sm line-through text-gray-500">
@@ -273,16 +257,18 @@ export default function ReviewPage() {
       </div>
 
       <div className="border-t pt-4 space-y-2">
-        <div className="flex justify-between">
-          <span>Subtotal</span>
+        <div className="flex justify-between text-sm">
+          <span>Subtotal ({cart.items.length} items)</span>
           <span>₹{subtotal.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-green-600">
-          <span>Discount</span>
-          <span>-₹{discount.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between font-semibold">
-          <span>Total</span>
+        {discount > 0 && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>Total Discount</span>
+            <span>-₹{discount.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="flex justify-between font-semibold text-lg pt-2">
+          <span>Total Amount</span>
           <span>₹{total.toFixed(2)}</span>
         </div>
       </div>

@@ -14,53 +14,73 @@ export default function CartPage() {
     dispatch(fetchUserCart());
   }, [dispatch]);
 
+  const checkStock = (item) => {
+    if (!item?.productId) return false;
+
+    // Check variant stock if product has variants
+    if (item.variants && item.productId.variants?.length > 0) {
+      const matchingCombination = item.productId.variantCombinations?.find((combo) => {
+        return Object.entries(item.variants).every(
+          ([key, value]) => combo.variants[key] === value
+        );
+      });
+      return matchingCombination && matchingCombination.stock >= item.quantity;
+    }
+
+    // Check regular product stock
+    return item.productId.stock >= item.quantity;
+  };
+
   const calculateTotals = () => {
     if (!cart?.items?.length) return { subtotal: 0, discount: 0, total: 0 };
 
-    return cart.items.reduce(
-      (acc, item) => {
-        if (!item.productId) return acc;
+    return cart.items.reduce((acc, item) => {
+      if (!item?.productId) return acc;
 
-        let itemBasePrice = 0;
-
-        if (item.selectedVariants?.length > 0) {
-          itemBasePrice = item.selectedVariants.reduce(
-            (total, selectedVariant) => {
-              const variant = item.productId.productVariants.find(
-                (v) => v.variantName === selectedVariant.variantName
-              );
-              const variantType = variant?.variantTypes.find(
-                (t) => t.name === selectedVariant.typeName
-              );
-              return total + (variantType?.price || 0);
-            },
-            0
+      // Calculate base price including variants
+      let itemBasePrice = item.productId.price || 0;
+      
+      // Add variant prices
+      if (item.variants) {
+        const matchingCombination = item.productId.variantCombinations?.find((combo) => {
+          return Object.entries(item.variants).every(
+            ([key, value]) => combo.variants[key] === value
           );
-        } else {
-          itemBasePrice = item.productId.price || 0;
+        });
+        if (matchingCombination) {
+          itemBasePrice += matchingCombination.priceAdjustment || 0;
         }
+      }
 
-        const itemTotalBasePrice = itemBasePrice * item.quantity;
-        const itemDiscount =
-          (itemTotalBasePrice * (item.productId.discount || 0)) / 100;
-        const itemFinalPrice = itemTotalBasePrice - itemDiscount;
+      const itemTotalBasePrice = itemBasePrice * (item.quantity || 1);
+      const itemDiscount = (itemTotalBasePrice * (item.productId.discount || 0)) / 100;
 
-        return {
-          subtotal: acc.subtotal + itemTotalBasePrice,
-          discount: acc.discount + itemDiscount,
-          total: acc.total + itemFinalPrice,
-        };
-      },
-      { subtotal: 0, discount: 0, total: 0 }
-    );
+      return {
+        subtotal: acc.subtotal + itemTotalBasePrice,
+        discount: acc.discount + itemDiscount,
+        total: acc.total + (itemTotalBasePrice - itemDiscount)
+      };
+    }, { subtotal: 0, discount: 0, total: 0 });
   };
 
   const { subtotal, discount, total } = calculateTotals();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="container py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((_, index) => (
+                <div key={index} className="h-40 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-1">
+            <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -121,8 +141,11 @@ export default function CartPage() {
             <Button
               className="w-full mt-6"
               onClick={() => navigate("/home/checkout/delivery")}
+              disabled={!cart?.items?.every(checkStock)}
             >
-              Proceed to Checkout
+              {!cart?.items?.every(checkStock)
+                ? "Some items are out of stock"
+                : "Proceed to Checkout"}
             </Button>
           </div>
         </div>
