@@ -176,7 +176,8 @@ const addVendorProducts = async (req, res) => {
       status,
       tags,
       discount,
-      productVariants,
+      variants,
+      variantCombinations,
       additionalDetails,
       customizable,
       price,
@@ -184,14 +185,52 @@ const addVendorProducts = async (req, res) => {
       shipping,
     } = req.body;
 
-    if (!name || !description || !category || !subCategory) {
+    if (!name || !description || !category) {
       return res.status(400).json({
         success: false,
         message:
-          "Required fields are missing: name, description, category, and subCategory are mandatory",
+          "Required fields are missing: name, description, and category are mandatory",
       });
     }
 
+    // Parse JSON strings if needed
+    if (variants && typeof variants === "string") {
+      try {
+        variants = JSON.parse(variants);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid variants data format",
+          error: error.message,
+        });
+      }
+    }
+
+    if (variantCombinations && typeof variantCombinations === "string") {
+      try {
+        variantCombinations = JSON.parse(variantCombinations);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid variant combinations data format",
+          error: error.message,
+        });
+      }
+    }
+
+    if (shipping && typeof shipping === "string") {
+      try {
+        shipping = JSON.parse(shipping);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid shipping data format",
+          error: error.message,
+        });
+      }
+    }
+
+    // Validate discount
     if (discount) {
       const discountValue = Number(discount);
       if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
@@ -203,36 +242,81 @@ const addVendorProducts = async (req, res) => {
       discount = discountValue;
     }
 
-    if (productVariants && typeof productVariants === "string") {
-      try {
-        productVariants = JSON.parse(productVariants);
-      } catch (error) {
+    // Validate base price
+    if (!price) {
+      return res.status(400).json({
+        success: false,
+        message: "Base price is required for all products",
+      });
+    }
+
+    price = Number(price);
+    if (isNaN(price) || price < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Price must be a non-negative number",
+      });
+    }
+
+    // Validate variants and combinations
+    if (variants?.length > 0) {
+      // Validate each variant
+      for (const variant of variants) {
+        if (!variant.variantName || !Array.isArray(variant.variantTypes)) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid variant structure for variant: ${
+              variant.variantName || "unnamed"
+            }`,
+          });
+        }
+
+        // Validate variant types
+        for (const type of variant.variantTypes) {
+          if (!type.name) {
+            return res.status(400).json({
+              success: false,
+              message: `Missing required fields in variant type for ${variant.variantName}`,
+            });
+          }
+        }
+      }
+
+      // Validate variant combinations if variants exist
+      if (!variantCombinations?.length) {
         return res.status(400).json({
           success: false,
-          message: "Invalid variant data format",
-          error: error.message,
+          message:
+            "Variant combinations are required when variants are specified",
         });
       }
-    }
 
-    if (!Array.isArray(productVariants)) {
-      productVariants = [];
-    }
+      // Validate each combination
+      for (const combo of variantCombinations) {
+        if (!combo.variants || !combo.stock) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid variant combination structure",
+          });
+        }
 
-    if (productVariants.length > 0 && (price || stock)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid configuration: Cannot have both variants and single product details",
-      });
-    }
+        combo.stock = Number(combo.stock);
+        combo.priceAdjustment = Number(combo.priceAdjustment || 0);
 
-    if (!productVariants.length && (!price || !stock || !shipping)) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Either product variants or single product details (price, stock, shipping) are required",
-      });
+        if (isNaN(combo.stock) || combo.stock < 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Stock must be a non-negative number",
+          });
+        }
+
+        if (isNaN(combo.priceAdjustment)) {
+          return res.status(400).json({
+            success: false,
+            message: "Price adjustment must be a number",
+          });
+        }
+      }
     }
 
     const token = req.cookies.token;
@@ -299,9 +383,14 @@ const addVendorProducts = async (req, res) => {
       name: name.trim(),
       description: description.trim(),
       images: imageUrls,
+      variants: variants || [],
+      variantCombinations: variantCombinations || [],
+      price,
+      stock: variants?.length ? 0 : stock,
+      shipping,
       discount: discount || 0,
       category,
-      subCategory,
+      subCategory: subCategory || null,
       status: status || "available",
       tags: processedTags,
       additionalDetails: additionalDetails ? additionalDetails.trim() : "",
@@ -309,149 +398,19 @@ const addVendorProducts = async (req, res) => {
       vendor: user._id,
     };
 
-    if (productVariants.length > 0) {
-      for (const variant of productVariants) {
-        if (!variant.variantName || !Array.isArray(variant.variantTypes)) {
-          return res.status(400).json({
-            success: false,
-            message: `Invalid variant structure for variant: ${
-              variant.variantName || "unnamed"
-            }`,
-          });
-        }
-
-        for (const type of variant.variantTypes) {
-          if (!type.name || type.price === undefined || !type.stock) {
-            return res.status(400).json({
-              success: false,
-              message: `Missing required fields in variant type for ${variant.variantName}`,
-            });
-          }
-          type.price = Number(type.price);
-          type.stock = Number(type.stock);
-
-          if (isNaN(type.price) || type.price < 0) {
-            return res.status(400).json({
-              success: false,
-              message: `Invalid price for variant ${variant.variantName} - ${type.name}`,
-            });
-          }
-
-          if (isNaN(type.stock) || type.stock < 0) {
-            return res.status(400).json({
-              success: false,
-              message: `Invalid stock for variant ${variant.variantName} - ${type.name}`,
-            });
-          }
-
-          if (type.shipping) {
-            if (
-              !type.shipping.weight ||
-              !type.shipping.dimensions ||
-              !type.shipping.dimensions.length ||
-              !type.shipping.dimensions.width ||
-              !type.shipping.dimensions.height
-            ) {
-              return res.status(400).json({
-                success: false,
-                message: `Invalid shipping details for variant ${variant.variantName} - ${type.name}`,
-              });
-            }
-          }
-        }
-      }
-      productData.productVariants = productVariants;
-    } else {
-      console.log("Shipping data type:", typeof shipping);
-      let shippingData;
-
-      try {
-        shippingData =
-          typeof shipping === "string" ? JSON.parse(shipping) : shipping;
-        console.log("Parsed shipping data:", shippingData);
-      } catch (error) {
-        console.error("Error parsing shipping data:", error);
-        return res.status(400).json({
-          success: false,
-          message: "Invalid shipping data format",
-        });
-      }
-
-      if (
-        !shippingData ||
-        typeof shippingData !== "object" ||
-        !shippingData.weight ||
-        !shippingData.dimensions ||
-        typeof shippingData.dimensions !== "object" ||
-        !shippingData.dimensions.length ||
-        !shippingData.dimensions.width ||
-        !shippingData.dimensions.height
-      ) {
-        console.log("Invalid shipping data structure:", shippingData);
-        return res.status(400).json({
-          success: false,
-          message:
-            "Invalid shipping details. Weight and all dimensions (length, width, height) are required",
-        });
-      }
-
-      const dimensions = {
-        length: Number(shippingData.dimensions.length),
-        width: Number(shippingData.dimensions.width),
-        height: Number(shippingData.dimensions.height),
-      };
-
-      if (
-        isNaN(dimensions.length) ||
-        isNaN(dimensions.width) ||
-        isNaN(dimensions.height) ||
-        dimensions.length <= 0 ||
-        dimensions.width <= 0 ||
-        dimensions.height <= 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "All dimensions must be valid positive numbers",
-        });
-      }
-
-      shippingData.dimensions = dimensions;
-
-      const parsedPrice = Number(price);
-      const parsedStock = Number(stock);
-
-      if (isNaN(parsedPrice) || parsedPrice < 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid price value",
-        });
-      }
-
-      if (isNaN(parsedStock) || parsedStock < 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid stock value",
-        });
-      }
-
-      productData.price = parsedPrice;
-      productData.stock = parsedStock;
-      productData.shipping = shippingData;
-    }
-
     const product = new Product(productData);
     await product.save();
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: "Product added successfully",
       product,
     });
   } catch (error) {
-    console.error("Error adding product:", error);
-    return res.status(500).json({
+    console.error("Error in addVendorProducts:", error);
+    res.status(500).json({
       success: false,
-      message: "Failed to add product",
+      message: "Error adding product",
       error: error.message,
     });
   }
@@ -466,8 +425,14 @@ const editVendorProduct = async (req, res) => {
       stock,
       discount,
       category,
+      subCategory,
       status,
       tags,
+      variants,
+      variantCombinations,
+      shipping,
+      additionalDetails,
+      customizable,
     } = req.body;
     const productId = req.params.productId;
 
@@ -498,6 +463,129 @@ const editVendorProduct = async (req, res) => {
         success: false,
         message: "You are not authorized to edit this product.",
       });
+    }
+
+    // Parse JSON strings if needed
+    let parsedVariants = variants;
+    let parsedVariantCombinations = variantCombinations;
+    let parsedShipping = shipping;
+
+    if (variants && typeof variants === "string") {
+      try {
+        parsedVariants = JSON.parse(variants);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid variants data format",
+          error: error.message,
+        });
+      }
+    }
+
+    if (variantCombinations && typeof variantCombinations === "string") {
+      try {
+        parsedVariantCombinations = JSON.parse(variantCombinations);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid variant combinations data format",
+          error: error.message,
+        });
+      }
+    }
+
+    if (shipping && typeof shipping === "string") {
+      try {
+        parsedShipping = JSON.parse(shipping);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid shipping data format",
+          error: error.message,
+        });
+      }
+    }
+
+    // Validate price
+    if (price) {
+      const priceValue = Number(price);
+      if (isNaN(priceValue) || priceValue < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Price must be a non-negative number",
+        });
+      }
+    }
+
+    // Validate discount
+    if (discount) {
+      const discountValue = Number(discount);
+      if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
+        return res.status(400).json({
+          success: false,
+          message: "Discount must be a number between 0 and 100",
+        });
+      }
+    }
+
+    // Validate variants and combinations if present
+    if (parsedVariants?.length > 0) {
+      // Validate each variant
+      for (const variant of parsedVariants) {
+        if (!variant.variantName || !Array.isArray(variant.variantTypes)) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid variant structure for variant: ${
+              variant.variantName || "unnamed"
+            }`,
+          });
+        }
+
+        // Validate variant types
+        for (const type of variant.variantTypes) {
+          if (!type.name) {
+            return res.status(400).json({
+              success: false,
+              message: `Missing required fields in variant type for ${variant.variantName}`,
+            });
+          }
+        }
+      }
+
+      // Validate variant combinations if variants exist
+      if (!parsedVariantCombinations?.length) {
+        return res.status(400).json({
+          success: false,
+          message: "Variant combinations are required when variants are specified",
+        });
+      }
+
+      // Validate each combination
+      for (const combo of parsedVariantCombinations) {
+        if (!combo.variants || !combo.stock) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid variant combination structure",
+          });
+        }
+
+        combo.stock = Number(combo.stock);
+        combo.priceAdjustment = Number(combo.priceAdjustment || 0);
+
+        if (isNaN(combo.stock) || combo.stock < 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Stock must be a non-negative number",
+          });
+        }
+
+        if (isNaN(combo.priceAdjustment)) {
+          return res.status(400).json({
+            success: false,
+            message: "Price adjustment must be a number",
+          });
+        }
+      }
     }
 
     const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
@@ -540,7 +628,6 @@ const editVendorProduct = async (req, res) => {
         try {
           const b64 = Buffer.from(req.files[i].buffer).toString("base64");
           const dataURI = "data:" + req.files[i].mimetype + ";base64," + b64;
-
           const result = await cloudinary.uploader.upload(dataURI, {
             folder: "infinora/products",
             width: 800,
@@ -555,44 +642,50 @@ const editVendorProduct = async (req, res) => {
             updatedImages.push(result.secure_url);
           }
         } catch (error) {
-          console.error("Error uploading new image:", error);
+          console.error("Error uploading image:", error);
           return res.status(500).json({
             success: false,
-            message: "Failed to upload image",
+            message: "Failed to upload product images",
             error: error.message,
           });
         }
       }
     }
 
-    while (updatedImages.length < 4) {
-      updatedImages.push(null);
-    }
-    updatedImages = updatedImages.slice(0, 4);
+    const updateData = {
+      ...(name && { name: name.trim() }),
+      ...(description && { description: description.trim() }),
+      ...(price && { price: Number(price) }),
+      ...(parsedVariants?.length ? { stock: 0 } : stock !== undefined && { stock: Number(stock) }),
+      ...(discount && { discount: Number(discount) }),
+      ...(category && { category }),
+      ...(subCategory && { subCategory }),
+      ...(status && { status }),
+      ...(processedTags.length > 0 && { tags: processedTags }),
+      ...(parsedVariants && { variants: parsedVariants }),
+      ...(parsedVariantCombinations && { variantCombinations: parsedVariantCombinations }),
+      ...(parsedShipping && { shipping: parsedShipping }),
+      ...(additionalDetails && { additionalDetails: additionalDetails.trim() }),
+      ...(customizable !== undefined && { customizable: Boolean(customizable) }),
+      images: updatedImages,
+    };
 
-    product.name = name || product.name;
-    product.description = description || product.description;
-    product.price = price ? Number(price) : product.price;
-    product.stock = stock ? Number(stock) : product.stock;
-    product.discount = discount ? Number(discount) : product.discount;
-    product.category = category || product.category;
-    product.status = status || product.status;
-    product.tags = processedTags.length > 0 ? processedTags : product.tags;
-    product.images = updatedImages;
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      updateData,
+      { new: true }
+    );
 
-    await product.save();
-
-    console.log("Product updated successfully:", product);
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Product updated successfully",
-      product,
+      product: updatedProduct,
     });
   } catch (error) {
-    console.error("Error editing product:", error);
-    return res.status(500).json({
+    console.error("Error in editVendorProduct:", error);
+    res.status(500).json({
       success: false,
-      message: "Failed to edit product",
+      message: "Error updating product",
       error: error.message,
     });
   }

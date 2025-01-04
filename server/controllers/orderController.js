@@ -15,63 +15,69 @@ const createOrder = async (req, res) => {
         message: "Unauthorized access",
       });
     }
-    console.log(req.body);
 
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
     const orderPromises = items.map(async (item) => {
-      console.log("Selected variant: ", item.selectedVariants);
       const product = await Product.findById(item.productId).populate("vendor");
       if (!product) {
         throw new Error(`Product not found: ${item.productId}`);
       }
 
-      if (product.productVariants.length === item.selectedVariants?.length) {
-        item.selectedVariants.forEach(selectedVariant => {
-          const variant = product.productVariants.find(
-            v => v.variantName === selectedVariant.variantName
-          );
+      // Handle products with variants
+      if (product.variants?.length > 0 && item.variants) {
+        // Validate variants and check stock
+        for (const [variantName, typeName] of Object.entries(item.variants)) {
+          const variant = product.variants.find(v => v.variantName === variantName);
           if (!variant) {
-            throw new Error(`Variant not found: ${selectedVariant.variantName}`);
+            throw new Error(`Variant not found: ${variantName}`);
           }
 
-          const variantType = variant.variantTypes.find(
-            type => type.name === selectedVariant.typeName
-          );
+          const variantType = variant.variantTypes.find(t => t.name === typeName);
           if (!variantType) {
-            throw new Error(`Variant type not found: ${selectedVariant.typeName}`);
+            throw new Error(`Variant type not found for ${variantName}: ${typeName}`);
           }
 
-          if (Number(variantType.stock) < Number(item.quantity)) {
+          // Find matching combination for stock check
+          const matchingCombination = product.variantCombinations.find(combo => {
+            return Object.entries(combo.variants).every(
+              ([key, value]) => item.variants[key] === value
+            );
+          });
+
+          if (!matchingCombination) {
+            throw new Error(`Invalid variant combination`);
+          }
+
+          if (matchingCombination.stock < item.quantity) {
             throw new Error(
-              `Insufficient stock for variant ${variant.variantName} - ${variantType.name}. Available: ${variantType.stock}, Requested: ${item.quantity}`
+              `Insufficient stock for variant combination. Available: ${matchingCombination.stock}, Requested: ${item.quantity}`
             );
           }
-        });
+        }
 
         const orderId = generateOrderId(userId);
 
-        let variantPrice = product.productVariants.reduce((price, variant) => {
-          const currVariant = item.selectedVariants.find(
-            (selectedVariant) =>
-              selectedVariant.variantName === variant.variantName
-          );
-          const currVariantType = variant.variantTypes.find(
-            (type) => type.name === currVariant.typeName
-          );
-          return (price += currVariantType.price);
-        }, 0);
+        // Calculate price including variants
+        let basePrice = product.price;
+        for (const [variantName, typeName] of Object.entries(item.variants)) {
+          const variant = product.variants.find(v => v.variantName === variantName);
+          const variantType = variant.variantTypes.find(t => t.name === typeName);
+          if (variantType?.price) {
+            basePrice += variantType.price;
+          }
+        }
 
-        let totalAmount = variantPrice * (1 - product.discount / 100) * item.quantity;
+        const totalAmount = basePrice * (1 - product.discount / 100) * item.quantity;
 
         const order = await Order.create({
           orderId,
           user: userId,
           product: item.productId,
-          selectedVariants: item.selectedVariants,
+          variants: item.variants,
           quantity: item.quantity,
-          price: variantPrice,
+          price: basePrice,
           discount: product.discount,
           address: addressId,
           paymentMethod,
@@ -80,51 +86,42 @@ const createOrder = async (req, res) => {
           status: "pending",
         });
 
-        const updatedProductVariants = product.productVariants.map((variant) => {
-          const selectedVariant = item.selectedVariants.find(
-            (sv) => sv.variantName === variant.variantName
+        // Update stock in variant combinations
+        const updatedCombinations = product.variantCombinations.map(combo => {
+          const isMatchingCombo = Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
           );
 
-          if (selectedVariant) {
+          if (isMatchingCombo) {
             return {
-              ...variant,
-              variantTypes: variant.variantTypes.map((type) => {
-                if (type.name === selectedVariant.typeName) {
-                  const newStock = Number(type.stock) - Number(item.quantity);
-                  if (isNaN(newStock) || newStock < 0) {
-                    throw new Error(
-                      `Invalid stock calculation for variant: ${variant.variantName} - ${type.name}`
-                    );
-                  }
-                  return { ...type, stock: newStock };
-                }
-                return type;
-              }),
+              ...combo,
+              stock: combo.stock - item.quantity
             };
           }
-          return variant;
+          return combo;
         });
 
         await Product.findByIdAndUpdate(item.productId, {
-          productVariants: updatedProductVariants,
+          variantCombinations: updatedCombinations
         });
 
         return order;
-      } else if (product.price) {
-        if (Number(product.stock) < Number(item.quantity)) {
+      } else {
+        // Handle products without variants
+        if (product.stock < item.quantity) {
           throw new Error(
-            `Insufficient stock for product: ${item.productId}. Available: ${product.stock}, Requested: ${item.quantity}`
+            `Insufficient stock for product. Available: ${product.stock}, Requested: ${item.quantity}`
           );
         }
 
         const orderId = generateOrderId(userId);
-        let totalAmount = product.price * (1 - product.discount / 100) * item.quantity;
+        const totalAmount = product.price * (1 - product.discount / 100) * item.quantity;
 
         const order = await Order.create({
           orderId,
           user: userId,
           product: item.productId,
-          selectedVariants: [],
+          variants: {},
           quantity: item.quantity,
           price: product.price,
           discount: product.discount,
@@ -135,18 +132,11 @@ const createOrder = async (req, res) => {
           status: "pending",
         });
 
-        const newStock = Number(product.stock) - Number(item.quantity);
-        if (isNaN(newStock) || newStock < 0) {
-          throw new Error(`Invalid stock calculation for product: ${item.productId}`);
-        }
-        
         await Product.findByIdAndUpdate(item.productId, {
-          stock: newStock
+          stock: product.stock - item.quantity
         });
 
         return order;
-      } else {
-        throw new Error(`Invalid product configuration: ${item.productId}`);
       }
     });
 
@@ -158,7 +148,7 @@ const createOrder = async (req, res) => {
           .populate("address")
           .populate({
             path: "product",
-            select: "name images productVariants",
+            select: "name images variants variantCombinations price",
             populate: {
               path: "vendor",
               select: "name",
@@ -202,14 +192,12 @@ const getUserOrders = async (req, res) => {
       .populate("address")
       .populate({
         path: "product",
-        select: "name images variant",
+        select: "name images variants variantCombinations price",
         populate: {
           path: "vendor",
           select: "name",
         },
       });
-
-    console.log("Found orders:", orders);
 
     res.status(200).json({
       success: true,
@@ -217,7 +205,6 @@ const getUserOrders = async (req, res) => {
       message: orders.length ? null : "No orders found",
     });
   } catch (error) {
-    console.error("Error fetching orders:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch orders",
@@ -241,11 +228,11 @@ const getOrderById = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, "user._id": userId })
+    const order = await Order.findOne({ _id: id, user: userId })
       .populate("address")
       .populate({
         path: "product",
-        select: "name images variant",
+        select: "name images variants variantCombinations price",
         populate: {
           path: "vendor",
           select: "name",
@@ -288,7 +275,7 @@ const updateOrderStatus = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, "user._id": userId });
+    const order = await Order.findOne({ _id: id, user: userId });
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -314,7 +301,7 @@ const updateOrderStatus = async (req, res) => {
       .populate("address")
       .populate({
         path: "product",
-        select: "name images variant",
+        select: "name images variants variantCombinations price",
         populate: {
           path: "vendor",
           select: "name",
@@ -350,7 +337,7 @@ const cancelOrder = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId });
+    const order = await Order.findOne({ _id: id, user: userId }).populate("product");
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -365,6 +352,33 @@ const cancelOrder = async (req, res) => {
       });
     }
 
+    // Restore stock based on variant or regular product
+    if (order.variants && Object.keys(order.variants).length > 0) {
+      // Update variant combination stock
+      const updatedCombinations = order.product.variantCombinations.map(combo => {
+        const isMatchingCombo = Object.entries(combo.variants).every(
+          ([key, value]) => order.variants[key] === value
+        );
+
+        if (isMatchingCombo) {
+          return {
+            ...combo,
+            stock: combo.stock + order.quantity
+          };
+        }
+        return combo;
+      });
+
+      await Product.findByIdAndUpdate(order.product._id, {
+        variantCombinations: updatedCombinations
+      });
+    } else {
+      // Update regular product stock
+      await Product.findByIdAndUpdate(order.product._id, {
+        $inc: { stock: order.quantity }
+      });
+    }
+
     order.status = "cancelled";
     await order.save();
 
@@ -372,7 +386,7 @@ const cancelOrder = async (req, res) => {
       .populate("address")
       .populate({
         path: "product",
-        select: "name images variant",
+        select: "name images variants variantCombinations price",
         populate: {
           path: "vendor",
           select: "name",
@@ -411,25 +425,25 @@ const getVendorOrders = async (req, res) => {
     const orders = await Order.find({ vendor: vendorId })
       .sort({ createdAt: -1 })
       .populate("address")
-      .populate("user", "name email")
       .populate({
         path: "product",
-        select: "name images variant",
+        select: "name images variants variantCombinations price",
         populate: {
           path: "vendor",
           select: "name",
         },
-      });
+      })
+      .populate("user", "name email");
 
     res.status(200).json({
       success: true,
       orders,
+      message: orders.length ? null : "No orders found",
     });
   } catch (error) {
-    console.error("Error fetching vendor orders:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch vendor orders",
+      message: "Failed to fetch orders",
       error: error.message,
     });
   }

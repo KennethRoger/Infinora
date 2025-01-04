@@ -11,10 +11,16 @@ const shippingSchema = new mongoose.Schema({
 
 const variantTypesSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  imageIndex: { type: Number },
+});
+
+const variantCombinationSchema = new mongoose.Schema({
+  variants: { 
+    type: Object,
+    required: true 
+  },
   stock: { type: Number, required: true },
-  price: { type: Number, required: true },
-  imageIndex: { type: Number, required: false },
-  shipping: { type: shippingSchema, required: false },
+  priceAdjustment: { type: Number, default: 0 },
 });
 
 const productVariantsSchema = new mongoose.Schema({
@@ -44,20 +50,26 @@ const productSchema = new mongoose.Schema(
       type: [productVariantsSchema],
       default: [],
     },
-    price: { type: Number },
-    stock: { type: Number },
+    variantCombinations: {
+      type: [variantCombinationSchema],
+      default: [],
+    },
+    price: { type: Number, required: true },
+    stock: { type: Number, default: 0 },
     shipping: { type: shippingSchema },
     discount: { type: Number, default: 0 },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
+      required: true,
     },
     subCategory: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
+      default: null,
     },
     rating: { type: Number, default: 0 },
-    reviews: { type: [reviewSchema], required: false },
+    reviews: { type: [reviewSchema], default: [] },
     additionalDetails: { type: String, default: "" },
     status: {
       type: String,

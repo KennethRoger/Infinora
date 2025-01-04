@@ -1,6 +1,5 @@
 import { useDispatch } from "react-redux";
 import StarRating from "../Rating/StarRating";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchProductById } from "@/redux/features/singleProductSlice";
 
@@ -10,7 +9,6 @@ export default function ProductCard({ product }) {
 
   const handleProductClick = async () => {
     try {
-      window.scrollTo(0, 0);
       await dispatch(fetchProductById(product._id));
       navigate(`/home/product/${product._id}`);
     } catch (error) {
@@ -19,14 +17,14 @@ export default function ProductCard({ product }) {
   };
 
   const calculateInitialPrice = () => {
-    if (product.productVariants?.length > 0) {
-      return product.productVariants.reduce((total, variant) => {
-        const firstType = variant.variantTypes[0];
-        return total + (firstType?.price || 0);
-      }, 0);
+    if (product.variants?.length > 0 && product.variantCombinations?.length > 0) {
+      // Find the minimum price from all combinations
+      const minPriceAdjustment = Math.min(
+        ...product.variantCombinations.map((combo) => combo.priceAdjustment || 0)
+      );
+      return product.price + minPriceAdjustment;
     }
     return product.price;
-
   };
 
   const initialPrice = calculateInitialPrice();
@@ -51,6 +49,9 @@ export default function ProductCard({ product }) {
           </p>
           <h3 className="font-bold text-base truncate">{product.name}</h3>
           <StarRating rating={product.rating} />
+          {product.variants?.length > 0 && (
+            <p className="text-sm text-gray-500">Multiple variants available</p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <p className="font-bold text-xl text-black">

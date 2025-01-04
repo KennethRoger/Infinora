@@ -1,31 +1,21 @@
 const mongoose = require("mongoose");
 
-const variantSelectionSchema = new mongoose.Schema({
-  variantName: {
-    type: String,
-    required: true
-  },
-  typeName: {
-    type: String,
-    required: true
-  }
-});
-
 const cartItemSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
     required: true,
   },
-  selectedVariants: {
-    type: [variantSelectionSchema],
+  variants: {
+    type: Map,
+    of: String,
     default: undefined
   },
   quantity: {
     type: Number,
     required: true,
     default: 1,
-  },
+  }
 });
 
 const cartSchema = new mongoose.Schema(
