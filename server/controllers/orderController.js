@@ -29,22 +29,30 @@ const createOrder = async (req, res) => {
       if (product.variants?.length > 0 && item.variants) {
         // Validate variants and check stock
         for (const [variantName, typeName] of Object.entries(item.variants)) {
-          const variant = product.variants.find(v => v.variantName === variantName);
+          const variant = product.variants.find(
+            (v) => v.variantName === variantName
+          );
           if (!variant) {
             throw new Error(`Variant not found: ${variantName}`);
           }
 
-          const variantType = variant.variantTypes.find(t => t.name === typeName);
+          const variantType = variant.variantTypes.find(
+            (t) => t.name === typeName
+          );
           if (!variantType) {
-            throw new Error(`Variant type not found for ${variantName}: ${typeName}`);
+            throw new Error(
+              `Variant type not found for ${variantName}: ${typeName}`
+            );
           }
 
           // Find matching combination for stock check
-          const matchingCombination = product.variantCombinations.find(combo => {
-            return Object.entries(combo.variants).every(
-              ([key, value]) => item.variants[key] === value
-            );
-          });
+          const matchingCombination = product.variantCombinations.find(
+            (combo) => {
+              return Object.entries(combo.variants).every(
+                ([key, value]) => item.variants[key] === value
+              );
+            }
+          );
 
           if (!matchingCombination) {
             throw new Error(`Invalid variant combination`);
@@ -62,14 +70,19 @@ const createOrder = async (req, res) => {
         // Calculate price including variants
         let basePrice = product.price;
         for (const [variantName, typeName] of Object.entries(item.variants)) {
-          const variant = product.variants.find(v => v.variantName === variantName);
-          const variantType = variant.variantTypes.find(t => t.name === typeName);
+          const variant = product.variants.find(
+            (v) => v.variantName === variantName
+          );
+          const variantType = variant.variantTypes.find(
+            (t) => t.name === typeName
+          );
           if (variantType?.price) {
             basePrice += variantType.price;
           }
         }
 
-        const totalAmount = basePrice * (1 - product.discount / 100) * item.quantity;
+        const totalAmount =
+          basePrice * (1 - product.discount / 100) * item.quantity;
 
         const order = await Order.create({
           orderId,
@@ -86,25 +99,6 @@ const createOrder = async (req, res) => {
           status: "pending",
         });
 
-        // Update stock in variant combinations
-        const updatedCombinations = product.variantCombinations.map(combo => {
-          const isMatchingCombo = Object.entries(combo.variants).every(
-            ([key, value]) => item.variants[key] === value
-          );
-
-          if (isMatchingCombo) {
-            return {
-              ...combo,
-              stock: combo.stock - item.quantity
-            };
-          }
-          return combo;
-        });
-
-        await Product.findByIdAndUpdate(item.productId, {
-          variantCombinations: updatedCombinations
-        });
-
         return order;
       } else {
         // Handle products without variants
@@ -115,7 +109,8 @@ const createOrder = async (req, res) => {
         }
 
         const orderId = generateOrderId(userId);
-        const totalAmount = product.price * (1 - product.discount / 100) * item.quantity;
+        const totalAmount =
+          product.price * (1 - product.discount / 100) * item.quantity;
 
         const order = await Order.create({
           orderId,
@@ -130,10 +125,6 @@ const createOrder = async (req, res) => {
           vendor: product.vendor._id,
           totalAmount,
           status: "pending",
-        });
-
-        await Product.findByIdAndUpdate(item.productId, {
-          stock: product.stock - item.quantity
         });
 
         return order;
@@ -273,9 +264,13 @@ const updateOrderStatus = async (req, res) => {
     }
 
     const decoded = verifyToken(token);
-    const userId = decoded.id;
+    const vendorId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId });
+    const order = await Order.findOne({ _id: id, vendor: vendorId }).populate({
+      path: "product",
+      select: "variants variantCombinations stock",
+    });
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -283,18 +278,46 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    if (status === "cancelled" && order.status === "delivered") {
+    // Prevent status update if order is cancelled or delivered
+    if (order.status === "cancelled" || order.status === "delivered") {
       return res.status(400).json({
         success: false,
-        message: "Cannot cancel delivered orders",
+        message: `Cannot update ${order.status} order`,
       });
     }
 
-    order.status = status;
-    if (status === "delivered") {
-      order.deliveryDate = new Date();
+    // If status is being changed to shipped, reduce product stock
+    if (status === "shipped") {
+      const product = await Product.findById(order.product._id);
+      
+      if (order.variants && Object.keys(order.variants).length > 0) {
+        // Handle variant product stock
+        const updatedCombinations = product.variantCombinations.map((combo) => {
+          const isMatchingCombo = Object.entries(combo.variants).every(
+            ([key, value]) => order.variants[key] === value
+          );
+
+          if (isMatchingCombo) {
+            return {
+              ...combo,
+              stock: combo.stock - order.quantity,
+            };
+          }
+          return combo;
+        });
+
+        await Product.findByIdAndUpdate(order.product._id, {
+          variantCombinations: updatedCombinations,
+        });
+      } else {
+        // Handle regular product stock
+        await Product.findByIdAndUpdate(order.product._id, {
+          stock: product.stock - order.quantity,
+        });
+      }
     }
 
+    order.status = status;
     await order.save();
 
     const updatedOrder = await Order.findById(id)
@@ -337,7 +360,9 @@ const cancelOrder = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId }).populate("product");
+    const order = await Order.findOne({ _id: id, user: userId }).populate(
+      "product"
+    );
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -349,33 +374,6 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Only pending orders can be cancelled",
-      });
-    }
-
-    // Restore stock based on variant or regular product
-    if (order.variants && Object.keys(order.variants).length > 0) {
-      // Update variant combination stock
-      const updatedCombinations = order.product.variantCombinations.map(combo => {
-        const isMatchingCombo = Object.entries(combo.variants).every(
-          ([key, value]) => order.variants[key] === value
-        );
-
-        if (isMatchingCombo) {
-          return {
-            ...combo,
-            stock: combo.stock + order.quantity
-          };
-        }
-        return combo;
-      });
-
-      await Product.findByIdAndUpdate(order.product._id, {
-        variantCombinations: updatedCombinations
-      });
-    } else {
-      // Update regular product stock
-      await Product.findByIdAndUpdate(order.product._id, {
-        $inc: { stock: order.quantity }
       });
     }
 

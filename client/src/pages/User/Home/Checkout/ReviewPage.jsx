@@ -10,6 +10,7 @@ import { clearCart } from "@/redux/features/userCartSlice";
 import { clearCheckout } from "@/redux/features/userOrderSlice";
 import Spinner from "@/components/Spinner/Spinner";
 import { createOrder } from "@/api/order/orderApi";
+import { createRazorpayOrder, verifyPayment } from "@/api/payment/paymentApi";
 import toast from "react-hot-toast";
 import axios from "axios";
 
@@ -127,33 +128,89 @@ export default function ReviewPage() {
         items: orderItems,
       };
 
-      const response = await createOrder(orderData);
+      if (selectedPaymentMethod === "cod") {
+        // Handle COD payment
+        const response = await createOrder(orderData);
+        if (response.success) {
+          handleOrderSuccess();
+        }
+      } else if (selectedPaymentMethod === "online") {
+        // Create Razorpay order
+        const razorpayResponse = await createRazorpayOrder(total);
+        if (!razorpayResponse.success) {
+          throw new Error("Failed to create Razorpay order");
+        }
 
-      if (response.success) {
-        localStorage.removeItem("selectedAddress");
-        localStorage.removeItem("selectedPayment");
+        // Create order in your system first
+        const orderResponse = await createOrder(orderData);
+        if (!orderResponse.success) {
+          throw new Error("Failed to create order");
+        }
 
-        dispatch(clearCart());
-        dispatch(clearCheckout());
+        // Initialize Razorpay payment
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: total * 100, // amount in paise
+          currency: "INR",
+          name: "Infinora",
+          description: "Payment for your order",
+          order_id: razorpayResponse.order.id,
+          handler: async function (response) {
+            try {
+              // Verify payment
+              const verificationData = {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId: orderResponse.orders[0]._id, // Assuming single order
+              };
 
-        await axios.delete(
-          `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
-          {
-            withCredentials: true,
-          }
-        );
+              const verificationResponse = await verifyPayment(verificationData);
+              if (verificationResponse.success) {
+                handleOrderSuccess();
+              } else {
+                throw new Error("Payment verification failed");
+              }
+            } catch (error) {
+              toast.error("Payment verification failed");
+              setOrderProcessing(false);
+            }
+          },
+          prefill: {
+            name: selectedAddress?.fullName || "",
+            contact: selectedAddress?.phone || "",
+          },
+          theme: {
+            color: "#2563eb",
+          },
+        };
 
-        toast.success("Order placed successfully!");
-        navigate("/home/profile/orders", { replace: true });
-      } else {
-        toast.error(response.message || "Failed to place order");
+        const razorpayInstance = new window.Razorpay(options);
+        razorpayInstance.open();
       }
     } catch (error) {
-      console.error("Failed to place order:", error);
-      toast.error(error.response?.data?.message || "Failed to place order");
-    } finally {
+      console.error("Error placing order:", error);
+      toast.error(error.message || "Failed to place order");
       setOrderProcessing(false);
     }
+  };
+
+  const handleOrderSuccess = async () => {
+    localStorage.removeItem("selectedAddress");
+    localStorage.removeItem("selectedPayment");
+
+    dispatch(clearCart());
+    dispatch(clearCheckout());
+
+    await axios.delete(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
+      {
+        withCredentials: true,
+      }
+    );
+
+    toast.success("Order placed successfully!");
+    navigate("/home/profile/orders", { replace: true });
   };
 
   if (orderProcessing) return <Spinner />;
