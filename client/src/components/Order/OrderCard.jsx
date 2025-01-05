@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 import Modal from "@/components/Modal/Modal";
@@ -32,7 +33,13 @@ const orderStatusColors = {
   cancelled: "bg-red-50 text-red-700 border-red-200",
 };
 
-export default function OrderCard({ order }) {
+const paymentStatusColors = {
+  pending: "bg-yellow-50 text-yellow-700",
+  completed: "bg-green-50 text-green-700",
+  failed: "bg-red-50 text-red-700",
+};
+
+export default function OrderCard({ order, showPaymentStatus = false, showDeliveryStatus = false }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -53,175 +60,159 @@ export default function OrderCard({ order }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      {/* Order Header */}
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">Order ID</p>
-            <p className="font-medium">{order.orderId}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Ordered On</p>
-            <p className="font-medium">{formatDate(order.orderDate)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Product Info */}
-      <div className="p-4 flex items-start gap-4">
-        <div className="h-24 w-24 flex-shrink-0">
-          <img
-            src={order.product.images[order.selectedVariant]}
-            alt={order.product.name}
-            className="h-full w-full object-cover rounded-md"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 truncate">
-            {order.product.name}
-          </h3>
-          <p className="text-sm text-gray-500">
-            {order.product.variant.variantName}:{" "}
-            {order.product.variant.variantTypes[order.selectedVariant].name}
-          </p>
-          <p className="text-sm text-gray-500">Quantity: {order.quantity}</p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="font-medium">
-              {formatPrice(order.totalAmount)}
+    <div className="border rounded-lg p-4 bg-white shadow-sm">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-medium">Order #{order.orderId}</h3>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                orderStatusColors[order.status]
+              }`}
+            >
+              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
             </span>
-            {order.discount > 0 && (
-              <span className="text-sm text-green-600">
-                {order.discount}% off
+            {showPaymentStatus && (
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  paymentStatusColors[order.paymentStatus]
+                }`}
+              >
+                <div className="flex items-center gap-1">
+                  <CreditCard className="h-3 w-3" />
+                  {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                </div>
               </span>
             )}
           </div>
+          <p className="text-sm text-gray-500">
+            Ordered on {formatDate(order.createdAt)}
+          </p>
         </div>
-        <div>
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm border ${
-              orderStatusColors[order.status]
-            }`}
-          >
-            {orderStatusIcons[order.status]}
-            <span className="capitalize">{order.status}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Expandable Details */}
-      <div className="border-t">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 flex items-center justify-center gap-1"
+          className="text-gray-500 hover:text-gray-700"
         >
-          {isExpanded ? "Show Less" : "Show More"}
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className="h-5 w-5" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-5 w-5" />
           )}
         </button>
       </div>
 
-      {/* Extended Details */}
+      <div className="flex items-center gap-4 mb-4">
+        <img
+          src={order.product.images[0]}
+          alt={order.product.name}
+          className="h-20 w-20 object-cover rounded-md"
+        />
+        <div>
+          <h4 className="font-medium">{order.product.name}</h4>
+          <p className="text-sm text-gray-500">Quantity: {order.quantity}</p>
+          {order.variants && Object.keys(order.variants).length > 0 && (
+            <p className="text-sm text-gray-500">
+              Variants:{" "}
+              {Object.entries(order.variants)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join(", ")}
+            </p>
+          )}
+          <p className="font-medium mt-1">{formatPrice(order.totalAmount)}</p>
+        </div>
+      </div>
+
       {isExpanded && (
-        <div className="border-t p-4 space-y-4">
-          {/* Payment Details */}
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Payment Details</h4>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500">Payment Method</p>
-                <p className="font-medium capitalize">{order.paymentMethod}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Status</p>
-                <p className="font-medium capitalize">{order.status}</p>
+        <div className="mt-4 border-t pt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h5 className="font-medium mb-2">Delivery Address</h5>
+              <div className="text-sm text-gray-600">
+                <p>{order.address.fullName}</p>
+                <p>{order.address.street}</p>
+                <p>
+                  {order.address.city}, {order.address.state} {order.address.pinCode}
+                </p>
+                <p>Phone: {order.address.phone}</p>
               </div>
             </div>
-          </div>
-
-          {/* Delivery Address */}
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Delivery Address</h4>
-            <div className="text-sm space-y-1">
-              <p className="font-medium">{order.address.fullName}</p>
-              <p>{order.address.address}</p>
-              <p>
-                {order.address.locality}, {order.address.district}
-              </p>
-              <p>
-                {order.address.state} - {order.address.pincode}
-              </p>
-              <p>Phone: {order.address.phoneNumber}</p>
-            </div>
-          </div>
-
-          {/* Price Breakdown */}
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Price Details</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">
-                  Price ({order.quantity} items)
-                </span>
-                <span>{formatPrice(order.price * order.quantity)}</span>
-              </div>
-              {order.discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount ({order.discount}%)</span>
-                  <span>
-                    -{" "}
-                    {formatPrice(
-                      (order.price * order.quantity * order.discount) / 100
+            <div>
+              <h5 className="font-medium mb-2">Payment Details</h5>
+              <div className="text-sm text-gray-600">
+                <p>Method: {order.paymentMethod.toUpperCase()}</p>
+                {order.paymentMethod === "online" && (
+                  <>
+                    <p>Status: {order.paymentStatus}</p>
+                    {order.razorpay?.paymentId && (
+                      <p>Payment ID: {order.razorpay.paymentId}</p>
                     )}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between font-medium pt-2 border-t">
-                <span>Total Amount</span>
-                <span>{formatPrice(order.totalAmount)}</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
+
+          {showDeliveryStatus && (
+            <div className="mt-4">
+              <h5 className="font-medium mb-2">Order Timeline</h5>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex flex-col items-center">
+                  <Clock className={`h-5 w-5 ${order.status === "pending" ? "text-blue-500" : "text-gray-400"}`} />
+                  <span>Pending</span>
+                </div>
+                <div className="flex-1 h-0.5 bg-gray-200 mx-2"></div>
+                <div className="flex flex-col items-center">
+                  <Package className={`h-5 w-5 ${order.status === "processing" ? "text-blue-500" : "text-gray-400"}`} />
+                  <span>Processing</span>
+                </div>
+                <div className="flex-1 h-0.5 bg-gray-200 mx-2"></div>
+                <div className="flex flex-col items-center">
+                  <Truck className={`h-5 w-5 ${order.status === "shipped" ? "text-blue-500" : "text-gray-400"}`} />
+                  <span>Shipped</span>
+                </div>
+                <div className="flex-1 h-0.5 bg-gray-200 mx-2"></div>
+                <div className="flex flex-col items-center">
+                  <CheckCircle className={`h-5 w-5 ${order.status === "delivered" ? "text-blue-500" : "text-gray-400"}`} />
+                  <span>Delivered</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {order.status !== "cancelled" && order.status !== "delivered" && (
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowCancelModal(true)}
+                className="text-red-600 hover:text-red-700 text-sm font-medium"
+              >
+                Cancel Order
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Cancel Button - Only show for pending orders */}
-      {order.status === "pending" && (
-        <div className="p-4 border-t">
-          <button
-            onClick={() => setShowCancelModal(true)}
-            className="w-full py-2 px-4 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
-          >
-            Cancel Order
-          </button>
-        </div>
-      )}
-
-      {/* Cancel Modal */}
-      <Modal isOpen={showCancelModal}>
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Cancel Order?
-          </h3>
-          <p className="text-sm text-gray-500 mb-6">
-            Are you sure you want to cancel this order? This action cannot be
-            undone.
-          </p>
-          <div className="flex justify-center gap-4">
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Cancel Order"
+      >
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4 text-amber-600">
+            <AlertCircle className="h-5 w-5" />
+            <p>Are you sure you want to cancel this order?</p>
+          </div>
+          <div className="flex justify-end gap-2">
             <button
               onClick={() => setShowCancelModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
               disabled={cancelling}
             >
               No, Keep Order
             </button>
             <button
               onClick={handleCancel}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
               disabled={cancelling}
             >
               {cancelling ? "Cancelling..." : "Yes, Cancel Order"}

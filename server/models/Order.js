@@ -17,8 +17,9 @@ const orderSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
-    selectedVariants: {
-      type: Array,
+    variants: {
+      type: Object,
+      default: {},
     },
     quantity: {
       type: Number,
@@ -27,7 +28,7 @@ const orderSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
-      default: null,
+      required: true,
     },
     discount: {
       type: Number,
@@ -41,16 +42,18 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ["cod", "online"],
+      enum: ["cod", "online", "wallet"],
     },
-    status: {
+    paymentStatus: {
       type: String,
       required: true,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
-      default: "pending",
+      enum: ["pending", "completed", "failed"],
+      default: "pending"
     },
-    deliveryDate: {
-      type: Date,
+    razorpay: {
+      orderId: String,
+      paymentId: String,
+      signature: String,
     },
     vendor: {
       type: mongoose.Schema.Types.ObjectId,
@@ -60,7 +63,13 @@ const orderSchema = new mongoose.Schema(
     totalAmount: {
       type: Number,
       required: true,
-    }
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+      default: "pending",
+    },
   },
   {
     timestamps: true,

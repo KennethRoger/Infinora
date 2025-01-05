@@ -31,6 +31,35 @@ export default function OrderPage() {
     };
   }, [dispatch]);
 
+  const getFilteredOrders = () => {
+    let filtered = [...orders];
+
+    // Filter orders
+    if (filter !== "all") {
+      filtered = filtered.filter((order) => order.status === filter);
+    }
+
+    // Sort orders
+    switch (sort) {
+      case "recent":
+        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      case "oldest":
+        filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        break;
+      case "price-high":
+        filtered.sort((a, b) => b.totalAmount - a.totalAmount);
+        break;
+      case "price-low":
+        filtered.sort((a, b) => a.totalAmount - b.totalAmount);
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -57,36 +86,15 @@ export default function OrderPage() {
     );
   }
 
-  const filteredOrders =
-    orders?.filter((order) => {
-      if (filter === "all") return true;
-      return order.status === filter;
-    }) || [];
-
-  const sortedOrders = [...filteredOrders].sort((a, b) => {
-    switch (sort) {
-      case "recent":
-        return new Date(b.orderDate) - new Date(a.orderDate);
-      case "oldest":
-        return new Date(a.orderDate) - new Date(b.orderDate);
-      case "high":
-        return b.totalAmount - a.totalAmount;
-      case "low":
-        return a.totalAmount - b.totalAmount;
-      default:
-        return 0;
-    }
-  });
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">My Orders</h1>
+        <h1 className="text-2xl font-semibold">My Orders</h1>
         <div className="flex gap-4">
           <select
+            className="border rounded-md px-3 py-1"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="rounded-md border-gray-300 text-sm"
           >
             <option value="all">All Orders</option>
             <option value="pending">Pending</option>
@@ -96,21 +104,26 @@ export default function OrderPage() {
             <option value="cancelled">Cancelled</option>
           </select>
           <select
+            className="border rounded-md px-3 py-1"
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="rounded-md border-gray-300 text-sm"
           >
             <option value="recent">Most Recent</option>
             <option value="oldest">Oldest First</option>
-            <option value="high">Price: High to Low</option>
-            <option value="low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="price-low">Price: Low to High</option>
           </select>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {sortedOrders.map((order) => (
-          <OrderCard key={order._id} order={order} />
+      <div className="grid gap-6">
+        {getFilteredOrders().map((order) => (
+          <OrderCard
+            key={order._id}
+            order={order}
+            showPaymentStatus={true}
+            showDeliveryStatus={true}
+          />
         ))}
       </div>
     </div>

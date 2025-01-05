@@ -20,6 +20,7 @@ const productRoutes = require("./routes/productRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/payment");
 
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -45,6 +46,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
