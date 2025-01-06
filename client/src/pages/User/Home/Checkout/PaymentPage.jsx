@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
-import { Banknote } from "lucide-react";
+import { BadgeIndianRupee, Banknote } from "lucide-react";
 import toast from "react-hot-toast";
 
 const paymentMethods = [
@@ -11,6 +11,12 @@ const paymentMethods = [
     description: "Pay with cash when your order arrives",
     icon: Banknote,
   },
+  {
+    id: "online",
+    name: "Online Payment",
+    description: "Pay securely online",
+    icon: BadgeIndianRupee,
+  }
 ];
 
 export default function PaymentPage() {
@@ -20,7 +26,6 @@ export default function PaymentPage() {
   );
 
   useEffect(() => {
-    // Validate previous step
     const selectedAddress = localStorage.getItem("selectedAddress");
     if (!selectedAddress) {
       toast.error("Please select a delivery address first");
@@ -28,7 +33,6 @@ export default function PaymentPage() {
       return;
     }
 
-    // Validate current selection
     if (
       selectedPayment &&
       !paymentMethods.some((method) => method.id === selectedPayment)
