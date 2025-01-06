@@ -16,6 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal } from "lucide-react";
 import { formatPrice, formatDate, cn } from "@/lib/utils";
@@ -109,7 +116,20 @@ export default function UserOrderDashboard() {
   const renderCell = (key, order) => {
     switch (key) {
       case "orderId":
-        return <div className="font-medium">{order.orderId}</div>;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="font-medium text-sm text-blue-600">
+                  {order.orderId.slice(-8).toUpperCase().concat("...")}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="font-medium text-sm">{order.orderId}</div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       case "customer":
         return (
           <div>
