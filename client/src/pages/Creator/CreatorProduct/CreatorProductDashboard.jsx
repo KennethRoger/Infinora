@@ -25,6 +25,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchVendorProducts } from "@/redux/features/vendorProductsSlice";
 import axios from "axios";
 import { PRODUCT_TABLE_COLUMNS } from "@/constants/creator/tableColumns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function CreatorProductDashboard() {
   const navigate = useNavigate();
@@ -36,9 +42,9 @@ export default function CreatorProductDashboard() {
   const calculateTotalStock = (product) => {
     if (!product) return 0;
     
-    if (product.productVariants?.[0]?.variantTypes?.length > 0) {
-      return product.productVariants[0].variantTypes.reduce(
-        (sum, type) => sum + (parseInt(type.stock) || 0),
+    if (product.variantCombinations?.length > 0) {
+      return product.variantCombinations.reduce(
+        (sum, combo) => sum + (parseInt(combo.stock) || 0),
         0
       );
     }
@@ -48,7 +54,6 @@ export default function CreatorProductDashboard() {
 
   useEffect(() => {
     dispatch(fetchVendorProducts());
-    console.log("products", products);
   }, [dispatch]);
 
   const handleAddProduct = () => {
@@ -66,11 +71,84 @@ export default function CreatorProductDashboard() {
         )
         .then(() => {
           dispatch(fetchVendorProducts());
-          console.log("Product listing toggled successfully");
         });
     } catch (error) {
       console.error("Error toggling listing:", error);
     }
+  };
+
+  const renderVariantCombinations = (combinations) => {
+    if (!combinations || combinations.length === 0) return "No variants";
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <span className="text-sm text-blue-600 cursor-pointer">
+              {combinations.length} combinations
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="p-2 max-w-sm">
+              <div className="text-sm font-medium mb-2">Variant Combinations:</div>
+              <div className="space-y-2">
+                {combinations.map((combo, index) => (
+                  <div key={combo._id || index} className="text-xs">
+                    <div className="flex justify-between items-center">
+                      <span>
+                        {Object.entries(combo.variants)
+                          .map(([key, value]) => `${key}: ${value}`)
+                          .join(", ")}
+                      </span>
+                      <span className="ml-2">
+                        Stock: {combo.stock}
+                        {combo.priceAdjustment > 0 && 
+                          `, +${formatPrice(combo.priceAdjustment)}`}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  const renderVariants = (variants) => {
+    if (!variants || variants.length === 0) return "No variants";
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <span className="text-sm text-blue-600 cursor-pointer">
+              {variants.length} variant types
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="p-2 max-w-sm">
+              <div className="text-sm font-medium mb-2">Available Variants:</div>
+              <div className="space-y-2">
+                {variants.map((variant) => (
+                  <div key={variant._id} className="text-xs">
+                    <div className="font-medium">{variant.variantName}:</div>
+                    <div className="ml-2">
+                      {variant.variantTypes.map((type) => (
+                        <span key={type._id} className="inline-block mr-2">
+                          {type.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
   const renderCell = (key, product) => {
@@ -84,9 +162,15 @@ export default function CreatorProductDashboard() {
           />
         );
       case "category":
-        return product.category?.name;
+        return product.category?.name || "N/A";
       case "subCategory":
-        return product.subCategory?.name;
+        return product.subCategory?.name || "N/A";
+      case "price":
+        return (
+          <div className="whitespace-nowrap">
+            {formatPrice(product.price)}
+          </div>
+        );
       case "stock":
         return (
           <span
@@ -102,9 +186,13 @@ export default function CreatorProductDashboard() {
           </span>
         );
       case "variants":
-        return product.productVariants?.length;
+        return renderVariants(product.variants);
+      case "variantCombinations":
+        return renderVariantCombinations(product.variantCombinations);
       case "offer":
-        return `${product.discount}%`;
+        return product.discount ? `${product.discount}%` : "No offer";
+      case "rating":
+        return product.rating || "No ratings";
       case "status":
         return (
           <Badge variant={product.isListed ? "success" : "destructive"}>

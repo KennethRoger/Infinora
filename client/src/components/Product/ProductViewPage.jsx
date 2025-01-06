@@ -43,7 +43,6 @@ const ProductViewPage = () => {
     if (product) {
       setTotalPrice(product.price);
       if (product.variants?.length > 0) {
-        // Initialize selected variants
         const initialVariants = {};
         product.variants.forEach((variant) => {
           initialVariants[variant.variantName] = "";
@@ -62,7 +61,6 @@ const ProductViewPage = () => {
       (type) => type.name === value
     );
 
-    // Update image if imageIndex is available
     if (
       selectedType?.imageIndex !== undefined &&
       selectedType.imageIndex !== null
@@ -70,7 +68,6 @@ const ProductViewPage = () => {
       setSelectedImage(selectedType.imageIndex);
     }
 
-    // Find matching combination
     const matchingCombination = product.variantCombinations.find((combo) => {
       return Object.entries(updatedSelections).every(
         ([key, val]) => val && combo.variants[key] === val

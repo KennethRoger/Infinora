@@ -31,7 +31,6 @@ function centerAspectCrop(mediaWidth, mediaHeight, aspect) {
   );
 }
 
-// Component for variant type input fields
 const VariantTypesForm = ({
   control,
   register,
@@ -327,14 +326,12 @@ export default function CreatorAddProduct() {
     }));
   };
 
-  // Variant management
   const {
     fields: variantFields,
     append: addVariantFields,
     remove: removeVariantFields,
   } = useFieldArray({ control, name: "variants" });
 
-  // Variant combination management
   const {
     fields: variantCombinationFields,
     append: addVariantCombination,
@@ -352,7 +349,6 @@ export default function CreatorAddProduct() {
     try {
       const formData = new FormData();
 
-      // Clean up variant combinations before serializing
       if (data.variantCombinations) {
         const cleanCombinations = data.variantCombinations.map((combo) => ({
           variants: Object.fromEntries(

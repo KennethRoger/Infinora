@@ -17,7 +17,6 @@ export default function CartPage() {
   const checkStock = (item) => {
     if (!item?.productId) return false;
 
-    // Check variant stock if product has variants
     if (item.variants && item.productId.variants?.length > 0) {
       const matchingCombination = item.productId.variantCombinations?.find((combo) => {
         return Object.entries(item.variants).every(
@@ -27,7 +26,6 @@ export default function CartPage() {
       return matchingCombination && matchingCombination.stock >= item.quantity;
     }
 
-    // Check regular product stock
     return item.productId.stock >= item.quantity;
   };
 
@@ -37,7 +35,6 @@ export default function CartPage() {
     return cart.items.reduce((acc, item) => {
       if (!item?.productId) return acc;
 
-      // Calculate base price including variants
       let itemBasePrice = item.productId.price || 0;
       
       // Add variant prices

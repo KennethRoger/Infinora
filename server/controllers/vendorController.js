@@ -433,6 +433,7 @@ const editVendorProduct = async (req, res) => {
       shipping,
       additionalDetails,
       customizable,
+      existingImages
     } = req.body;
     const productId = req.params.productId;
 
@@ -469,6 +470,7 @@ const editVendorProduct = async (req, res) => {
     let parsedVariants = variants;
     let parsedVariantCombinations = variantCombinations;
     let parsedShipping = shipping;
+    let parsedExistingImages = [];
 
     if (variants && typeof variants === "string") {
       try {
@@ -501,6 +503,18 @@ const editVendorProduct = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: "Invalid shipping data format",
+          error: error.message,
+        });
+      }
+    }
+
+    if (existingImages && typeof existingImages === "string") {
+      try {
+        parsedExistingImages = JSON.parse(existingImages);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid existing images format",
           error: error.message,
         });
       }
@@ -589,45 +603,14 @@ const editVendorProduct = async (req, res) => {
     }
 
     const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
-    let updatedImages = product.images.slice();
+    let updatedImages = [...parsedExistingImages];
 
+    // Handle new image uploads
     if (req.files && req.files.length > 0) {
-      const imagePositions = req.body.imagePositions
-        ? JSON.parse(req.body.imagePositions)
-        : Array(req.files.length).fill(null);
-
-      if (!Array.isArray(imagePositions)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid image positions. Provide an array of positions.",
-        });
-      }
-
-      for (let i = 0; i < req.files.length; i++) {
-        const position = imagePositions[i];
-
-        if (position !== null && updatedImages[position]) {
-          const oldImageUrl = updatedImages[position];
-          const publicId = oldImageUrl.split("/").pop().split(".")[0];
-
-          try {
-            await cloudinary.uploader.destroy(publicId);
-            console.log(
-              `Old image with public ID ${publicId} deleted from Cloudinary.`
-            );
-          } catch (error) {
-            console.error("Error deleting old image from Cloudinary:", error);
-            return res.status(500).json({
-              success: false,
-              message: "Failed to delete old image from Cloudinary",
-              error: error.message,
-            });
-          }
-        }
-
+      for (const file of req.files) {
         try {
-          const b64 = Buffer.from(req.files[i].buffer).toString("base64");
-          const dataURI = "data:" + req.files[i].mimetype + ";base64," + b64;
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          const dataURI = "data:" + file.mimetype + ";base64," + b64;
           const result = await cloudinary.uploader.upload(dataURI, {
             folder: "infinora/products",
             width: 800,
@@ -635,12 +618,7 @@ const editVendorProduct = async (req, res) => {
             crop: "fill",
             quality: "auto",
           });
-
-          if (position !== null) {
-            updatedImages[position] = result.secure_url;
-          } else {
-            updatedImages.push(result.secure_url);
-          }
+          updatedImages.push(result.secure_url);
         } catch (error) {
           console.error("Error uploading image:", error);
           return res.status(500).json({
@@ -652,23 +630,43 @@ const editVendorProduct = async (req, res) => {
       }
     }
 
+    // Clean up old images that are no longer in use
+    const imagesToDelete = product.images.filter(
+      (img) => !updatedImages.includes(img)
+    );
+
+    for (const imageUrl of imagesToDelete) {
+      try {
+        const publicId = imageUrl.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`Old image with public ID ${publicId} deleted from Cloudinary.`);
+      } catch (error) {
+        console.error("Error deleting old image from Cloudinary:", error);
+      }
+    }
+
     const updateData = {
-      ...(name && { name: name.trim() }),
-      ...(description && { description: description.trim() }),
-      ...(price && { price: Number(price) }),
-      ...(parsedVariants?.length ? { stock: 0 } : stock !== undefined && { stock: Number(stock) }),
-      ...(discount && { discount: Number(discount) }),
-      ...(category && { category }),
-      ...(subCategory && { subCategory }),
-      ...(status && { status }),
-      ...(processedTags.length > 0 && { tags: processedTags }),
-      ...(parsedVariants && { variants: parsedVariants }),
-      ...(parsedVariantCombinations && { variantCombinations: parsedVariantCombinations }),
-      ...(parsedShipping && { shipping: parsedShipping }),
-      ...(additionalDetails && { additionalDetails: additionalDetails.trim() }),
-      ...(customizable !== undefined && { customizable: Boolean(customizable) }),
-      images: updatedImages,
+      name: name?.trim(),
+      description: description?.trim(),
+      price: price ? Number(price) : undefined,
+      stock: parsedVariants?.length ? 0 : (stock !== undefined ? Number(stock) : undefined),
+      discount: discount ? Number(discount) : undefined,
+      category: category || undefined,
+      subCategory: subCategory || undefined,
+      status: status || undefined,
+      tags: processedTags.length > 0 ? processedTags : undefined,
+      variants: parsedVariants || undefined,
+      variantCombinations: parsedVariantCombinations || undefined,
+      shipping: parsedShipping || undefined,
+      additionalDetails: additionalDetails?.trim(),
+      customizable: customizable !== undefined ? Boolean(customizable) : undefined,
+      images: updatedImages
     };
+
+    // Remove undefined values
+    Object.keys(updateData).forEach(
+      (key) => updateData[key] === undefined && delete updateData[key]
+    );
 
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,

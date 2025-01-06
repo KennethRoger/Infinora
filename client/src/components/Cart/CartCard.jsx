@@ -23,34 +23,40 @@ export default function CartCard({ item }) {
     if (!item?.productId) {
       return {
         originalPrice: 0,
-        variantDetails: null
+        variantDetails: null,
       };
     }
 
-    // Calculate total price from all variants
+    //
     let totalVariantPrice = item.productId.price || 0;
-    const variantDetails = item.variants ? Object.entries(item.variants).map(([variantName, typeName]) => {
-      const variant = item.productId.variants?.find(
-        v => v.variantName === variantName
-      );
-      const variantType = variant?.variantTypes?.find(
-        t => t.name === typeName
-      );
+    const variantDetails = item.variants
+      ? Object.entries(item.variants)
+          .map(([variantName, typeName]) => {
+            const variant = item.productId.variants?.find(
+              (v) => v.variantName === variantName
+            );
+            const variantType = variant?.variantTypes?.find(
+              (t) => t.name === typeName
+            );
 
-      if (variantType) {
-        totalVariantPrice += variantType.price || 0;
-      }
+            if (variantType) {
+              totalVariantPrice += variantType.price || 0;
+            }
 
-      return variant ? {
-        name: variant.variantName,
-        value: variantType?.name || 'Unknown',
-        price: variantType?.price || 0
-      } : null;
-    }).filter(Boolean) : [];
+            return variant
+              ? {
+                  name: variant.variantName,
+                  value: variantType?.name || "Unknown",
+                  price: variantType?.price || 0,
+                }
+              : null;
+          })
+          .filter(Boolean)
+      : [];
 
     return {
       originalPrice: totalVariantPrice,
-      variantDetails
+      variantDetails,
     };
   };
 
@@ -59,12 +65,19 @@ export default function CartCard({ item }) {
 
     if (item.variants && item.productId.variants?.length > 0) {
       for (const [variantName, typeName] of Object.entries(item.variants)) {
-        const variant = item.productId.variants.find(v => v.variantName === variantName);
-        const variantType = variant?.variantTypes.find(t => t.name === typeName);
+        const variant = item.productId.variants.find(
+          (v) => v.variantName === variantName
+        );
+        const variantType = variant?.variantTypes.find(
+          (t) => t.name === typeName
+        );
         console.log("variant: ", variant);
         console.log("variantType: ", variantType);
-        if (typeof variantType?.imageIndex === 'number') {
-          return item.productId.images[variantType.imageIndex] || item.productId.images[0];
+        if (typeof variantType?.imageIndex === "number") {
+          return (
+            item.productId.images[variantType.imageIndex] ||
+            item.productId.images[0]
+          );
         }
       }
     }
@@ -73,19 +86,20 @@ export default function CartCard({ item }) {
   };
 
   const { originalPrice, variantDetails } = getVariantDetails();
-  
-  const singleItemDiscountedPrice = originalPrice * (1 - (item.productId?.discount || 0) / 100);
+
+  const singleItemDiscountedPrice =
+    originalPrice * (1 - (item.productId?.discount || 0) / 100);
   const totalOriginalPrice = originalPrice * quantity;
   const totalDiscountedPrice = singleItemDiscountedPrice * quantity;
 
   const handleQuantityChange = async (type) => {
     if (isLoading) return;
-    
+
     try {
       setIsLoading(true);
       const data = {
         productId: item.productId._id,
-        ...(item.variants && { variants: item.variants })
+        ...(item.variants && { variants: item.variants }),
       };
 
       const response = await (type === "increase"
@@ -100,8 +114,13 @@ export default function CartCard({ item }) {
         toast.error(response.message);
       }
     } catch (error) {
-      console.error(`Error ${type === "increase" ? "increasing" : "decreasing"} quantity:`, error);
-      toast.error(error.response.data.message || "An error occurred. Please try again.");
+      console.error(
+        `Error ${type === "increase" ? "increasing" : "decreasing"} quantity:`,
+        error
+      );
+      toast.error(
+        error.response.data.message || "An error occurred. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -109,12 +128,12 @@ export default function CartCard({ item }) {
 
   const handleRemove = async () => {
     if (isLoading) return;
-    
+
     try {
       setIsLoading(true);
       const data = {
         productId: item.productId._id,
-        ...(item.variants && { variants: item.variants })
+        ...(item.variants && { variants: item.variants }),
       };
 
       const response = await removeFromCart(data);
@@ -138,9 +157,11 @@ export default function CartCard({ item }) {
 
   return (
     <>
-      <div className={`flex gap-6 bg-white p-4 rounded-lg border ${
-        isLoading ? 'opacity-60' : ''
-      } border-gray-100 hover:border-gray-200 transition-all relative`}>
+      <div
+        className={`flex gap-6 bg-white p-4 rounded-lg border ${
+          isLoading ? "opacity-60" : ""
+        } border-gray-100 hover:border-gray-200 transition-all relative`}
+      >
         {isLoading && (
           <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -168,7 +189,9 @@ export default function CartCard({ item }) {
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Avatar className="h-5 w-5">
                   <AvatarImage src={item.productId.vendor.profileImagePath} />
-                  <AvatarFallback>{item.productId.vendor.name[0]}</AvatarFallback>
+                  <AvatarFallback>
+                    {item.productId.vendor.name[0]}
+                  </AvatarFallback>
                 </Avatar>
                 <span>{item.productId.vendor.name}</span>
               </div>
@@ -195,7 +218,9 @@ export default function CartCard({ item }) {
           <div className="flex justify-between items-end">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">₹{totalDiscountedPrice.toFixed(2)}</span>
+                <span className="font-semibold">
+                  ₹{totalDiscountedPrice.toFixed(2)}
+                </span>
                 {item.productId.discount > 0 && (
                   <>
                     <span className="text-sm text-gray-500 line-through">
