@@ -1,35 +1,37 @@
-import { HiOutlineShoppingCart } from "react-icons/hi";
-import { MdOutlinePayment } from "react-icons/md";
-import { TbActivityHeartbeat } from "react-icons/tb";
+import { HiOutlineShoppingCart, HiOutlineHeart } from "react-icons/hi";
+import { MdOutlinePayment, MdOutlineAccountBalance } from "react-icons/md";
+import { BiWallet } from "react-icons/bi";
+import { RiExchangeDollarLine } from "react-icons/ri";
 import { AiOutlineLogout } from "react-icons/ai";
 import { FaListCheck } from "react-icons/fa6";
-import { BsCart3 } from "react-icons/bs";
 import { FaRegUser } from "react-icons/fa";
 import { logout } from "@/api/user/userAuth";
+
+const iconStyle = "text-xl text-[#ff9500] group-hover:text-[#ff7800] transition-colors duration-300";
 
 export const profileSideMenu = [
   {
     id: 1,
     label: "Cart",
-    icon: <HiOutlineShoppingCart className="text-[#ff9500]" />,
+    icon: <HiOutlineShoppingCart className={iconStyle} />,
     path: "/home/profile/cart",
   },
   {
     id: 2,
     label: "Orders",
-    icon: <FaListCheck className="text-[#ff9500]" />,
+    icon: <FaListCheck className={iconStyle} />,
     path: "/home/profile/orders",
   },
   {
     id: 3,
     label: "Favorites",
-    icon: <BsCart3 className="text-[#ff9500]" />,
+    icon: <HiOutlineHeart className={iconStyle} />,
     path: "/home/profile/favorites",
   },
   {
     id: 4,
     label: "Account Settings",
-    icon: <FaRegUser className="text-[#ff9500]" />,
+    icon: <FaRegUser className={iconStyle} />,
     collapse: [
       {
         subId: 11,
@@ -46,53 +48,51 @@ export const profileSideMenu = [
   {
     id: 5,
     label: "Payments",
-    icon: <MdOutlinePayment className="text-[#ff9500]" />,
+    icon: <MdOutlinePayment className={iconStyle} />,
     collapse: [
       {
         subId: 21,
         subLabel: "Wallet",
-        subPath: "#",
+        subPath: "/home/profile/wallet",
+        icon: <BiWallet className="text-lg text-gray-600 group-hover:text-[#ff9500] transition-colors duration-300" />
       },
       {
         subId: 22,
-        subLabel: "Card",
-        subPath: "#",
+        subLabel: "Transactions",
+        subPath: "/home/profile/transactions",
+        icon: <RiExchangeDollarLine className="text-lg text-gray-600 group-hover:text-[#ff9500] transition-colors duration-300" />
       },
     ],
   },
   {
     id: 6,
     label: "My Stuff",
-    icon: <TbActivityHeartbeat className="text-[#ff9500]" />,
+    icon: <MdOutlineAccountBalance className={iconStyle} />,
     collapse: [
       {
-        subId: 31,
-        subLabel: "My Vision",
-        subPath: "#",
+        subId: 23,
+        subLabel: "Notification",
+        subPath: "/home/profile/notification",
       },
       {
-        subId: 32,
-        subLabel: "Notifications",
-        subPath: "#",
+        subId: 24,
+        subLabel: "My Visions",
+        subPath: "/home/profile/my-visions",
       },
       {
-        subId: 33,
-        subLabel: "Reviews and Ratings",
-        subPath: "#",
-      },
-      {
-        subId: 34,
-        subLabel: "Coupons",
-        subPath: "#",
+        subId: 25,
+        subLabel: "My Reviews",
+        subPath: "/home/profile/my-reviews",
       },
     ],
   },
   {
     id: 7,
     label: "Logout",
-    icon: <AiOutlineLogout className="text-[#ff9500]" />,
-    onClick: async () => {
-      await logout();
+    icon: <AiOutlineLogout className={`${iconStyle} text-red-500 hover:text-red-600`} />,
+    onClick: () => {
+      logout();
+      window.location.href = "/";
     },
   },
 ];

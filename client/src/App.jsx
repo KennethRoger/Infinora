@@ -39,6 +39,9 @@ import PaymentPage from "./pages/User/Home/Checkout/PaymentPage";
 import ReviewPage from "./pages/User/Home/Checkout/ReviewPage";
 import UserOrderDashboard from "./pages/Creator/UserOrder/UserOrderDashboard";
 import { useEffect } from "react";
+import TransactionPage from "./pages/User/Home/Transaction/TransactionPage";
+import WalletPage from "./pages/User/Home/Wallet/WalletPage";
+import NotFound from "./pages/NotFound";
 
 export function App() {
   const location = useLocation();
@@ -143,7 +146,26 @@ export function App() {
                 }
               />
             </Route>
-
+            <Route path="wallet" element={<ProfilePage />}>
+              <Route
+                index
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <WalletPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+            <Route path="transactions" element={<ProfilePage />}>
+              <Route
+                index
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <TransactionPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
             <Route path="cart" element={<ProfilePage />}>
               <Route
                 index
@@ -278,6 +300,9 @@ export function App() {
           />
           <Route path="category-list" element={<CategoryListPage />} />
         </Route>
+
+        {/* Catch all unmatched routes */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
