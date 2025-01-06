@@ -31,6 +31,7 @@ const getProductById = async (req, res) => {
       .populate("category", "name")
       .populate("subCategory", "name")
       .populate("vendor", "name email profileImagePath");
+      console.log(product)
 
     if (!product) {
       return res.status(404).json({

@@ -27,7 +27,7 @@ export default function ProfilePage() {
             <SidebarMenu menuItems={profileSideMenu} />
           </div>
         </aside>
-        <div className="w-full p-5 min-h-screen">
+        <div className="w-full p-5 min-h-[150vh]">
           <Outlet context={{ user }} />
         </div>
       </div>

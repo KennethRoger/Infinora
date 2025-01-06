@@ -129,7 +129,6 @@ export default function ReviewPage() {
       };
 
       if (selectedPaymentMethod === "cod") {
-        // Handle COD payment
         const response = await createOrder(orderData);
         if (response.success) {
           handleOrderSuccess();
@@ -190,7 +189,7 @@ export default function ReviewPage() {
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.error(error.message || "Failed to place order");
+      toast.error(error.response.data.error || error.response.data.message || error.message || "Failed to place order");
       setOrderProcessing(false);
     }
   };

@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import SearchBarAdmin from "@/components/Form/SearchBarAdmin";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import DataTable from "@/components/Table/DataTable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,8 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal } from "lucide-react";
-import { formatPrice, formatDate } from "@/lib/utils";
-import { useDispatch, useSelector } from "react-redux";
+import { formatPrice, formatDate, cn } from "@/lib/utils";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -36,6 +28,14 @@ const orderStatusColors = {
   shipped: "bg-purple-100 text-purple-800 border-purple-200",
   delivered: "bg-green-100 text-green-800 border-green-200",
   cancelled: "bg-red-100 text-red-800 border-red-200",
+};
+
+const paymentStatusColors = {
+  pending: "bg-yellow-100 text-yellow-800",
+  completed: "bg-green-100 text-green-800",
+  failed: "bg-red-100 text-red-800",
+  cod_pending: "bg-blue-100 text-blue-800",
+  cod_received: "bg-green-100 text-green-800",
 };
 
 export default function UserOrderDashboard() {
@@ -82,7 +82,6 @@ export default function UserOrderDashboard() {
     }
   };
 
-  // Filter orders based on status and search query
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = filter === "all" || order.status === filter;
     const matchesSearch =
@@ -92,7 +91,6 @@ export default function UserOrderDashboard() {
     return matchesStatus && matchesSearch;
   });
 
-  // Sort orders
   const sortedOrders = [...filteredOrders].sort((a, b) => {
     switch (sort) {
       case "newest":
@@ -107,6 +105,132 @@ export default function UserOrderDashboard() {
         return 0;
     }
   });
+
+  const renderCell = (key, order) => {
+    switch (key) {
+      case "orderId":
+        return <div className="font-medium">{order.orderId}</div>;
+      case "customer":
+        return (
+          <div>
+            <div className="font-medium">{order.user.name}</div>
+            <div className="text-sm text-gray-500">{order.user.email}</div>
+          </div>
+        );
+      case "product":
+        return (
+          <div className="flex items-center gap-3">
+            <img
+              src={order.product.images[0]}
+              alt={order.product.name}
+              className="h-12 w-12 rounded-md object-cover"
+            />
+            <div className="font-medium">{order.product.name}</div>
+          </div>
+        );
+      case "variants":
+        if (!order.variants) return "No variants";
+        return (
+          <div className="space-y-1">
+            {Object.entries(order.variants).map(([key, value]) => (
+              <div key={key} className="text-sm">
+                <span className="font-medium">{key}:</span> {value}
+              </div>
+            ))}
+          </div>
+        );
+      case "quantity":
+        return order.quantity;
+      case "price":
+        return formatPrice(order.price);
+      case "totalAmount":
+        return (
+          <div>
+            <div>{formatPrice(order.totalAmount)}</div>
+            {order.discount > 0 && (
+              <div className="text-sm text-green-600">
+                {order.discount}% off
+              </div>
+            )}
+          </div>
+        );
+      case "paymentStatus":
+        return order.paymentMethod === "cod" ? (
+          <Badge
+            className={cn(
+              "text-center",
+              order.status === "delivered"
+                ? paymentStatusColors.cod_received
+                : paymentStatusColors.cod_pending
+            )}
+          >
+            {order.status === "delivered" ? "Payment Received" : "Payment Due"}
+          </Badge>
+        ) : (
+          <Badge className={paymentStatusColors[order.paymentStatus]}>
+            {order.paymentStatus}
+          </Badge>
+        );
+      case "paymentMethod":
+        return (
+          <Badge variant="outline" className="capitalize">
+            {order.paymentMethod.toUpperCase()}
+          </Badge>
+        );
+      case "orderDate":
+        return formatDate(order.createdAt);
+      case "status":
+        return (
+          <Badge
+            className={`${orderStatusColors[order.status]} border px-2 py-1`}
+          >
+            {order.status}
+          </Badge>
+        );
+      case "actions":
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {order.status !== "cancelled" && (
+                <>
+                  {order.status === "pending" && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleUpdateStatus(order._id, "processing")
+                      }
+                    >
+                      Mark as Processing
+                    </DropdownMenuItem>
+                  )}
+                  {order.status === "processing" && (
+                    <DropdownMenuItem
+                      onClick={() => handleUpdateStatus(order._id, "shipped")}
+                    >
+                      Mark as Shipped
+                    </DropdownMenuItem>
+                  )}
+                  {order.status === "shipped" && (
+                    <DropdownMenuItem
+                      onClick={() => handleUpdateStatus(order._id, "delivered")}
+                    >
+                      Mark as Delivered
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      default:
+        return order[key];
+    }
+  };
 
   if (loading) return <div>Loading...</div>;
 
@@ -155,107 +279,24 @@ export default function UserOrderDashboard() {
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-100 hover:bg-gray-100">
-              <TableHead>Order ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedOrders.map((order) => (
-              <TableRow key={order._id}>
-                <TableCell className="font-medium">{order.orderId}</TableCell>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{order.user.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {order.user.email}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={order.product.images[0]}
-                      alt={order.product.name}
-                      className="h-12 w-12 rounded-md object-cover"
-                    />
-                    <div>
-                      <div className="font-medium">{order.product.name}</div>
-                      <div className="text-sm text-gray-500">
-                        Variant: {order.selectedVariant + 1}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{order.quantity}</TableCell>
-                <TableCell>{formatPrice(order.totalAmount)}</TableCell>
-                <TableCell>{formatDate(order.orderDate)}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={`${
-                      orderStatusColors[order.status]
-                    } border px-2 py-1`}
-                  >
-                    {order.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="h-8 w-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {order.status !== "cancelled" && (
-                        <>
-                          {order.status === "pending" && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleUpdateStatus(order._id, "processing")
-                              }
-                            >
-                              Mark as Processing
-                            </DropdownMenuItem>
-                          )}
-                          {order.status === "processing" && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleUpdateStatus(order._id, "shipped")
-                              }
-                            >
-                              Mark as Shipped
-                            </DropdownMenuItem>
-                          )}
-                          {order.status === "shipped" && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleUpdateStatus(order._id, "delivered")
-                              }
-                            >
-                              Mark as Delivered
-                            </DropdownMenuItem>
-                          )}
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={[
+          { key: "orderId", label: "Order ID" },
+          { key: "customer", label: "Customer" },
+          { key: "product", label: "Product" },
+          { key: "variants", label: "Variants" },
+          { key: "quantity", label: "Quantity" },
+          { key: "price", label: "Price" },
+          { key: "totalAmount", label: "Total Amount" },
+          { key: "paymentStatus", label: "Payment Status" },
+          { key: "paymentMethod", label: "Payment Method" },
+          { key: "orderDate", label: "Order Date" },
+          { key: "status", label: "Status" },
+          { key: "actions", label: "Actions" },
+        ]}
+        data={sortedOrders}
+        renderCell={renderCell}
+      />
     </div>
   );
 }
