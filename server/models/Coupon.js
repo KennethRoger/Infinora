@@ -30,18 +30,12 @@ const couponSchema = new mongoose.Schema(
       required: true,
     },
     // the purchase criteria needed for the coupon to be applicable
-    minimumPurchase: {
-      maximumOrders: {
-        type: Number,
-        default: null,
-      },
-      maximumAmount: {
-        type: Number,
-        default: null,
-      },
+    minimumAmount: {
+      type: Number,
+      default: null,
     },
     // The dicount cap amount to limit the purchases
-    maximumDiscount: {
+    maximumDiscountAmount: {
       type: Number,
       default: null,
     },
@@ -67,7 +61,7 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    // The maximum number of times the coupon can be used
+    // The maximum number of times the coupon can be used in platform as a whole
     maxUses: {
       type: Number,
       default: 0,
