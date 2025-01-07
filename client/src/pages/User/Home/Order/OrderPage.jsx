@@ -34,12 +34,10 @@ export default function OrderPage() {
   const getFilteredOrders = () => {
     let filtered = [...orders];
 
-    // Filter orders
     if (filter !== "all") {
       filtered = filtered.filter((order) => order.status === filter);
     }
 
-    // Sort orders
     switch (sort) {
       case "recent":
         filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

@@ -17,13 +17,6 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { fetchUserOrders } from "@/redux/features/userOrderSlice";
 
-const orderStatusIcons = {
-  pending: <Clock className="h-5 w-5 text-yellow-500" />,
-  processing: <Package className="h-5 w-5 text-blue-500" />,
-  shipped: <Truck className="h-5 w-5 text-purple-500" />,
-  delivered: <CheckCircle className="h-5 w-5 text-green-500" />,
-  cancelled: <XCircle className="h-5 w-5 text-red-500" />,
-};
 
 const orderStatusColors = {
   pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -31,12 +24,6 @@ const orderStatusColors = {
   shipped: "bg-purple-50 text-purple-700 border-purple-200",
   delivered: "bg-green-50 text-green-700 border-green-200",
   cancelled: "bg-red-50 text-red-700 border-red-200",
-};
-
-const paymentStatusColors = {
-  pending: "bg-yellow-50 text-yellow-700",
-  completed: "bg-green-50 text-green-700",
-  failed: "bg-red-50 text-red-700",
 };
 
 export default function OrderCard({ order, showPaymentStatus = false, showDeliveryStatus = false }) {
@@ -72,7 +59,7 @@ export default function OrderCard({ order, showPaymentStatus = false, showDelive
             >
               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
             </span>
-            {showPaymentStatus && (
+            {/* {showPaymentStatus && (
               <span
                 className={`px-2 py-1 rounded-full text-xs font-medium ${
                   paymentStatusColors[order.paymentStatus]
@@ -83,7 +70,7 @@ export default function OrderCard({ order, showPaymentStatus = false, showDelive
                   {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
                 </div>
               </span>
-            )}
+            )} */}
           </div>
           <p className="text-sm text-gray-500">
             Ordered on {formatDate(order.createdAt)}

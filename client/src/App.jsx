@@ -42,6 +42,7 @@ import { useEffect } from "react";
 import TransactionPage from "./pages/User/Home/Transaction/TransactionPage";
 import WalletPage from "./pages/User/Home/Wallet/WalletPage";
 import NotFound from "./pages/NotFound";
+import CouponPage from "./pages/Creator/CreatorCoupon/CouponPage";
 
 export function App() {
   const location = useLocation();
@@ -234,6 +235,14 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={["vendor"]}>
                     <UserOrderDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="coupons"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <CouponPage />
                   </ProtectedRoute>
                 }
               />

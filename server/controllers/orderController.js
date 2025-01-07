@@ -27,9 +27,7 @@ const createOrder = async (req, res) => {
         throw new Error(`Product not found: ${item.productId}`);
       }
 
-      // Validate variants first
       if (product.variants?.length > 0 && item.variants) {
-        // Validate all variants exist
         for (const [variantName, typeName] of Object.entries(item.variants)) {
           const variant = product.variants.find(
             (v) => v.variantName === variantName
@@ -48,7 +46,6 @@ const createOrder = async (req, res) => {
           }
         }
 
-        // Check and update stock once
         const matchingCombination = product.variantCombinations.find(
           (combo) => {
             return Object.entries(combo.variants).every(
@@ -56,8 +53,6 @@ const createOrder = async (req, res) => {
             );
           }
         );
-
-        console.log("Checking stock for combination:", matchingCombination);
 
         if (!matchingCombination) {
           throw new Error(`Invalid variant combination for product ${product.name}`);
@@ -69,7 +64,6 @@ const createOrder = async (req, res) => {
           );
         }
 
-        // Update stock once
         const updatedCombinations = product.variantCombinations.map((combo) => {
           const isMatchingCombo = Object.entries(combo.variants).every(
             ([key, value]) => item.variants[key] === value
@@ -101,16 +95,14 @@ const createOrder = async (req, res) => {
 
       let basePrice = product.price;
       if (item.variants) {
-        for (const [variantName, typeName] of Object.entries(item.variants)) {
-          const variant = product.variants.find(
-            (v) => v.variantName === variantName
-          );
-          const variantType = variant.variantTypes.find(
-            (t) => t.name === typeName
-          );
-          if (variantType?.price) {
-            basePrice += variantType.price;
-          }
+        const matchingCombination = product.variantCombinations.find(
+          (combo) => Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
+          )
+        );
+
+        if (matchingCombination) {
+          basePrice += matchingCombination.priceAdjustment || 0;
         }
       }
 
@@ -290,7 +282,6 @@ const updateOrderStatus = async (req, res) => {
       console.log(`Updating order ${id} to shipped status`);
     }
 
-    // Update the order status
     order.status = status;
     const updatedOrder = await order.save();
 
@@ -301,7 +292,6 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Populate necessary fields
     await updatedOrder.populate("product");
 
     res.status(200).json({
