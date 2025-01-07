@@ -7,6 +7,7 @@ import singleProductReducer from "../features/singleProductSlice";
 import userAddressesReducer from "../features/userAddressSlice";
 import userCartReducer from "../features/userCartSlice";
 import userOrderReducer from "../features/userOrderSlice";
+import vendorCouponsReducer from "../features/vendorCouponSlice";
 
 const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ const store = configureStore({
     userAddresses: userAddressesReducer,
     userCart: userCartReducer,
     userOrder: userOrderReducer,
+    vendorCoupons: vendorCouponsReducer,
   },
 });
 
