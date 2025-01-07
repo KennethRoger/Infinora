@@ -18,7 +18,6 @@ export default function ProductCard({ product }) {
 
   const calculateInitialPrice = () => {
     if (product.variants?.length > 0 && product.variantCombinations?.length > 0) {
-      // Find the minimum price from all combinations
       const minPriceAdjustment = Math.min(
         ...product.variantCombinations.map((combo) => combo.priceAdjustment || 0)
       );
@@ -49,9 +48,6 @@ export default function ProductCard({ product }) {
           </p>
           <h3 className="font-bold text-base truncate">{product.name}</h3>
           <StarRating rating={product.rating} />
-          {product.variants?.length > 0 && (
-            <p className="text-sm text-gray-500">Multiple variants available</p>
-          )}
         </div>
         <div className="flex items-center gap-2">
           <p className="font-bold text-xl text-black">

@@ -34,6 +34,6 @@ export const creatorSideMenu = [
     id: 5,
     label: "Coupons",
     icon: <RiCoupon2Line className="text-[#ff9500]" />,
-    path: "#",
+    path: "/home/profile/creator/coupons",
   },
 ];

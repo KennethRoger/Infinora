@@ -26,10 +26,8 @@ export default function ReviewPage() {
     if (!item?.productId) return { basePrice: 0, totalPrice: 0, discountedPrice: 0 };
 
     try {
-      // Start with base product price
       let basePrice = item.productId.price || 0;
 
-      // Add variant prices if any
       if (item.variants && item.productId.variants?.length > 0) {
         for (const [variantName, typeName] of Object.entries(item.variants)) {
           const variant = item.productId.variants.find(v => v.variantName === variantName);
@@ -134,34 +132,30 @@ export default function ReviewPage() {
           handleOrderSuccess();
         }
       } else if (selectedPaymentMethod === "online") {
-        // Create Razorpay order
         const razorpayResponse = await createRazorpayOrder(total);
         if (!razorpayResponse.success) {
           throw new Error("Failed to create Razorpay order");
         }
 
-        // Create order in your system first
         const orderResponse = await createOrder(orderData);
         if (!orderResponse.success) {
           throw new Error("Failed to create order");
         }
 
-        // Initialize Razorpay payment
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: total * 100, // amount in paise
+          amount: total * 100,
           currency: "INR",
           name: "Infinora",
           description: "Payment for your order",
           order_id: razorpayResponse.order.id,
           handler: async function (response) {
             try {
-              // Verify payment
               const verificationData = {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                orderId: orderResponse.orders[0]._id, // Assuming single order
+                orderId: orderResponse.orders[0]._id,
               };
 
               const verificationResponse = await verifyPayment(verificationData);
@@ -189,7 +183,7 @@ export default function ReviewPage() {
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.error(error.response.data.error || error.response.data.message || error.message || "Failed to place order");
+      toast.error(error.response?.data?.error || error.response?.data?.message || error.message || "Failed to place order");
       setOrderProcessing(false);
     }
   };
@@ -247,76 +241,76 @@ export default function ReviewPage() {
             </p>
           </div>
         </div>
-      </div>
+          </div>
 
-      <div className="space-y-4">
+          <div className="space-y-4">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <ShoppingBag className="w-5 h-5" />
           <h2>Order Items</h2>
         </div>
         <div className="space-y-4">
-          {cart?.items?.map((item, index) => {
-            if (!item.productId) return null;
+            {cart?.items?.map((item, index) => {
+              if (!item.productId) return null;
 
-            const { basePrice, totalPrice, discountedPrice } = calculateItemPrice(item);
+              const { basePrice, totalPrice, discountedPrice } = calculateItemPrice(item);
 
-            const getVariantImage = () => {
-              if (item.variants && item.productId.variants?.length > 0) {
-                for (const [variantName, typeName] of Object.entries(item.variants)) {
-                  const variant = item.productId.variants.find(v => v.variantName === variantName);
-                  const variantType = variant?.variantTypes.find(t => t.name === typeName);
-                  if (typeof variantType?.imageIndex === 'number') {
-                    return item.productId.images[variantType.imageIndex] || item.productId.images[0];
+              const getVariantImage = () => {
+                if (item.variants && item.productId.variants?.length > 0) {
+                  for (const [variantName, typeName] of Object.entries(item.variants)) {
+                    const variant = item.productId.variants.find(v => v.variantName === variantName);
+                    const variantType = variant?.variantTypes.find(t => t.name === typeName);
+                    if (typeof variantType?.imageIndex === 'number') {
+                      return item.productId.images[variantType.imageIndex] || item.productId.images[0];
+                    }
                   }
                 }
-              }
-              return item.productId.images[0];
-            };
+                return item.productId.images[0];
+              };
 
-            return (
-              <div
-                key={item.productId._id}
-                className="flex items-center gap-4 p-4 border rounded-lg"
-              >
-                <img
-                  src={getVariantImage()}
-                  alt={item.productId.name}
-                  className="w-20 h-20 object-cover rounded-md"
-                />
-                <div className="flex-1">
-                  <h3 className="font-medium">{item.productId.name}</h3>
-                  <div className="text-sm text-gray-500 space-y-1">
-                    {item.variants && Object.entries(item.variants).map(([variantName, typeName]) => (
-                      <p key={variantName}>
-                        {variantName}: {typeName}
+              return (
+                <div
+                  key={item.productId._id}
+                  className="flex items-center gap-4 p-4 border rounded-lg"
+                >
+                  <img
+                    src={getVariantImage()}
+                    alt={item.productId.name}
+                    className="w-20 h-20 object-cover rounded-md"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-medium">{item.productId.name}</h3>
+                    <div className="text-sm text-gray-500 space-y-1">
+                      {item.variants && Object.entries(item.variants).map(([variantName, typeName]) => (
+                        <p key={variantName}>
+                          {variantName}: {typeName}
+                        </p>
+                      ))}
+                      <p>Quantity: {item.quantity}</p>
+                      <p className="text-xs">Base Price: ₹{basePrice.toFixed(2)}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-sm line-through text-gray-500">
+                        ₹{totalPrice.toFixed(2)}
                       </p>
-                    ))}
-                    <p>Quantity: {item.quantity}</p>
-                    <p className="text-xs">Base Price: ₹{basePrice.toFixed(2)}</p>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <p className="text-sm line-through text-gray-500">
-                      ₹{totalPrice.toFixed(2)}
-                    </p>
-                    <p className="font-medium">₹{discountedPrice.toFixed(2)}</p>
+                      <p className="font-medium">₹{discountedPrice.toFixed(2)}</p>
                     {item.productId.discount > 0 && (
                       <p className="text-sm text-green-600">
                         ({item.productId.discount}% off)
                       </p>
                     )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
       </div>
 
-      <div className="border-t pt-4 space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Subtotal ({cart.items.length} items)</span>
-          <span>₹{subtotal.toFixed(2)}</span>
-        </div>
+          <div className="mt-6 p-4 border rounded-lg space-y-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Subtotal</span>
+              <span>₹{subtotal.toFixed(2)}</span>
+            </div>
         {discount > 0 && (
           <div className="flex justify-between text-sm text-green-600">
             <span>Total Discount</span>
