@@ -1,35 +1,111 @@
-# Coupon Implementation Plan
+# Implementation Plan for Tomorrow
 
-## Current Status
-- Basic coupon UI implemented in CartCard
-- Need to restructure for multi-vendor support
+## 1. Infinite Scroll Product Listing
+### Frontend Implementation
+- [ ] Install `react-intersection-observer` for scroll detection
+- [ ] Create custom hook `useInfiniteScroll`
+- [ ] Modify ProductListingPage to use infinite scroll
+- [ ] Add loading skeleton for new items
+- [ ] Implement scroll restoration
 
-## TODO
-### 1. Local Storage Structure
-```javascript
-appliedCoupons = [
-  {
-    vendorId: "vendor123",
-    productId: "product456",
-    couponDiscount: 100,
-    couponCode: "SAVE10"
-  }
-]
-```
+### Backend Implementation
+- [ ] Modify product fetch API to support pagination
+- [ ] Add limit and offset parameters
+- [ ] Optimize query performance
 
-### 2. Required Changes
-- Modify CartCard to support multiple coupon applications
-- Store coupon data in localStorage
-- Update ReviewPage.jsx to include coupon data in order payload
-- Modify orderController.js to apply vendor-specific discounts during order creation
+## 2. Admin Dashboard Tables
+### Reusable Table Component
+- [ ] Create base Table component with:
+  - Sorting
+  - Filtering
+  - Column customization
+  - Row selection
+  - Action buttons
+- [ ] Add loading states
+- [ ] Implement responsive design
 
-### 3. Implementation Steps
-1. Create localStorage utility for coupon management
-2. Update cart UI to show multiple applied coupons
-3. Modify order creation flow to include coupon data
-4. Update backend to handle per-vendor coupon discounts
+### Data Fetching
+- [ ] Create custom hook `useTableData`
+- [ ] Implement server-side pagination
+- [ ] Add data caching
+- [ ] Handle error states
 
-### 4. Key Points to Remember
-- Orders are created per vendor, not as bulk
-- Users can apply multiple coupons (one per product)
-- Discounts must be calculated in backend during order creation
+## 3. Sales Report Generation
+### Vendor Dashboard (Implement First)
+- [ ] Store Performance Metrics:
+  - Daily/Monthly/Yearly revenue
+  - Orders count and average order value
+  - Product-wise sales breakdown
+  - Best-selling items ranking
+- [ ] Financial Analytics:
+  - Revenue after commission
+  - Payment method distribution
+  - Refund statistics
+- [ ] Customer Insights:
+  - Customer demographics
+  - Repeat customer rate
+  - Average customer spend
+- [ ] Product Analytics:
+  - Category-wise performance
+  - Stock movement patterns
+  - Product return rates
+
+### Admin Dashboard
+- [ ] Platform Overview:
+  - Total platform revenue
+  - Commission earnings
+  - Active vendors count
+  - Order volume trends
+- [ ] Vendor Analytics:
+  - Top performing vendors
+  - Vendor-wise revenue share
+  - Commission distribution
+- [ ] Category Insights:
+  - Category-wise platform performance
+  - Trending categories
+  - Cross-category analysis
+- [ ] Customer Metrics:
+  - Platform-wide customer behavior
+  - User acquisition trends
+  - Customer retention rates
+
+### Common Features
+- [ ] Interactive Charts:
+  - Revenue line charts
+  - Sales distribution pie charts
+  - Performance bar charts
+- [ ] Filters:
+  - Time period selection
+  - Category filters
+  - Payment method filters
+- [ ] Export Options:
+  - PDF reports
+  - CSV data export
+- [ ] Real-time Updates
+
+## 4. Reusable Pagination Component
+### Core Features
+- [ ] Create PaginationProvider context
+- [ ] Build PaginationControls component
+- [ ] Add per-page selector
+- [ ] Implement page number input
+
+### Integration
+- [ ] Admin product list
+- [ ] Vendor management
+- [ ] Order history
+- [ ] User list
+
+## Implementation Order
+1. Start with Vendor Sales Report
+2. Extend to Admin Sales Report
+3. Implement reusable Table component
+4. Add infinite scroll to products
+5. Create pagination component
+
+## Notes
+- Use TanStack Table for complex table features
+- Implement data caching with RTK Query
+- Consider using virtual scrolling for large datasets
+- Add error boundaries for each major component
+- Use Recharts for consistent chart styling

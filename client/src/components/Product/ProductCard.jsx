@@ -3,7 +3,11 @@ import StarRating from "../Rating/StarRating";
 import { useNavigate } from "react-router-dom";
 import { fetchProductById } from "@/redux/features/singleProductSlice";
 import { Heart } from "lucide-react";
-import { toggleProductFavorite } from "@/redux/features/userFavoriteSlice";
+import {
+  fetchUserFavorites,
+  toggleProductFavorite,
+} from "@/redux/features/userFavoriteSlice";
+import { useEffect } from "react";
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
@@ -11,7 +15,11 @@ export default function ProductCard({ product }) {
   const { items: favorites, loading: favoritesLoading } = useSelector(
     (state) => state.favorites
   );
-  
+
+  useEffect(() => {
+    dispatch(fetchUserFavorites());
+  }, [dispatch]);
+
   const handleProductClick = async () => {
     try {
       await dispatch(fetchProductById(product._id));

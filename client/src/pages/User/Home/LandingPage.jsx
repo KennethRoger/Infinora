@@ -9,9 +9,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import Button from "@/components/Form/Button";
 import SearchBar from "@/components/Form/SearchBar";
-import ProductCard from "@/components/Product/ProductCard";
 import ProductScroll from "../../../components/Product/ProductScroll";
 import CreatorBanner from "@/components/Section/CreatorBanner";
 import CraftIdeaSection from "@/components/Section/CraftIdeaSection";
