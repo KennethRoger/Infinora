@@ -4,7 +4,7 @@ const { verifyToken } = require("../utils/tokenValidator");
 
 const addToCart = async (req, res) => {
   try {
-    const { productId, variants, quantity = 1, price } = req.body;
+    const { productId, variants, quantity = 1 } = req.body;
     const token = req.cookies.token;
 
     if (!token) {
