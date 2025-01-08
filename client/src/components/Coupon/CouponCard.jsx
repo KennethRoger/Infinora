@@ -16,9 +16,9 @@ export default function CouponCard({ coupon }) {
     isActive,
     createdAt,
   } = coupon;
-  console.log(coupon)
+  console.log()
   return (
-    <div className={`bg-white rounded-lg shadow-md p-8 ${!isActive && 'opacity-60'}`}>
+    <div className={`bg-white rounded-lg shadow-md p-8 ${!isActive && 'opacity-60'} h-[300px]`}>
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>

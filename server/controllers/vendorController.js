@@ -24,9 +24,7 @@ const verifyVendor = async (req, res) => {
 
     const decoded = verifyToken(token);
     const user = await User.findById(decoded.id);
-    console.log(typeof password);
-    console.log(typeof user.password);
-    console.log(user.password);
+    
     if (!user) {
       return res
         .status(404)
@@ -193,7 +191,6 @@ const addVendorProducts = async (req, res) => {
       });
     }
 
-    // Parse JSON strings if needed
     if (variants && typeof variants === "string") {
       try {
         variants = JSON.parse(variants);
@@ -230,7 +227,6 @@ const addVendorProducts = async (req, res) => {
       }
     }
 
-    // Validate discount
     if (discount) {
       const discountValue = Number(discount);
       if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
@@ -242,7 +238,6 @@ const addVendorProducts = async (req, res) => {
       discount = discountValue;
     }
 
-    // Validate base price
     if (!price) {
       return res.status(400).json({
         success: false,
@@ -258,9 +253,7 @@ const addVendorProducts = async (req, res) => {
       });
     }
 
-    // Validate variants and combinations
     if (variants?.length > 0) {
-      // Validate each variant
       for (const variant of variants) {
         if (!variant.variantName || !Array.isArray(variant.variantTypes)) {
           return res.status(400).json({
@@ -271,7 +264,6 @@ const addVendorProducts = async (req, res) => {
           });
         }
 
-        // Validate variant types
         for (const type of variant.variantTypes) {
           if (!type.name) {
             return res.status(400).json({
@@ -282,7 +274,6 @@ const addVendorProducts = async (req, res) => {
         }
       }
 
-      // Validate variant combinations if variants exist
       if (!variantCombinations?.length) {
         return res.status(400).json({
           success: false,
@@ -291,7 +282,6 @@ const addVendorProducts = async (req, res) => {
         });
       }
 
-      // Validate each combination
       for (const combo of variantCombinations) {
         if (!combo.variants || !combo.stock) {
           return res.status(400).json({
@@ -326,20 +316,20 @@ const addVendorProducts = async (req, res) => {
         message: "No authentication token found.",
       });
     }
-
     const decoded = verifyToken(token);
-    if (decoded.role !== "vendor") {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized access. Only vendors can add products.",
-      });
-    }
 
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "Vendor account not found.",
+      });
+    }
+
+    if (user.role !== "vendor") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized access. Only vendors can add products.",
       });
     }
 
@@ -433,7 +423,7 @@ const editVendorProduct = async (req, res) => {
       shipping,
       additionalDetails,
       customizable,
-      existingImages
+      existingImages,
     } = req.body;
     const productId = req.params.productId;
 
@@ -466,7 +456,6 @@ const editVendorProduct = async (req, res) => {
       });
     }
 
-    // Parse JSON strings if needed
     let parsedVariants = variants;
     let parsedVariantCombinations = variantCombinations;
     let parsedShipping = shipping;
@@ -520,7 +509,6 @@ const editVendorProduct = async (req, res) => {
       }
     }
 
-    // Validate price
     if (price) {
       const priceValue = Number(price);
       if (isNaN(priceValue) || priceValue < 0) {
@@ -531,7 +519,6 @@ const editVendorProduct = async (req, res) => {
       }
     }
 
-    // Validate discount
     if (discount) {
       const discountValue = Number(discount);
       if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
@@ -542,9 +529,7 @@ const editVendorProduct = async (req, res) => {
       }
     }
 
-    // Validate variants and combinations if present
     if (parsedVariants?.length > 0) {
-      // Validate each variant
       for (const variant of parsedVariants) {
         if (!variant.variantName || !Array.isArray(variant.variantTypes)) {
           return res.status(400).json({
@@ -555,7 +540,6 @@ const editVendorProduct = async (req, res) => {
           });
         }
 
-        // Validate variant types
         for (const type of variant.variantTypes) {
           if (!type.name) {
             return res.status(400).json({
@@ -566,15 +550,14 @@ const editVendorProduct = async (req, res) => {
         }
       }
 
-      // Validate variant combinations if variants exist
       if (!parsedVariantCombinations?.length) {
         return res.status(400).json({
           success: false,
-          message: "Variant combinations are required when variants are specified",
+          message:
+            "Variant combinations are required when variants are specified",
         });
       }
 
-      // Validate each combination
       for (const combo of parsedVariantCombinations) {
         if (!combo.variants || !combo.stock) {
           return res.status(400).json({
@@ -605,7 +588,6 @@ const editVendorProduct = async (req, res) => {
     const processedTags = tags ? tags.split(",").map((tag) => tag.trim()) : [];
     let updatedImages = [...parsedExistingImages];
 
-    // Handle new image uploads
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         try {
@@ -630,7 +612,6 @@ const editVendorProduct = async (req, res) => {
       }
     }
 
-    // Clean up old images that are no longer in use
     const imagesToDelete = product.images.filter(
       (img) => !updatedImages.includes(img)
     );
@@ -639,7 +620,9 @@ const editVendorProduct = async (req, res) => {
       try {
         const publicId = imageUrl.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
-        console.log(`Old image with public ID ${publicId} deleted from Cloudinary.`);
+        console.log(
+          `Old image with public ID ${publicId} deleted from Cloudinary.`
+        );
       } catch (error) {
         console.error("Error deleting old image from Cloudinary:", error);
       }
@@ -649,7 +632,11 @@ const editVendorProduct = async (req, res) => {
       name: name?.trim(),
       description: description?.trim(),
       price: price ? Number(price) : undefined,
-      stock: parsedVariants?.length ? 0 : (stock !== undefined ? Number(stock) : undefined),
+      stock: parsedVariants?.length
+        ? 0
+        : stock !== undefined
+        ? Number(stock)
+        : undefined,
       discount: discount ? Number(discount) : undefined,
       category: category || undefined,
       subCategory: subCategory || undefined,
@@ -659,11 +646,11 @@ const editVendorProduct = async (req, res) => {
       variantCombinations: parsedVariantCombinations || undefined,
       shipping: parsedShipping || undefined,
       additionalDetails: additionalDetails?.trim(),
-      customizable: customizable !== undefined ? Boolean(customizable) : undefined,
-      images: updatedImages
+      customizable:
+        customizable !== undefined ? Boolean(customizable) : undefined,
+      images: updatedImages,
     };
 
-    // Remove undefined values
     Object.keys(updateData).forEach(
       (key) => updateData[key] === undefined && delete updateData[key]
     );

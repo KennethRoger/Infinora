@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,13 +11,38 @@ import { fetchUserCart } from "@/redux/features/userCartSlice";
 import toast from "react-hot-toast";
 import Modal from "@/components/Modal/Modal";
 import { useNavigate } from "react-router-dom";
+import { applyCoupon, removeCoupon } from "@/api/coupon/couponApi";
+import { useForm } from "react-hook-form";
+import {
+  addAppliedCoupon,
+  getCouponForProduct,
+  removeAppliedCoupon,
+  hasVendorCoupon,
+} from "@/utils/couponStorage";
 
-export default function CartCard({ item }) {
+export default function CartCard({ item, onCouponChange }) {
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(item.quantity);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const [couponDiscount, setCouponDiscount] = useState(0);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    mode: "onChange",
+  });
+
+  useEffect(() => {
+    const existingCoupon = getCouponForProduct(item.productId._id);
+    if (existingCoupon) {
+      setCouponDiscount(existingCoupon.couponDiscount);
+    }
+  }, [item.productId._id]);
 
   const getVariantDetails = () => {
     if (!item?.productId) {
@@ -27,8 +52,20 @@ export default function CartCard({ item }) {
       };
     }
 
-    //
-    let totalVariantPrice = item.productId.price || 0;
+    let totalPrice = item.productId.price || 0;
+
+    if (item.variants && item.productId.variantCombinations?.length > 0) {
+      const matchingCombination = item.productId.variantCombinations.find(
+        (combo) =>
+          Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
+          )
+      );
+      if (matchingCombination) {
+        totalPrice += matchingCombination.priceAdjustment || 0;
+      }
+    }
+
     const variantDetails = item.variants
       ? Object.entries(item.variants)
           .map(([variantName, typeName]) => {
@@ -39,15 +76,10 @@ export default function CartCard({ item }) {
               (t) => t.name === typeName
             );
 
-            if (variantType) {
-              totalVariantPrice += variantType.price || 0;
-            }
-
             return variant
               ? {
                   name: variant.variantName,
                   value: variantType?.name || "Unknown",
-                  price: variantType?.price || 0,
                 }
               : null;
           })
@@ -55,7 +87,7 @@ export default function CartCard({ item }) {
       : [];
 
     return {
-      originalPrice: totalVariantPrice,
+      originalPrice: totalPrice,
       variantDetails,
     };
   };
@@ -71,8 +103,6 @@ export default function CartCard({ item }) {
         const variantType = variant?.variantTypes.find(
           (t) => t.name === typeName
         );
-        console.log("variant: ", variant);
-        console.log("variantType: ", variantType);
         if (typeof variantType?.imageIndex === "number") {
           return (
             item.productId.images[variantType.imageIndex] ||
@@ -85,12 +115,35 @@ export default function CartCard({ item }) {
     return item.productId.images[0];
   };
 
+  const getAvailableStock = () => {
+    if (!item?.productId) return 0;
+
+    if (item.variants && item.productId.variantCombinations?.length > 0) {
+      const matchingCombination = item.productId.variantCombinations.find(
+        (combo) =>
+          Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
+          )
+      );
+      return matchingCombination?.stock || 0;
+    }
+
+    return item.productId.stock || 0;
+  };
+
+  const availableStock = getAvailableStock();
+
   const { originalPrice, variantDetails } = getVariantDetails();
+  console.log(originalPrice, variantDetails);
 
   const singleItemDiscountedPrice =
     originalPrice * (1 - (item.productId?.discount || 0) / 100);
   const totalOriginalPrice = originalPrice * quantity;
-  const totalDiscountedPrice = singleItemDiscountedPrice * quantity;
+  let totalDiscountedPrice = singleItemDiscountedPrice * quantity;
+
+  if (couponDiscount > 0) {
+    totalDiscountedPrice = totalDiscountedPrice - couponDiscount;
+  }
 
   const handleQuantityChange = async (type) => {
     if (isLoading) return;
@@ -153,6 +206,76 @@ export default function CartCard({ item }) {
     }
   };
 
+  const onSubmit = async (data) => {
+    try {
+      const existingCoupon = getCouponForProduct(item.productId._id);
+      if (existingCoupon) {
+        toast.error(
+          "A coupon is already applied to this item. Please remove it first."
+        );
+        return;
+      }
+
+      const vendorId = item.productId.vendor._id;
+      if (hasVendorCoupon(vendorId)) {
+        toast.error(
+          "You can only use one coupon per vendor. Please remove existing coupon first."
+        );
+        return;
+      }
+
+      const response = await applyCoupon({
+        couponCode: data.couponCode,
+        productId: item.productId._id,
+        variants: item.variants || {},
+        itemQuantity: quantity,
+      });
+
+      if (response.success) {
+        const couponData = {
+          vendorId: vendorId,
+          productId: item.productId._id,
+          couponDiscount: response.data.discount,
+          variants: item.variants || {},
+          couponCode: data.couponCode,
+        };
+
+        addAppliedCoupon(couponData);
+        setCouponDiscount(response.data.discount);
+        onCouponChange?.();
+        toast.success("Coupon applied successfully!");
+        reset();
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to apply coupon"
+      );
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    try {
+      const existingCoupon = getCouponForProduct(item.productId._id);
+      if (!existingCoupon) return;
+
+      const response = await removeCoupon({
+        couponCode: existingCoupon.couponCode,
+        productId: item.productId._id,
+      });
+
+      if (response.success) {
+        removeAppliedCoupon(item.productId._id);
+        setCouponDiscount(0);
+        onCouponChange?.();
+        toast.success("Coupon removed successfully!");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to remove coupon");
+    }
+  };
+
   if (!item.productId) return null;
 
   return (
@@ -169,14 +292,33 @@ export default function CartCard({ item }) {
         )}
         {/* Product Image */}
         <div
-          className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+          className="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer relative"
           onClick={() => navigate(`/home/product/${item.productId._id}`)}
         >
           <img
             src={getVariantImage()}
             alt={item.productId.name}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            className={`w-full h-full object-cover hover:scale-105 transition-transform duration-300 ${
+              availableStock === 0
+                ? "opacity-50"
+                : availableStock < quantity
+                ? "opacity-75"
+                : ""
+            }`}
           />
+          {availableStock === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <span className="text-white font-semibold px-2 py-1 rounded bg-red-500/80 text-sm">
+                Out of Stock
+              </span>
+            </div>
+          ) : availableStock < quantity ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+              <span className="text-white font-semibold px-2 py-1 rounded bg-orange-500/80 text-sm">
+                Only {availableStock} Left
+              </span>
+            </div>
+          ) : null}
         </div>
 
         {/* Product Details */}
@@ -269,6 +411,47 @@ export default function CartCard({ item }) {
           </div>
         </div>
       </div>
+
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="mt-2 flex items-center gap-2"
+      >
+        <div className="">
+          <input
+            type="text"
+            {...register("couponCode", {
+              required: "Coupon code is required",
+            })}
+            placeholder="Enter coupon code"
+            className="px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {errors.couponCode && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.couponCode.message}
+            </p>
+          )}
+        </div>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Apply
+        </button>
+      </form>
+
+      {couponDiscount > 0 && (
+        <div className="mt-2 flex items-center gap-2">
+          <div className="text-green-500 font-medium">
+            Coupon Discount Applied: ₹{couponDiscount}
+          </div>
+          <button
+            onClick={handleRemoveCoupon}
+            className="text-sm text-red-500 hover:text-red-600"
+          >
+            Remove
+          </button>
+        </div>
+      )}
 
       <Modal isOpen={isRemoveModalOpen}>
         <div className="space-y-4">

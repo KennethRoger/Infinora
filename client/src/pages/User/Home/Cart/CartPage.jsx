@@ -1,28 +1,46 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUserCart } from "@/redux/features/userCartSlice";
 import CartCard from "@/components/Cart/CartCard";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { getAppliedCoupons } from "@/utils/couponStorage";
 
 export default function CartPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { cart, loading, error } = useSelector((state) => state.userCart);
+  const [totals, setTotals] = useState({
+    subtotal: 0,
+    discount: 0,
+    couponDiscount: 0,
+    total: 0,
+  });
+  const [couponUpdate, setCouponUpdate] = useState(0);
 
   useEffect(() => {
     dispatch(fetchUserCart());
   }, [dispatch]);
 
+  useEffect(() => {
+    setTotals(calculateTotals());
+  }, [cart, couponUpdate]);
+
+  const handleCouponChange = () => {
+    setCouponUpdate(prev => prev + 1);
+  };
+
   const checkStock = (item) => {
     if (!item?.productId) return false;
 
     if (item.variants && item.productId.variants?.length > 0) {
-      const matchingCombination = item.productId.variantCombinations?.find((combo) => {
-        return Object.entries(item.variants).every(
-          ([key, value]) => combo.variants[key] === value
-        );
-      });
+      const matchingCombination = item.productId.variantCombinations?.find(
+        (combo) => {
+          return Object.entries(item.variants).every(
+            ([key, value]) => combo.variants[key] === value
+          );
+        }
+      );
       return matchingCombination && matchingCombination.stock >= item.quantity;
     }
 
@@ -30,37 +48,50 @@ export default function CartPage() {
   };
 
   const calculateTotals = () => {
-    if (!cart?.items?.length) return { subtotal: 0, discount: 0, total: 0 };
+    let subtotal = 0;
+    let discount = 0;
+    let couponDiscount = 0;
 
-    return cart.items.reduce((acc, item) => {
-      if (!item?.productId) return acc;
+    cart?.items?.forEach((item) => {
+      if (!item?.productId) return;
 
-      let itemBasePrice = item.productId.price || 0;
-      
-      // Add variant prices
-      if (item.variants) {
-        const matchingCombination = item.productId.variantCombinations?.find((combo) => {
-          return Object.entries(item.variants).every(
-            ([key, value]) => combo.variants[key] === value
-          );
-        });
+      let basePrice = item.productId.price || 0;
+
+      // Add variant combination price adjustment if it exists
+      if (item.variants && item.productId.variantCombinations?.length > 0) {
+        const matchingCombination = item.productId.variantCombinations.find(combo => 
+          Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
+          )
+        );
         if (matchingCombination) {
-          itemBasePrice += matchingCombination.priceAdjustment || 0;
+          basePrice += matchingCombination.priceAdjustment || 0;
         }
       }
 
-      const itemTotalBasePrice = itemBasePrice * (item.quantity || 1);
-      const itemDiscount = (itemTotalBasePrice * (item.productId.discount || 0)) / 100;
+      const quantity = item.quantity;
+      const itemDiscount = (basePrice * (item.productId?.discount || 0)) / 100;
 
-      return {
-        subtotal: acc.subtotal + itemTotalBasePrice,
-        discount: acc.discount + itemDiscount,
-        total: acc.total + (itemTotalBasePrice - itemDiscount)
-      };
-    }, { subtotal: 0, discount: 0, total: 0 });
+      subtotal += basePrice * quantity;
+      discount += itemDiscount * quantity;
+
+      const appliedCoupon = getAppliedCoupons().find(
+        (coupon) => coupon.productId === item.productId._id
+      );
+      if (appliedCoupon) {
+        couponDiscount += appliedCoupon.couponDiscount;
+      }
+    });
+
+    return {
+      subtotal,
+      discount,
+      couponDiscount,
+      total: subtotal - discount - couponDiscount,
+    };
   };
 
-  const { subtotal, discount, total } = calculateTotals();
+  const { subtotal, discount, couponDiscount, total } = calculateTotals();
 
   if (loading) {
     return (
@@ -70,7 +101,10 @@ export default function CartPage() {
             <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
             <div className="space-y-4">
               {[1, 2, 3].map((_, index) => (
-                <div key={index} className="h-40 bg-gray-200 rounded animate-pulse"></div>
+                <div
+                  key={index}
+                  className="h-40 bg-gray-200 rounded animate-pulse"
+                ></div>
               ))}
             </div>
           </div>
@@ -108,7 +142,7 @@ export default function CartPage() {
           <h1 className="text-2xl font-semibold">Shopping Cart</h1>
           <div className="space-y-4">
             {cart.items.map((item, index) => (
-              <CartCard key={index} item={item} />
+              <CartCard key={index} item={item} onCouponChange={handleCouponChange} />
             ))}
           </div>
         </div>
@@ -122,12 +156,14 @@ export default function CartPage() {
                 <span className="text-gray-600">Subtotal</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount</span>
-                  <span>-₹{discount.toFixed(2)}</span>
-                </div>
-              )}
+              <div className="flex justify-between text-green-600">
+                <span>Product Discount</span>
+                <span>-₹{totals.discount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-green-600">
+                <span>Coupon Discount</span>
+                <span>-₹{totals.couponDiscount.toFixed(2)}</span>
+              </div>
               <div className="pt-3 border-t border-gray-100">
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>

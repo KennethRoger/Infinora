@@ -53,6 +53,7 @@ export default function UserOrderDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
+    console.log("working")
     fetchOrders();
   }, []);
 
@@ -162,17 +163,35 @@ export default function UserOrderDashboard() {
       case "quantity":
         return order.quantity;
       case "price":
-        return formatPrice(order.price);
+        return formatPrice(order.price); // Show base price per unit
       case "totalAmount":
         return (
-          <div>
-            <div>{formatPrice(order.totalAmount)}</div>
-            {order.discount > 0 && (
-              <div className="text-sm text-green-600">
-                {order.discount}% off
-              </div>
-            )}
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center gap-2">
+                  <span>{formatPrice(order.finalAmount)}</span>
+                  {(order.discount > 0 || order.appliedCoupon) && (
+                    <span className="text-xs text-muted-foreground line-through">
+                      {formatPrice(order.totalAmount)}
+                    </span>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="space-y-1 text-sm">
+                  <div>Subtotal: {formatPrice(order.totalAmount)}</div>
+                  {order.discount > 0 && (
+                    <div>Product Discount: -{formatPrice(order.productDiscount)}</div>
+                  )}
+                  {order.appliedCoupon && (
+                    <div>Coupon Discount: -{formatPrice(order.appliedCoupon.couponDiscount)}</div>
+                  )}
+                  <div className="font-medium">Final Amount: {formatPrice(order.finalAmount)}</div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       case "paymentStatus":
         return order.paymentMethod === "cod" ? (

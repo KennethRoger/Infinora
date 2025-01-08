@@ -1,23 +1,79 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
-const Cart = require("../models/Cart");
+// const Cart = require("../models/Cart");
 const { verifyToken } = require("../utils/tokenValidator");
 const { generateOrderId } = require("../utils/generateOrderId");
+const Address = require("../models/Address");
+const createWalletTransaction = require("../utils/walletUtils");
+
+const calculateOrderAmount = async (items, appliedCoupons = []) => {
+  let totalAmount = 0;
+  let totalDiscount = 0;
+  let totalCouponDiscount = 0;
+
+  for (const item of items) {
+    const product = await Product.findById(item.productId);
+    if (!product) {
+      throw new Error(`Product not found: ${item.productId}`);
+    }
+
+    let basePrice = product.price;
+
+    if (item.variants && product.variantCombinations?.length > 0) {
+      const matchingCombination = product.variantCombinations.find(combo => 
+        Object.entries(combo.variants).every(
+          ([key, value]) => item.variants[key] === value
+        )
+      );
+      if (matchingCombination) {
+        basePrice += matchingCombination.priceAdjustment || 0;
+      }
+    }
+
+    const itemTotal = basePrice * item.quantity;
+    const productDiscount = (itemTotal * (product.discount || 0)) / 100;
+    totalDiscount += productDiscount;
+
+    const appliedCoupon = appliedCoupons.find(c => c.productId === item.productId.toString());
+    if (appliedCoupon) {
+      totalCouponDiscount += appliedCoupon.couponDiscount;
+    }
+
+    totalAmount += itemTotal;
+  }
+
+  const finalAmount = totalAmount - totalDiscount - totalCouponDiscount;
+
+  return {
+    totalAmount,
+    totalDiscount,
+    totalCouponDiscount,
+    finalAmount
+  };
+};
 
 const createOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod, items } = req.body;
+    const { addressId, paymentMethod, items, appliedCoupons } = req.body;
     const token = req.cookies.token;
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized access",
+        message: "Please login to place order",
       });
     }
 
     const decoded = verifyToken(token);
     const userId = decoded.id;
+
+    const shippingAddress = await Address.findById(addressId);
+    if (!shippingAddress) {
+      return res.status(404).json({
+        success: false,
+        message: "Shipping address not found",
+      });
+    }
 
     const orders = [];
 
@@ -28,30 +84,10 @@ const createOrder = async (req, res) => {
       }
 
       if (product.variants?.length > 0 && item.variants) {
-        for (const [variantName, typeName] of Object.entries(item.variants)) {
-          const variant = product.variants.find(
-            (v) => v.variantName === variantName
-          );
-          if (!variant) {
-            throw new Error(`Variant not found: ${variantName}`);
-          }
-
-          const variantType = variant.variantTypes.find(
-            (t) => t.name === typeName
-          );
-          if (!variantType) {
-            throw new Error(
-              `Variant type not found for ${variantName}: ${typeName}`
-            );
-          }
-        }
-
-        const matchingCombination = product.variantCombinations.find(
-          (combo) => {
-            return Object.entries(combo.variants).every(
-              ([key, value]) => item.variants[key] === value
-            );
-          }
+        const matchingCombination = product.variantCombinations.find(combo => 
+          Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
+          )
         );
 
         if (!matchingCombination) {
@@ -60,53 +96,52 @@ const createOrder = async (req, res) => {
 
         if (matchingCombination.stock < item.quantity) {
           throw new Error(
-            `Insufficient stock for variant combination in ${product.name}. Available: ${matchingCombination.stock}, Requested: ${item.quantity}`
+            `Insufficient stock for ${product.name} with selected variants. Available: ${matchingCombination.stock}, Requested: ${item.quantity}`
           );
         }
 
-        const updatedCombinations = product.variantCombinations.map((combo) => {
-          const isMatchingCombo = Object.entries(combo.variants).every(
+        const updatedCombinations = product.variantCombinations.map(combo => {
+          if (Object.entries(combo.variants).every(
             ([key, value]) => item.variants[key] === value
-          );
-
-          if (isMatchingCombo) {
+          )) {
             return {
               ...combo,
-              stock: combo.stock - item.quantity,
+              stock: combo.stock - item.quantity
             };
           }
           return combo;
         });
 
         product.variantCombinations = updatedCombinations;
-        await product.save();
-        console.log("Updated stock for variant combination");
       } else {
         if (product.stock < item.quantity) {
           throw new Error(
             `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`
           );
         }
-
         product.stock -= item.quantity;
-        await product.save();
-        console.log("Updated stock for regular product");
       }
 
       let basePrice = product.price;
-      if (item.variants) {
-        const matchingCombination = product.variantCombinations.find(
-          (combo) => Object.entries(combo.variants).every(
+
+      if (item.variants && product.variantCombinations?.length > 0) {
+        const matchingCombination = product.variantCombinations.find(combo => 
+          Object.entries(combo.variants).every(
             ([key, value]) => item.variants[key] === value
           )
         );
-
         if (matchingCombination) {
           basePrice += matchingCombination.priceAdjustment || 0;
         }
       }
 
-      const totalAmount = basePrice * (1 - product.discount / 100) * item.quantity;
+      const itemTotal = basePrice * item.quantity;
+      const productDiscount = (itemTotal * (product.discount || 0)) / 100;
+      
+      const appliedCoupon = appliedCoupons?.find(c => c.productId === item.productId);
+      const couponDiscount = appliedCoupon?.couponDiscount || 0;
+
+      const finalAmount = itemTotal - productDiscount - couponDiscount;
 
       const orderId = generateOrderId(userId);
 
@@ -114,16 +149,34 @@ const createOrder = async (req, res) => {
         orderId,
         user: userId,
         product: item.productId,
-        variants: item.variants,
+        variants: item.variants || {},
         quantity: item.quantity,
         price: basePrice,
-        discount: product.discount,
-        address: addressId,
+        discount: product.discount || 0,
+        appliedCoupon: appliedCoupon ? {
+          couponCode: appliedCoupon.couponCode,
+          couponDiscount: appliedCoupon.couponDiscount,
+          variants: appliedCoupon.variants
+        } : undefined,
+        shippingAddress: {
+          name: shippingAddress.name,
+          phone: shippingAddress.phone,
+          address: shippingAddress.address,
+          locality: shippingAddress.locality,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          pincode: shippingAddress.pincode,
+          type: shippingAddress.type
+        },
         paymentMethod,
         vendor: product.vendor._id,
-        totalAmount,
+        totalAmount: itemTotal, // Subtotal (price * quantity)
+        productDiscount: productDiscount, // Product discount amount
+        finalAmount: finalAmount, // Final amount after all discounts
         status: "pending",
       });
+
+      await product.save();
 
       orders.push(order);
     }
@@ -131,17 +184,14 @@ const createOrder = async (req, res) => {
     const populatedOrders = await Order.find({
       _id: { $in: orders.map((order) => order._id) },
     })
-      .populate("address")
       .populate({
         path: "product",
-        select: "name images variants variantCombinations price",
+        select: "name images variants price",
         populate: {
           path: "vendor",
           select: "name",
         },
       });
-
-    await Cart.findOneAndUpdate({ user: userId }, { items: [] }, { new: true });
 
     res.status(201).json({
       success: true,
@@ -149,10 +199,10 @@ const createOrder = async (req, res) => {
       orders: populatedOrders,
     });
   } catch (error) {
-    res.status(400).json({
+    console.error("Error in createOrder:", error);
+    res.status(500).json({
       success: false,
-      message: "Failed to create orders",
-      error: error.message,
+      message: error.message || "Failed to create order",
     });
   }
 };
@@ -160,11 +210,10 @@ const createOrder = async (req, res) => {
 const getUserOrders = async (req, res) => {
   try {
     const token = req.cookies.token;
-
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized access",
+        message: "Please login to view orders",
       });
     }
 
@@ -173,7 +222,6 @@ const getUserOrders = async (req, res) => {
 
     const orders = await Order.find({ user: userId })
       .sort({ createdAt: -1 })
-      .populate("address")
       .populate({
         path: "product",
         select: "name images variants variantCombinations price",
@@ -185,10 +233,10 @@ const getUserOrders = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      orders: orders,
-      message: orders.length ? null : "No orders found",
+      orders,
     });
   } catch (error) {
+    console.error("Error in getUserOrders:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch orders",
@@ -205,7 +253,7 @@ const getOrderById = async (req, res) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized access",
+        message: "Please login to view order details",
       });
     }
 
@@ -213,7 +261,6 @@ const getOrderById = async (req, res) => {
     const userId = decoded.id;
 
     const order = await Order.findOne({ _id: id, user: userId })
-      .populate("address")
       .populate({
         path: "product",
         select: "name images variants variantCombinations price",
@@ -235,15 +282,17 @@ const getOrderById = async (req, res) => {
       order,
     });
   } catch (error) {
+    console.error("Error in getOrderById:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch order",
+      message: "Failed to fetch order details",
       error: error.message,
     });
   }
 };
 
 const updateOrderStatus = async (req, res) => {
+  console.log("reached")
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -323,9 +372,7 @@ const cancelOrder = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId }).populate(
-      "product"
-    );
+    const order = await Order.findOne({ _id: id, user: userId }).populate("product");
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -333,10 +380,22 @@ const cancelOrder = async (req, res) => {
       });
     }
 
-    if (order.status !== "pending") {
+    if (!["pending", "processing"].includes(order.status)) {
       return res.status(400).json({
         success: false,
-        message: "Only pending orders can be cancelled",
+        message: "Cannot cancel order in current status",
+      });
+    }
+
+    if (order.paymentMethod !== 'cod') {
+      await createWalletTransaction({
+        userId,
+        amount: order.finalAmount,
+        type: 'credit',
+        description: `Refund for order #${order.orderId}`,
+        reference: `refund_${order._id}`,
+        paymentMethod: 'refund',
+        orderId: order._id
       });
     }
 
@@ -344,7 +403,6 @@ const cancelOrder = async (req, res) => {
     await order.save();
 
     const updatedOrder = await Order.findById(id)
-      .populate("address")
       .populate({
         path: "product",
         select: "name images variants variantCombinations price",
@@ -372,11 +430,10 @@ const cancelOrder = async (req, res) => {
 const getVendorOrders = async (req, res) => {
   try {
     const token = req.cookies.token;
-
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Unauthorized access",
+        message: "Please login to view orders",
       });
     }
 
@@ -385,7 +442,6 @@ const getVendorOrders = async (req, res) => {
 
     const orders = await Order.find({ vendor: vendorId })
       .sort({ createdAt: -1 })
-      .populate("address")
       .populate({
         path: "product",
         select: "name images variants variantCombinations price",
@@ -399,7 +455,6 @@ const getVendorOrders = async (req, res) => {
     res.status(200).json({
       success: true,
       orders,
-      message: orders.length ? null : "No orders found",
     });
   } catch (error) {
     res.status(500).json({

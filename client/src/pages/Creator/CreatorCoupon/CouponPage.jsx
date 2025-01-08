@@ -52,6 +52,7 @@ export default function CouponPage() {
     try {
       await createCoupon(data);
       toast.success("Coupon created successfully!");
+      dispatch(fetchVendorCoupons());
       setIsModalOpen(false);
       reset();
     } catch (error) {

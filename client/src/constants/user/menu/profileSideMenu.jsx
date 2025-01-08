@@ -6,6 +6,7 @@ import { AiOutlineLogout } from "react-icons/ai";
 import { FaListCheck } from "react-icons/fa6";
 import { FaRegUser } from "react-icons/fa";
 import { logout } from "@/api/user/userAuth";
+import toast from "react-hot-toast";
 
 const iconStyle = "text-xl text-[#ff9500] group-hover:text-[#ff7800] transition-colors duration-300";
 
@@ -90,9 +91,18 @@ export const profileSideMenu = [
     id: 7,
     label: "Logout",
     icon: <AiOutlineLogout className={`${iconStyle} text-red-500 hover:text-red-600`} />,
-    onClick: () => {
-      logout();
-      window.location.href = "/";
+    onClick: async (navigate) => {
+      try {
+        const response = await logout();
+        console.log(response)
+        if (response.success) {
+          toast.success(response.message);
+          navigate("/");
+        }
+      } catch (error) {
+        console.log(error)
+        toast.error(error.response.data.message);
+      }
     },
   },
 ];

@@ -38,8 +38,15 @@ export default function CreatorSection() {
   }, [formValues]);
 
   useEffect(() => {
-    refreshUser();
-  }, []);
+    const loadUser = async () => {
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error("Error refreshing user:", error);
+      }
+    };
+    loadUser();
+  }, [refreshUser]);
 
   const onSubmit = async (e) => {
     try {
@@ -66,7 +73,6 @@ export default function CreatorSection() {
         { withCredentials: true }
       );
 
-      console.log("Verification successful:", response.data);
       await refreshUser();
       navigate("/home/profile/creator-profile");
     } catch (error) {
@@ -104,6 +110,8 @@ export default function CreatorSection() {
   return (
     <>
       <main className="pt-[75px] flex">
+      {!user?.isVerified && (
+        
         <div className="relative w-[50%] bg-gradient-to-b from-[#FF6B6B] to-[#FFC75F] pb-24 pt-5">
           <img
             src="/creator-representation.png"
@@ -137,11 +145,12 @@ export default function CreatorSection() {
             </div>
           </div>
         </div>
-        <div className="relative w-[50%] bg-gradient-to-b from-[#4169E1] to-[#4682B4] pb-24 pt-5">
+      )}
+        <div className={`relative ${user?.isVerified ? 'w-full' : 'w-[50%]'} bg-gradient-to-b from-[#4169E1] to-[#4682B4] pb-24 pt-5`}>
           <img
             src="/craft-representation.png"
             alt="craft representation"
-            className="absolute inset-0 w-full opacity-10 pointer-events-none z-0"
+            className={`absolute inset-0 ${user?.isVerified ? 'mx-auto' : ' w-full'} opacity-10 pointer-events-none z-0`}
           />
           <div className="relative flex flex-col items-center text-center z-10">
             <img

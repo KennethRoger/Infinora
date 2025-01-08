@@ -8,6 +8,7 @@ import { fetchUserAddresses } from "@/redux/features/userAddressSlice";
 import { fetchUserCart } from "@/redux/features/userCartSlice";
 import { clearCart } from "@/redux/features/userCartSlice";
 import { clearCheckout } from "@/redux/features/userOrderSlice";
+import { getAppliedCoupons } from "@/utils/couponStorage";
 import Spinner from "@/components/Spinner/Spinner";
 import { createOrder } from "@/api/order/orderApi";
 import { createRazorpayOrder, verifyPayment } from "@/api/payment/paymentApi";
@@ -23,49 +24,56 @@ export default function ReviewPage() {
   const [orderProcessing, setOrderProcessing] = useState(false);
 
   const calculateItemPrice = (item) => {
-    if (!item?.productId) return { basePrice: 0, totalPrice: 0, discountedPrice: 0 };
+    let basePrice = item.productId.price;
+    const quantity = item.quantity;
 
-    try {
-      let basePrice = item.productId.price || 0;
-
-      if (item.variants && item.productId.variants?.length > 0) {
-        for (const [variantName, typeName] of Object.entries(item.variants)) {
-          const variant = item.productId.variants.find(v => v.variantName === variantName);
-          const variantType = variant?.variantTypes.find(t => t.name === typeName);
-          if (variantType?.price) {
-            basePrice += variantType.price;
-          }
-        }
+    // Add variant combination price adjustment if it exists
+    if (item.variants && item.productId.variantCombinations?.length > 0) {
+      const matchingCombination = item.productId.variantCombinations.find(combo => 
+        Object.entries(combo.variants).every(
+          ([key, value]) => item.variants[key] === value
+        )
+      );
+      if (matchingCombination) {
+        basePrice += matchingCombination.priceAdjustment || 0;
       }
-
-      const totalPrice = basePrice * item.quantity;
-      const discount = (totalPrice * (item.productId.discount || 0)) / 100;
-      const discountedPrice = totalPrice - discount;
-
-      return { basePrice, totalPrice, discountedPrice };
-    } catch (error) {
-      console.error("Error calculating item price:", error);
-      return { basePrice: 0, totalPrice: 0, discountedPrice: 0 };
     }
+
+    // Apply product discount if any
+    const discount = item.productId.discount || 0;
+    const discountedPrice = basePrice * (1 - discount / 100);
+
+    // Get coupon discount for this item if any
+    const appliedCoupon = getAppliedCoupons().find(
+      (coupon) => coupon.productId === item.productId._id
+    );
+    const couponDiscount = appliedCoupon ? appliedCoupon.couponDiscount : 0;
+
+    return {
+      basePrice: basePrice * quantity,
+      discount: (basePrice * discount * quantity) / 100,
+      couponDiscount,
+      finalPrice: (discountedPrice * quantity) - couponDiscount,
+    };
   };
 
   const calculateTotals = () => {
-    if (!cart?.items?.length) return { subtotal: 0, discount: 0, total: 0 };
+    let subtotal = 0;
+    let discount = 0;
+    let couponDiscount = 0;
 
-    return cart.items.reduce(
-      (acc, item) => {
-        const { totalPrice, discountedPrice } = calculateItemPrice(item);
-        return {
-          subtotal: acc.subtotal + totalPrice,
-          discount: acc.discount + (totalPrice - discountedPrice),
-          total: acc.total + discountedPrice,
-        };
-      },
-      { subtotal: 0, discount: 0, total: 0 }
-    );
+    cart?.items?.forEach((item) => {
+      const itemPrices = calculateItemPrice(item);
+      subtotal += itemPrices.basePrice;
+      discount += itemPrices.discount;
+      couponDiscount += itemPrices.couponDiscount;
+    });
+
+    const total = subtotal - discount - couponDiscount;
+    return { subtotal, discount, couponDiscount, total };
   };
 
-  const { subtotal, discount, total } = calculateTotals();
+  const { subtotal, discount, couponDiscount, total } = calculateTotals();
 
   useEffect(() => {
     dispatch(fetchUserCart());
@@ -120,10 +128,26 @@ export default function ReviewPage() {
         return;
       }
 
+      // Get applied coupons for each item
+      const appliedCoupons = cart.items.map((item) => {
+        const coupon = getAppliedCoupons().find(
+          (c) => c.productId === item.productId._id
+        );
+        return coupon
+          ? {
+              productId: item.productId._id,
+              couponCode: coupon.couponCode,
+              couponDiscount: coupon.couponDiscount,
+              variants: coupon.variants,
+            }
+          : null;
+      }).filter(Boolean);
+
       const orderData = {
         addressId: selectedAddressId,
         paymentMethod: selectedPaymentMethod,
         items: orderItems,
+        appliedCoupons,
       };
 
       if (selectedPaymentMethod === "cod") {
@@ -183,7 +207,12 @@ export default function ReviewPage() {
       }
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.error(error.response?.data?.error || error.response?.data?.message || error.message || "Failed to place order");
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to place order"
+      );
       setOrderProcessing(false);
     }
   };
@@ -191,6 +220,7 @@ export default function ReviewPage() {
   const handleOrderSuccess = async () => {
     localStorage.removeItem("selectedAddress");
     localStorage.removeItem("selectedPayment");
+    localStorage.removeItem("appliedCoupons");
 
     dispatch(clearCart());
     dispatch(clearCheckout());
@@ -241,80 +271,99 @@ export default function ReviewPage() {
             </p>
           </div>
         </div>
-          </div>
+      </div>
 
-          <div className="space-y-4">
+      <div className="space-y-4">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <ShoppingBag className="w-5 h-5" />
           <h2>Order Items</h2>
         </div>
         <div className="space-y-4">
-            {cart?.items?.map((item, index) => {
-              if (!item.productId) return null;
+          {cart?.items?.map((item, index) => {
+            if (!item.productId) return null;
 
-              const { basePrice, totalPrice, discountedPrice } = calculateItemPrice(item);
+            const { basePrice, discount, couponDiscount, finalPrice } =
+              calculateItemPrice(item);
 
-              const getVariantImage = () => {
-                if (item.variants && item.productId.variants?.length > 0) {
-                  for (const [variantName, typeName] of Object.entries(item.variants)) {
-                    const variant = item.productId.variants.find(v => v.variantName === variantName);
-                    const variantType = variant?.variantTypes.find(t => t.name === typeName);
-                    if (typeof variantType?.imageIndex === 'number') {
-                      return item.productId.images[variantType.imageIndex] || item.productId.images[0];
-                    }
+            const getVariantImage = () => {
+              if (item.variants && item.productId.variants?.length > 0) {
+                for (const [variantName, typeName] of Object.entries(
+                  item.variants
+                )) {
+                  const variant = item.productId.variants.find(
+                    (v) => v.variantName === variantName
+                  );
+                  const variantType = variant?.variantTypes.find(
+                    (t) => t.name === typeName
+                  );
+                  if (typeof variantType?.imageIndex === "number") {
+                    return item.productId.images[variantType.imageIndex] || item.productId.images[0];
                   }
                 }
-                return item.productId.images[0];
-              };
+              }
+              return item.productId.images[0];
+            };
 
-              return (
-                <div
-                  key={item.productId._id}
-                  className="flex items-center gap-4 p-4 border rounded-lg"
-                >
-                  <img
-                    src={getVariantImage()}
-                    alt={item.productId.name}
-                    className="w-20 h-20 object-cover rounded-md"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-medium">{item.productId.name}</h3>
-                    <div className="text-sm text-gray-500 space-y-1">
-                      {item.variants && Object.entries(item.variants).map(([variantName, typeName]) => (
+            return (
+              <div
+                key={item.productId._id}
+                className="flex items-center gap-4 p-4 border rounded-lg"
+              >
+                <img
+                  src={getVariantImage()}
+                  alt={item.productId.name}
+                  className="w-20 h-20 object-cover rounded-md"
+                />
+                <div className="flex-1">
+                  <h3 className="font-medium">{item.productId.name}</h3>
+                  <div className="text-sm text-gray-500 space-y-1">
+                    {item.variants &&
+                      Object.entries(item.variants).map(([variantName, typeName]) => (
                         <p key={variantName}>
                           {variantName}: {typeName}
                         </p>
                       ))}
-                      <p>Quantity: {item.quantity}</p>
-                      <p className="text-xs">Base Price: ₹{basePrice.toFixed(2)}</p>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-sm line-through text-gray-500">
-                        ₹{totalPrice.toFixed(2)}
-                      </p>
-                      <p className="font-medium">₹{discountedPrice.toFixed(2)}</p>
+                    <p>Quantity: {item.quantity}</p>
+                    <p className="text-xs">Base Price: ₹{basePrice.toFixed(2)}</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <p className="text-sm line-through text-gray-500">
+                      ₹{(basePrice + discount).toFixed(2)}
+                    </p>
+                    <p className="font-medium">₹{finalPrice.toFixed(2)}</p>
                     {item.productId.discount > 0 && (
                       <p className="text-sm text-green-600">
                         ({item.productId.discount}% off)
                       </p>
                     )}
-                    </div>
+                    {couponDiscount > 0 && (
+                      <p className="text-sm text-green-600">
+                        (₹{couponDiscount.toFixed(2)} coupon discount)
+                      </p>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-          <div className="mt-6 p-4 border rounded-lg space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Subtotal</span>
-              <span>₹{subtotal.toFixed(2)}</span>
-            </div>
+      <div className="mt-6 p-4 border rounded-lg space-y-2">
+        <div className="flex justify-between text-sm text-gray-600">
+          <span>Subtotal</span>
+          <span>₹{subtotal.toFixed(2)}</span>
+        </div>
         {discount > 0 && (
           <div className="flex justify-between text-sm text-green-600">
             <span>Total Discount</span>
             <span>-₹{discount.toFixed(2)}</span>
+          </div>
+        )}
+        {couponDiscount > 0 && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>Total Coupon Discount</span>
+            <span>-₹{couponDiscount.toFixed(2)}</span>
           </div>
         )}
         <div className="flex justify-between font-semibold text-lg pt-2">

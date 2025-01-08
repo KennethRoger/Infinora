@@ -17,7 +17,6 @@ import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { fetchUserOrders } from "@/redux/features/userOrderSlice";
 
-
 const orderStatusColors = {
   pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
   processing: "bg-blue-50 text-blue-700 border-blue-200",
@@ -113,14 +112,17 @@ export default function OrderCard({ order, showPaymentStatus = false, showDelive
         <div className="mt-4 border-t pt-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <h5 className="font-medium mb-2">Delivery Address</h5>
+              <h5 className="font-medium mb-2">Shipping Address</h5>
               <div className="text-sm text-gray-600">
-                <p>{order.address.fullName}</p>
-                <p>{order.address.street}</p>
+                <p>{order.shippingAddress.name}</p>
+                <p>{order.shippingAddress.phone}</p>
+                <p>{order.shippingAddress.address}</p>
                 <p>
-                  {order.address.city}, {order.address.state} {order.address.pinCode}
+                  {order.shippingAddress.locality}, {order.shippingAddress.city}
                 </p>
-                <p>Phone: {order.address.phone}</p>
+                <p>
+                  {order.shippingAddress.state} - {order.shippingAddress.pincode}
+                </p>
               </div>
             </div>
             <div>
