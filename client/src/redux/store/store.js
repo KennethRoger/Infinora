@@ -8,6 +8,7 @@ import userAddressesReducer from "../features/userAddressSlice";
 import userCartReducer from "../features/userCartSlice";
 import userOrderReducer from "../features/userOrderSlice";
 import vendorCouponsReducer from "../features/vendorCouponSlice";
+import favoriteReducer from "../features/userFavoriteSlice";
 
 const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
     userCart: userCartReducer,
     userOrder: userOrderReducer,
     vendorCoupons: vendorCouponsReducer,
+    favorites: favoriteReducer,
   },
 });
 

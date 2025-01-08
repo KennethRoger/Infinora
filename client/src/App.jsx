@@ -43,6 +43,8 @@ import TransactionPage from "./pages/User/Home/Transaction/TransactionPage";
 import WalletPage from "./pages/User/Home/Wallet/WalletPage";
 import NotFound from "./pages/NotFound";
 import CouponPage from "./pages/Creator/CreatorCoupon/CouponPage";
+import FavoritesPage from "./pages/User/Home/Favorites/FavoritesPage";
+
 
 export function App() {
   const location = useLocation();
@@ -187,7 +189,16 @@ export function App() {
                 }
               />
             </Route>
-
+            <Route path="favorites" element={<ProfilePage />}>
+              <Route
+                index
+                element={
+                  <ProtectedRoute allowedRoles={["user", "vendor"]}>
+                    <FavoritesPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
             {/* Creator Routes */}
             <Route
               path="creator-profile"

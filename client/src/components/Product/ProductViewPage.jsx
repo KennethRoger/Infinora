@@ -12,6 +12,7 @@ import MagnifyImage from "../Image/MagnifyImage";
 import { Star } from "lucide-react";
 import toast from "react-hot-toast";
 import StarRating from "../Rating/StarRating";
+import { toggleProductFavorite } from "@/redux/features/userFavoriteSlice";
 
 const ProductViewPage = () => {
   const { productId } = useParams();
@@ -21,6 +22,18 @@ const ProductViewPage = () => {
   );
   const { products: vendorProducts, loading: vendorProductsLoading } =
     useSelector((state) => state.vendorProducts);
+
+  const { items: favorites, loading: favoritesLoading } = useSelector(
+    (state) => state.favorites
+  );
+
+  const isFavorited = favorites.some(
+    (favorite) => favorite.productId._id === product?._id
+  );
+
+  const handleFavoriteClick = () => {
+    dispatch(toggleProductFavorite(product._id));
+  };
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariants, setSelectedVariants] = useState({});
@@ -127,7 +140,9 @@ const ProductViewPage = () => {
       toast.success("Product added to cart!");
     } catch (error) {
       console.error("Error adding to cart:", error);
-      toast.error(error.response.data.message || "Failed to add product to cart");
+      toast.error(
+        error.response.data.message || "Failed to add product to cart"
+      );
     }
   };
 
@@ -189,8 +204,16 @@ const ProductViewPage = () => {
                 </Avatar>
                 <span className="font-medium">{product.vendor?.name}</span>
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-full">
-                <Heart className="h-6 w-6" />
+              <button
+                onClick={handleFavoriteClick}
+                disabled={favoritesLoading}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <Heart
+                  className={`h-6 w-6 ${
+                    isFavorited ? "fill-red-500 text-red-500" : ""
+                  }`}
+                />
               </button>
             </div>
 
