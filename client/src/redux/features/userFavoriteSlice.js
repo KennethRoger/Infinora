@@ -23,7 +23,7 @@ export const fetchUserFavorites = createAsyncThunk(
       const response = await getFavorites();
       return response.favorites;
     } catch (error) {
-      toast.error(error.message || "Failed to fetch favorites");
+      console.error(error.message || "Failed to fetch favorites");
       return rejectWithValue(error.message);
     }
   }

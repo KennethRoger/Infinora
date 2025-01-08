@@ -44,6 +44,7 @@ import WalletPage from "./pages/User/Home/Wallet/WalletPage";
 import NotFound from "./pages/NotFound";
 import CouponPage from "./pages/Creator/CreatorCoupon/CouponPage";
 import FavoritesPage from "./pages/User/Home/Favorites/FavoritesPage";
+import ProductListingPage from "./components/Product/ProductListingPage";
 
 
 export function App() {
@@ -119,6 +120,7 @@ export function App() {
           <Route index element={<MainPage />} />
           <Route path="product/:productId" element={<ProductViewPage />} />
           <Route path="creator" element={<CreatorSection />} />
+          <Route path="products" element={<ProductListingPage />} />
           <Route path="profile" element={<ProfileLayout />}>
             <Route index element={<Navigate to="profile-info" replace />} />
             <Route path="profile-info" element={<ProfilePage />}>

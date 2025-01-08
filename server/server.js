@@ -24,6 +24,7 @@ const paymentRoutes = require("./routes/payment");
 const couponRoutes = require("./routes/couponRoutes");
 const walletRoutes = require("./routes/walletRoutes");
 const favoriteRoutes = require("./routes/favoriteRoutes");
+const searchRoutes = require("./routes/searchRoutes");
 
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -53,6 +54,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/coupon", couponRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/search", searchRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
