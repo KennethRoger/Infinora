@@ -1,5 +1,8 @@
 const Coupon = require("../models/Coupon");
-const { verifyToken } = require("../utils/tokenValidator")
+const Product = require("../models/Product"); 
+const User = require("../models/User"); 
+const CouponUsage = require("../models/CouponUsage");
+const { verifyToken } = require("../utils/tokenValidator");
 
 const createCoupon = async (req, res) => {
   try {
@@ -24,7 +27,6 @@ const createCoupon = async (req, res) => {
       newUsersOnly,
     } = req.body;
 
-    // Create coupon object with validated data
     const couponData = {
       name,
       code: code.toUpperCase(),
@@ -41,7 +43,6 @@ const createCoupon = async (req, res) => {
       maxUses: maxUses || 0,
     };
 
-    // Check if coupon with same code exists
     const existingCoupon = await Coupon.findOne({ code: couponData.code });
     if (existingCoupon) {
       return res.status(400).json({
@@ -51,7 +52,7 @@ const createCoupon = async (req, res) => {
     }
 
     const coupon = await Coupon.create(couponData);
-    
+
     res.status(201).json({
       success: true,
       data: coupon,
@@ -75,7 +76,7 @@ const getVendorCoupons = async (req, res) => {
     const decoded = verifyToken(token);
     const vendorId = decoded.id;
     const coupons = await Coupon.find({ vendorId });
-    
+
     res.status(200).json({
       success: true,
       data: coupons,
@@ -100,7 +101,7 @@ const updateCouponStatus = async (req, res) => {
     const vendorId = decoded.id;
     const { isActive } = req.body;
     console.log("reached, ", isActive, req.params.id);
-    
+
     const coupon = await Coupon.findOneAndUpdate(
       { _id: req.params.id, vendorId },
       { isActive },
@@ -126,8 +127,188 @@ const updateCouponStatus = async (req, res) => {
   }
 };
 
+const applyCoupon = async (req, res) => {
+  try {
+    const { productId, couponCode, itemQuantity } = req.body;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login to apply coupon",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    const userId = decoded.id;
+
+    const coupon = await Coupon.findOne({ code: couponCode });
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid coupon code",
+      });
+    }
+
+    if (!coupon.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: "This coupon is no longer active",
+      });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // Check if coupon belongs to the product's vendor
+    if (coupon.vendorId.toString() !== product.vendor.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "This coupon cannot be used for this product",
+      });
+    }
+
+    // Get base price after product discount
+    let basePrice = product.price;
+    if (product.discount) {
+      basePrice = basePrice * (1 - product.discount / 100);
+    }
+
+    // Calculate total price including quantity
+    const totalPrice = basePrice * itemQuantity;
+
+    // Check minimum amount requirement
+    if (coupon.minimumAmount && totalPrice < coupon.minimumAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Minimum purchase amount of ₹${coupon.minimumAmount} required to use this coupon`,
+      });
+    }
+
+    // Calculate coupon discount
+    let discount = 0;
+    if (coupon.discountType === "percentage") {
+      discount = (totalPrice * coupon.discountValue) / 100;
+    } else if (coupon.discountType === "fixed") {
+      discount = coupon.discountValue;
+    }
+
+    // Apply maximum discount cap if set
+    if (coupon.maximumDiscountAmount && discount > coupon.maximumDiscountAmount) {
+      discount = coupon.maximumDiscountAmount;
+    }
+
+    const discountedPrice = totalPrice - discount;
+
+    // Update coupon usage
+    const userUsage = await CouponUsage.findOne({
+      couponId: coupon._id,
+      userId: userId,
+    });
+
+    if (userUsage) {
+      await CouponUsage.findByIdAndUpdate(userUsage._id, {
+        $inc: { usageCount: 1 },
+      });
+    } else {
+      await CouponUsage.create({
+        couponId: coupon._id,
+        userId: userId,
+        usageCount: 1,
+      });
+    }
+
+    // Increment total uses
+    await Coupon.findByIdAndUpdate(coupon._id, {
+      $inc: { totalUses: 1 },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        originalPrice: product.price,
+        totalPrice,
+        discountedPrice,
+        discount,
+      },
+    });
+  } catch (error) {
+    console.error("Error in applyCoupon:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+const removeCoupon = async (req, res) => {
+  try {
+    console.log("Reached controller")
+    const { couponCode, productId } = req.body;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    const userId = decoded.id;
+
+    // Find the coupon
+    const coupon = await Coupon.findOne({ code: couponCode });
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Coupon not found",
+      });
+    }
+
+    // Find and update user's usage
+    const userUsage = await CouponUsage.findOne({
+      couponId: coupon._id,
+      userId: userId,
+    });
+
+    if (userUsage) {
+      if (userUsage.usageCount > 1) {
+        await CouponUsage.findByIdAndUpdate(userUsage._id, {
+          $inc: { usageCount: -1 },
+        });
+      } else {
+        // If this was the last usage, remove the record
+        await CouponUsage.findByIdAndDelete(userUsage._id);
+      }
+    }
+
+    // Decrement total uses
+    await Coupon.findByIdAndUpdate(coupon._id, {
+      $inc: { totalUses: -1 },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Coupon removed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createCoupon,
   getVendorCoupons,
   updateCouponStatus,
+  applyCoupon,
+  removeCoupon
 };

@@ -34,9 +34,13 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    address: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Address",
+    appliedCoupon: {
+      couponCode: String,
+      couponDiscount: Number,
+      variants: Object,
+    },
+    shippingAddress: {
+      type: Object,
       required: true,
     },
     paymentMethod: {
@@ -64,6 +68,10 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    finalAmount: {
+      type: Number,
+      required: true,
+    },
     status: {
       type: String,
       required: true,
@@ -71,11 +79,7 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Order = mongoose.model("Order", orderSchema);
-
-module.exports = Order;
+module.exports = mongoose.model("Order", orderSchema);

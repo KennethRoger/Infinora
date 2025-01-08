@@ -38,8 +38,7 @@ export default function SidebarMenu({ menuItems }) {
   };
 
   const handleLogout = async (onClick) => {
-    await onClick();
-    navigate("/home");
+    await onClick(navigate);
   };
 
   return (
