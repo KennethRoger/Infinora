@@ -44,6 +44,5 @@ export const sideMenuItems = [
     icon: <RiUserStarLine />,
     path: "creator-list",
   },
-  { id: 7, label: "Coupons", icon: <RiCoupon2Line />, path: "admin/coupons" },
   { id: 8, label: "Logout", icon: <AiOutlineLogout />, path: "admin/logout" },
 ];
