@@ -1,13 +1,21 @@
 import { useUser } from "@/context/UserContext";
 import imagePlaceholder from "../../assets/images/banner-img.jpg";
 import profilePlaceHolder from "../../assets/images/holding-shoes.jpg";
+import StorePerformance from "./SalesReport/StorePerformance";
+import { useEffect } from "react";
+import FinancialAnalytics from "./SalesReport/FinancialAnalytics";
+import SalesReport from "./SalesReport/SalesReport";
 
 export default function CreatorOverview() {
-  const { user } = useUser();
-  console.log(user)
+  const { user, refreshUser } = useUser();
+
+  useEffect(() => {
+    refreshUser();
+  }, []);
+
   return (
-    <>
-      <div className="relative">
+    <div className="min-h-screen bg-gray-50">
+      <div className="relative mb-8">
         <div className="h-48 bg-gray-200">
           <img
             src={imagePlaceholder || "/path-to-default-banner.jpg"}
@@ -17,7 +25,7 @@ export default function CreatorOverview() {
         </div>
         {/* profile image */}
         <img
-          src={user.profileImagePath}
+          src={user?.profileImagePath || profilePlaceHolder}
           alt="Profile pic"
           width={120}
           height={120}
@@ -28,12 +36,11 @@ export default function CreatorOverview() {
           <div className="pl-[70px] pt-3 w-full p-10">
             <div className="flex justify-between items-center mb-6">
               <div>
-                {/* name */}
-                <h2 className="text-2xl font-bold">{user.name}</h2>
-                {/* bio */}
-                <p className="text-gray-600">{user.bio}</p>
+                <h2 className="text-2xl font-bold">
+                  {user?.name || "Creator Name"}
+                </h2>
+                <p className="text-gray-600">{user?.bio || "Creator Bio"}</p>
               </div>
-
               <button className="border border-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-100 transition">
                 Edit profile
               </button>
@@ -41,6 +48,12 @@ export default function CreatorOverview() {
           </div>
         </div>
       </div>
-    </>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* <StorePerformance />
+        <FinancialAnalytics /> */}
+        <SalesReport />
+      </div>
+    </div>
   );
 }

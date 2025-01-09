@@ -53,13 +53,14 @@ export default function TableCreator({
                         <span className="flex-1">{row[head.field]}</span>
                       </div>
                     </div>
-                  ) : head.field === "profileImagePath" ? (
+                  ) : head.field === "profileImagePath" ||
+                    head.field === "image" ? (
                     <div className="flex items-center justify-center">
                       {row[head.field] ? (
                         <div className="h-12 w-12 rounded-full overflow-hidden">
                           <img
                             src={row[head.field]}
-                            alt={row.name || "Profile"}
+                            alt={row.name || "Image"}
                             className="h-full w-full object-cover"
                             onError={(e) => {
                               e.target.src = "https://via.placeholder.com/48";
@@ -75,8 +76,6 @@ export default function TableCreator({
                       )}
                     </div>
                   ) : head.field === "actions" && actionsRenderer ? (
-                    actionsRenderer(row)
-                  ) : head.field === "verificationId" && extraActionRenderer ? (
                     extraActionRenderer(row)
                   ) : (
                     row[head.field] || "N/A"
@@ -115,12 +114,19 @@ export default function TableCreator({
                   head.field === "actions" ? "text-center" : ""
                 }`}
               >
-                {head.field === "profileImagePath" ? (
-                  <img
-                    src={row[head.field]}
-                    alt={row.name || "Image"}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
+                {head.field === "profileImagePath" || head.field === "image" ? (
+                  <div className="flex items-center justify-center">
+                    <div className="h-12 w-12 rounded-full overflow-hidden">
+                      <img
+                        src={row[head.field]}
+                        alt={row.name || "Image"}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/48";
+                        }}
+                      />
+                    </div>
+                  </div>
                 ) : head.field === "actions" && actionsRenderer ? (
                   actionsRenderer(row)
                 ) : head.field === "verificationId" && extraActionRenderer ? (
