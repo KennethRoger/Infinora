@@ -125,11 +125,9 @@ export default function AdminSalesReport() {
   const generatePDF = () => {
     const doc = new jsPDF();
 
-    // Add title
     doc.setFontSize(20);
     doc.text("Platform Sales Report", 14, 22);
 
-    // Add date range
     doc.setFontSize(12);
     doc.text(
       `${format(startDate, "MMM d, yyyy")} - ${format(endDate, "MMM d, yyyy")}`,
@@ -137,7 +135,6 @@ export default function AdminSalesReport() {
       32
     );
 
-    // Add platform summary
     doc.setFontSize(14);
     doc.text("Platform Summary", 14, 45);
     const summaryData = [
@@ -153,7 +150,6 @@ export default function AdminSalesReport() {
       theme: "grid",
     });
 
-    // Add top vendors
     doc.setFontSize(14);
     doc.text("Top Performing Vendors", 14, doc.autoTable.previous.finalY + 20);
     const vendorData = salesData.summary.topVendors.map((vendor) => [
@@ -170,7 +166,6 @@ export default function AdminSalesReport() {
       theme: "grid",
     });
 
-    // Add orders table
     doc.setFontSize(14);
     doc.text("Order Details", 14, doc.autoTable.previous.finalY + 20);
 
@@ -248,7 +243,6 @@ export default function AdminSalesReport() {
             </div>
           </div>
 
-          {/* Top Vendors */}
           <div className="mt-8">
             <h3 className="text-xl font-semibold mb-4">
               Top Performing Vendors
@@ -271,7 +265,6 @@ export default function AdminSalesReport() {
             </div>
           </div>
 
-          {/* Orders Table */}
           <div className="mt-8 overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">

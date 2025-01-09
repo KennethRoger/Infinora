@@ -308,7 +308,6 @@ const incrementCartItem = async (req, res) => {
       });
     }
 
-    // Check stock based on variants
     if (product.variants?.length > 0) {
       if (variants) {
         const matchingCombination = product.variantCombinations.find((combo) => {

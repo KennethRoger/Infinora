@@ -110,7 +110,6 @@ export default function FinancialAnalytics() {
           </div>
         </Card>
 
-        {/* Payment Method Distribution */}
         <Card className="p-6">
           <h3 className="text-lg font-medium mb-4">Payment Methods</h3>
           <div className="h-64">

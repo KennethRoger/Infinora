@@ -45,7 +45,7 @@ import NotFound from "./pages/NotFound";
 import CouponPage from "./pages/Creator/CreatorCoupon/CouponPage";
 import FavoritesPage from "./pages/User/Home/Favorites/FavoritesPage";
 import ProductListingPage from "./components/Product/ProductListingPage";
-
+import OrderListPage from "./pages/Admin/Home/OrderListPage";
 
 export function App() {
   const location = useLocation();
@@ -320,10 +320,24 @@ export function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="category-list" element={<CategoryListPage />} />
+          <Route
+            path="category-list"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <CategoryListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="order-list"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <OrderListPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
-        {/* Catch all unmatched routes */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

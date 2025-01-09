@@ -1197,7 +1197,6 @@ export default function CreatorAddProduct() {
                           <button
                             type="button"
                             onClick={() => {
-                              // Check if all variants have at least one type
                               const hasEmptyVariants = variantFields.some(
                                 (_, idx) =>
                                   !watch(`variants.${idx}.variantTypes`)?.length
@@ -1332,7 +1331,6 @@ export default function CreatorAddProduct() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       <Modal isOpen={isDeleteModalOpen}>
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">

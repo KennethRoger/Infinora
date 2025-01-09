@@ -17,19 +17,21 @@ export default function ProductListPage() {
     dispatch(fetchAllProducts());
   }, [dispatch]);
 
-  const handleUnlist = async (productId) => {
+  const handleToggleListing = async (productId) => {
     try {
-      await axios.patch(
-        `${
-          import.meta.env.VITE_USERS_API_BASE_URL
-        }/api/products/${productId}/toggle-listing`,
-        {},
-        { withCredentials: true }
-      );
-      toast.success("Product listing status updated");
-      dispatch(fetchAllProducts()); // Refresh the list
+      await axios
+        .patch(
+          `${
+            import.meta.env.VITE_USERS_API_BASE_URL
+          }/api/products/toggle-listing`,
+          { productId }
+        )
+        .then(() => {
+          dispatch(fetchAllProducts());
+        });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update product");
+      console.error("Error toggling listing:", error);
+      toast.error("Unable to list product")
     }
   };
 
@@ -39,7 +41,7 @@ export default function ProductListPage() {
         className={`${
           product.isListed ? "bg-red-500" : "bg-green-500"
         } text-white px-3 py-1 rounded`}
-        onClick={() => handleUnlist(product._id)}
+        onClick={() => handleToggleListing(product._id)}
       >
         {product.isListed ? "Unlist" : "List"}
       </button>

@@ -23,7 +23,6 @@ export default function CreatorOverview() {
             className="w-full h-full object-cover"
           />
         </div>
-        {/* profile image */}
         <img
           src={user?.profileImagePath || profilePlaceHolder}
           alt="Profile pic"
@@ -50,8 +49,8 @@ export default function CreatorOverview() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* <StorePerformance />
-        <FinancialAnalytics /> */}
+        {/* <StorePerformance /> */}
+        {/* <FinancialAnalytics /> */}
         <SalesReport />
       </div>
     </div>

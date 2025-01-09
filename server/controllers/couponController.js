@@ -165,7 +165,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Check if coupon belongs to the product's vendor
     if (coupon.vendorId.toString() !== product.vendor.toString()) {
       return res.status(400).json({
         success: false,
@@ -173,16 +172,13 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Get base price after product discount
     let basePrice = product.price;
     if (product.discount) {
       basePrice = basePrice * (1 - product.discount / 100);
     }
 
-    // Calculate total price including quantity
     const totalPrice = basePrice * itemQuantity;
 
-    // Check minimum amount requirement
     if (coupon.minimumAmount && totalPrice < coupon.minimumAmount) {
       return res.status(400).json({
         success: false,
@@ -190,7 +186,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Calculate coupon discount
     let discount = 0;
     if (coupon.discountType === "percentage") {
       discount = (totalPrice * coupon.discountValue) / 100;
@@ -198,14 +193,12 @@ const applyCoupon = async (req, res) => {
       discount = coupon.discountValue;
     }
 
-    // Apply maximum discount cap if set
     if (coupon.maximumDiscountAmount && discount > coupon.maximumDiscountAmount) {
       discount = coupon.maximumDiscountAmount;
     }
 
     const discountedPrice = totalPrice - discount;
 
-    // Update coupon usage
     const userUsage = await CouponUsage.findOne({
       couponId: coupon._id,
       userId: userId,
@@ -223,7 +216,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Increment total uses
     await Coupon.findByIdAndUpdate(coupon._id, {
       $inc: { totalUses: 1 },
     });
@@ -262,7 +254,6 @@ const removeCoupon = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    // Find the coupon
     const coupon = await Coupon.findOne({ code: couponCode });
     if (!coupon) {
       return res.status(404).json({
@@ -271,7 +262,6 @@ const removeCoupon = async (req, res) => {
       });
     }
 
-    // Find and update user's usage
     const userUsage = await CouponUsage.findOne({
       couponId: coupon._id,
       userId: userId,
@@ -283,12 +273,10 @@ const removeCoupon = async (req, res) => {
           $inc: { usageCount: -1 },
         });
       } else {
-        // If this was the last usage, remove the record
         await CouponUsage.findByIdAndDelete(userUsage._id);
       }
     }
 
-    // Decrement total uses
     await Coupon.findByIdAndUpdate(coupon._id, {
       $inc: { totalUses: -1 },
     });

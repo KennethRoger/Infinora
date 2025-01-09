@@ -11,7 +11,6 @@ const createWalletTransaction = async ({
   orderId
 }) => {
   try {
-    // Find or create wallet
     const wallet = await Wallet.findOneAndUpdate(
       { userId },
       { 
@@ -21,7 +20,6 @@ const createWalletTransaction = async ({
       { upsert: true, new: true }
     );
 
-    // Create transaction record
     const transaction = await Transaction.create({
       userId,
       amount,

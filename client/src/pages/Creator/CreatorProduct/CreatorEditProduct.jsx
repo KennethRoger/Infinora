@@ -212,7 +212,6 @@ export default function CreatorEditProduct() {
 
   useEffect(() => {
     if (product && categories?.length > 0) {
-      // Set basic fields
       setValue("name", product.name);
       setValue("description", product.description);
       setValue("category", product.category._id);
@@ -234,17 +233,14 @@ export default function CreatorEditProduct() {
         }
       );
 
-      // Set subcategories based on selected category
       const category = categories.find((cat) => cat._id === product.category._id);
       if (category) {
         setSubcategories(category.children || []);
-        // Set subcategory after subcategories are loaded
         if (product.subCategory) {
           setValue("subCategory", product.subCategory._id);
         }
       }
 
-      // Set images
       if (product.images?.length > 0) {
         const mainImage = product.images[0];
         const additionalImages = product.images.slice(1);
@@ -261,7 +257,6 @@ export default function CreatorEditProduct() {
         });
       }
 
-      // Set variants if they exist
       if (product.variants?.length > 0) {
         setVariantSections(true);
         setValue("variants", product.variants);
@@ -1407,7 +1402,6 @@ export default function CreatorEditProduct() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
       <Modal isOpen={isDeleteModalOpen}>
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">

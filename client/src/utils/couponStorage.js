@@ -14,7 +14,6 @@ export const addAppliedCoupon = (couponData) => {
   try {
     const coupons = getAppliedCoupons();
     
-    // Check if a coupon already exists for this product
     const existingCoupon = coupons.find(
       coupon => coupon.productId === couponData.productId
     );
@@ -23,12 +22,10 @@ export const addAppliedCoupon = (couponData) => {
       throw new Error("A coupon is already applied to this item");
     }
 
-    // Check if user already has a coupon from this vendor
     const existingVendorCoupon = coupons.find(
       coupon => coupon.vendorId === couponData.vendorId
     );
 
-    // Only prevent if trying to add another coupon from the same vendor
     if (existingVendorCoupon && existingVendorCoupon.vendorId === couponData.vendorId) {
       throw new Error("You can only use one coupon per vendor");
     }

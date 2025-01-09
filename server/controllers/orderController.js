@@ -1,5 +1,7 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const Wallet = require("../models/Wallet");
+const User = require("../models/User");
 // const Cart = require("../models/Cart");
 const { verifyToken } = require("../utils/tokenValidator");
 const { generateOrderId } = require("../utils/generateOrderId");
@@ -20,7 +22,7 @@ const calculateOrderAmount = async (items, appliedCoupons = []) => {
     let basePrice = product.price;
 
     if (item.variants && product.variantCombinations?.length > 0) {
-      const matchingCombination = product.variantCombinations.find(combo => 
+      const matchingCombination = product.variantCombinations.find((combo) =>
         Object.entries(combo.variants).every(
           ([key, value]) => item.variants[key] === value
         )
@@ -34,7 +36,9 @@ const calculateOrderAmount = async (items, appliedCoupons = []) => {
     const productDiscount = (itemTotal * (product.discount || 0)) / 100;
     totalDiscount += productDiscount;
 
-    const appliedCoupon = appliedCoupons.find(c => c.productId === item.productId.toString());
+    const appliedCoupon = appliedCoupons.find(
+      (c) => c.productId === item.productId.toString()
+    );
     if (appliedCoupon) {
       totalCouponDiscount += appliedCoupon.couponDiscount;
     }
@@ -48,7 +52,7 @@ const calculateOrderAmount = async (items, appliedCoupons = []) => {
     totalAmount,
     totalDiscount,
     totalCouponDiscount,
-    finalAmount
+    finalAmount,
   };
 };
 
@@ -84,14 +88,16 @@ const createOrder = async (req, res) => {
       }
 
       if (product.variants?.length > 0 && item.variants) {
-        const matchingCombination = product.variantCombinations.find(combo => 
+        const matchingCombination = product.variantCombinations.find((combo) =>
           Object.entries(combo.variants).every(
             ([key, value]) => item.variants[key] === value
           )
         );
 
         if (!matchingCombination) {
-          throw new Error(`Invalid variant combination for product ${product.name}`);
+          throw new Error(
+            `Invalid variant combination for product ${product.name}`
+          );
         }
 
         if (matchingCombination.stock < item.quantity) {
@@ -100,13 +106,15 @@ const createOrder = async (req, res) => {
           );
         }
 
-        const updatedCombinations = product.variantCombinations.map(combo => {
-          if (Object.entries(combo.variants).every(
-            ([key, value]) => item.variants[key] === value
-          )) {
+        const updatedCombinations = product.variantCombinations.map((combo) => {
+          if (
+            Object.entries(combo.variants).every(
+              ([key, value]) => item.variants[key] === value
+            )
+          ) {
             return {
               ...combo,
-              stock: combo.stock - item.quantity
+              stock: combo.stock - item.quantity,
             };
           }
           return combo;
@@ -125,7 +133,7 @@ const createOrder = async (req, res) => {
       let basePrice = product.price;
 
       if (item.variants && product.variantCombinations?.length > 0) {
-        const matchingCombination = product.variantCombinations.find(combo => 
+        const matchingCombination = product.variantCombinations.find((combo) =>
           Object.entries(combo.variants).every(
             ([key, value]) => item.variants[key] === value
           )
@@ -137,8 +145,10 @@ const createOrder = async (req, res) => {
 
       const itemTotal = basePrice * item.quantity;
       const productDiscount = (itemTotal * (product.discount || 0)) / 100;
-      
-      const appliedCoupon = appliedCoupons?.find(c => c.productId === item.productId);
+
+      const appliedCoupon = appliedCoupons?.find(
+        (c) => c.productId === item.productId
+      );
       const couponDiscount = appliedCoupon?.couponDiscount || 0;
 
       const finalAmount = itemTotal - productDiscount - couponDiscount;
@@ -153,11 +163,13 @@ const createOrder = async (req, res) => {
         quantity: item.quantity,
         price: basePrice,
         discount: product.discount || 0,
-        appliedCoupon: appliedCoupon ? {
-          couponCode: appliedCoupon.couponCode,
-          couponDiscount: appliedCoupon.couponDiscount,
-          variants: appliedCoupon.variants
-        } : undefined,
+        appliedCoupon: appliedCoupon
+          ? {
+              couponCode: appliedCoupon.couponCode,
+              couponDiscount: appliedCoupon.couponDiscount,
+              variants: appliedCoupon.variants,
+            }
+          : undefined,
         shippingAddress: {
           name: shippingAddress.name,
           phone: shippingAddress.phone,
@@ -166,7 +178,7 @@ const createOrder = async (req, res) => {
           city: shippingAddress.city,
           state: shippingAddress.state,
           pincode: shippingAddress.pincode,
-          type: shippingAddress.type
+          type: shippingAddress.type,
         },
         paymentMethod,
         vendor: product.vendor._id,
@@ -183,15 +195,14 @@ const createOrder = async (req, res) => {
 
     const populatedOrders = await Order.find({
       _id: { $in: orders.map((order) => order._id) },
-    })
-      .populate({
-        path: "product",
-        select: "name images variants price",
-        populate: {
-          path: "vendor",
-          select: "name",
-        },
-      });
+    }).populate({
+      path: "product",
+      select: "name images variants price",
+      populate: {
+        path: "vendor",
+        select: "name",
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -260,15 +271,14 @@ const getOrderById = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId })
-      .populate({
-        path: "product",
-        select: "name images variants variantCombinations price",
-        populate: {
-          path: "vendor",
-          select: "name",
-        },
-      });
+    const order = await Order.findOne({ _id: id, user: userId }).populate({
+      path: "product",
+      select: "name images variants variantCombinations price",
+      populate: {
+        path: "vendor",
+        select: "name",
+      },
+    });
 
     if (!order) {
       return res.status(404).json({
@@ -292,7 +302,7 @@ const getOrderById = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
-  console.log("reached")
+  console.log("reached");
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -372,7 +382,9 @@ const cancelOrder = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    const order = await Order.findOne({ _id: id, user: userId }).populate("product");
+    const order = await Order.findOne({ _id: id, user: userId }).populate(
+      "product"
+    );
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -387,30 +399,53 @@ const cancelOrder = async (req, res) => {
       });
     }
 
-    if (order.paymentMethod !== 'cod') {
+    const product = await Product.findById(order.product);
+
+    if (order.variants) {
+      const updatedCombinations = product.variantCombinations.map((combo) => {
+        if (
+          Object.entries(combo.variants).every(
+            ([key, value]) => order.variants[key] === value
+          )
+        ) {
+          return {
+            ...combo,
+            stock: combo.stock + order.quantity,
+          };
+        }
+        return combo;
+      });
+
+      product.variantCombinations = updatedCombinations;
+    } else {
+      product.stock += order.quantity;
+    }
+
+    await product.save();
+
+    if (order.paymentMethod !== "cod") {
       await createWalletTransaction({
         userId,
         amount: order.finalAmount,
-        type: 'credit',
+        type: "credit",
         description: `Refund for order #${order.orderId}`,
         reference: `refund_${order._id}`,
-        paymentMethod: 'refund',
-        orderId: order._id
+        paymentMethod: "refund",
+        orderId: order._id,
       });
     }
 
     order.status = "cancelled";
     await order.save();
 
-    const updatedOrder = await Order.findById(id)
-      .populate({
-        path: "product",
-        select: "name images variants variantCombinations price",
-        populate: {
-          path: "vendor",
-          select: "name",
-        },
-      });
+    const updatedOrder = await Order.findById(id).populate({
+      path: "product",
+      select: "name images variants variantCombinations price",
+      populate: {
+        path: "vendor",
+        select: "name",
+      },
+    });
 
     res.status(200).json({
       success: true,
@@ -465,6 +500,211 @@ const getVendorOrders = async (req, res) => {
   }
 };
 
+const getAllOrders = async (req, res) => {
+  try {
+    console.log("reached");
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login to view orders",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    console.log(decoded);
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view all orders",
+      });
+    }
+
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "product",
+        select: "name images variants variantCombinations price",
+        populate: {
+          path: "vendor",
+          select: "name",
+        },
+      })
+      .populate("user", "name email");
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+      error: error.message,
+    });
+  }
+};
+
+const adminCancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to cancel orders",
+      });
+    }
+
+    const order = await Order.findById(id).populate("product user");
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (["completed", "cancelled"].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot cancel order in current status",
+      });
+    }
+
+    const product = await Product.findById(order.product);
+
+    if (order.variants) {
+      const updatedCombinations = product.variantCombinations.map((combo) => {
+        if (
+          Object.entries(combo.variants).every(
+            ([key, value]) => order.variants[key] === value
+          )
+        ) {
+          return {
+            ...combo,
+            stock: combo.stock + order.quantity,
+          };
+        }
+        return combo;
+      });
+
+      product.variantCombinations = updatedCombinations;
+    } else {
+      product.stock += order.quantity;
+    }
+
+    await product.save();
+
+    if (order.paymentMethod !== "cod") {
+      await createWalletTransaction({
+        userId: order.user._id,
+        amount: order.finalAmount,
+        type: "credit",
+        description: `Admin cancelled order #${order.orderId} - Refund issued`,
+        reference: `admin_refund_${order._id}`,
+        paymentMethod: "refund",
+        orderId: order._id,
+      });
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    const updatedOrder = await Order.findById(id)
+      .populate({
+        path: "product",
+        select: "name images variants variantCombinations price",
+        populate: {
+          path: "vendor",
+          select: "name",
+        },
+      })
+      .populate("user", "name email");
+
+    res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully by admin",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Error in admin cancel order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel order",
+      error: error.message,
+    });
+  }
+};
+
+const confirmDelivered = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findById(orderId).populate({
+      path: "vendor",
+      model: "User",
+      select: "_id",
+    });
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (order.status !== "delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Order must be in shipped state to confirm delivery",
+      });
+    }
+
+    order.paymentStatus = "completed";
+    await order.save();
+
+    const wallet = await Wallet.findOneAndUpdate(
+      { userId: order.vendor._id },
+      {
+        userId: order.vendor._id,
+        $inc: { balance: order.finalAmount },
+      },
+      { upsert: true, new: true }
+    );
+
+    await createWalletTransaction({
+      userId: order.vendor._id,
+      amount: order.finalAmount,
+      type: "credit",
+      description: `Payment received for order ${order.orderId}`,
+      reference: order.orderId,
+      orderId: order._id,
+      paymentMethod: order.paymentMethod
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Order delivered and payment completed",
+      data: { order, wallet },
+    });
+  } catch (error) {
+    console.error("Error in confirmDelivered:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error confirming delivery",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
@@ -472,4 +712,7 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   getVendorOrders,
+  getAllOrders,
+  adminCancelOrder,
+  confirmDelivered,
 };

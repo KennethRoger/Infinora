@@ -30,7 +30,7 @@ export const getUserOrders = async () => {
 export const cancelOrder = async (orderId) => {
   try {
     const response = await axios.patch(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/${orderId}/cancel`,
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/admin/${orderId}/cancel`,
       {},
       { withCredentials: true }
     );
@@ -40,3 +40,29 @@ export const cancelOrder = async (orderId) => {
     throw error.response?.data || error;
   }
 };
+
+export const adminCancelOrder = async (orderId) => {
+  try {
+    const response = await axios.patch(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/admin/${orderId}/cancel`,
+      {},
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to cancel order:", error);
+    throw error.response?.data || error;
+  }
+};
+
+export const confirmDelivered = async (orderId) => {
+  try {
+    const response = await axios.patch(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/admin/${orderId}/confirm-delivered`
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+

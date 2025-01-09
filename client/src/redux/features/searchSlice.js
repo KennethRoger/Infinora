@@ -70,7 +70,6 @@ const searchSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Search Products
       .addCase(searchProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -83,7 +82,6 @@ const searchSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Search Suggestions
       .addCase(getSearchSuggestions.pending, (state) => {
         state.loading = true;
         state.error = null;
