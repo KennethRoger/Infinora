@@ -111,7 +111,6 @@ export default function SalesReport() {
     return `₹${value.toLocaleString()}`;
   };
 
-  // Helper function to calculate total discount
   const calculateTotalDiscount = (order) => {
     const totalAmount = Number(order.totalAmount || 0);
     const finalAmount = Number(order.finalAmount || 0);
@@ -121,11 +120,9 @@ export default function SalesReport() {
   const generatePDF = () => {
     const doc = new jsPDF();
 
-    // Add title
     doc.setFontSize(20);
     doc.text("Sales Report", 14, 22);
 
-    // Add date range
     doc.setFontSize(12);
     doc.text(
       `${format(startDate, "MMM d, yyyy")} - ${format(endDate, "MMM d, yyyy")}`,
@@ -133,7 +130,6 @@ export default function SalesReport() {
       32
     );
 
-    // Add summary
     doc.setFontSize(14);
     doc.text("Summary", 14, 45);
     const summaryData = [
@@ -156,7 +152,6 @@ export default function SalesReport() {
       theme: "grid",
     });
 
-    // Add orders table
     doc.setFontSize(14);
     doc.text("Order Details", 14, doc.autoTable.previous.finalY + 20);
 
@@ -277,7 +272,6 @@ export default function SalesReport() {
           )}
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-4 rounded-lg shadow">
             <p className="text-sm text-gray-500">Total Orders</p>
@@ -305,7 +299,6 @@ export default function SalesReport() {
           </div>
         </div>
 
-        {/* Orders Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

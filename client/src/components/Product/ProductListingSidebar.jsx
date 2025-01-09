@@ -81,7 +81,6 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
     }));
   };
 
-  // Count active filters
   const activeFilterCount = [
     priceRange[0] !== defaultPriceRange[0] || priceRange[1] !== defaultPriceRange[1],
     filters.categories.length > 0,
@@ -101,7 +100,6 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
         )}
       </div>
 
-      {/* Sort By */}
       <div>
         <h3 className="text-lg font-semibold mb-3">Sort By</h3>
         <Select value={sortBy} onValueChange={setSortBy}>
@@ -118,7 +116,6 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
         </Select>
       </div>
 
-      {/* Price Range */}
       <div>
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-lg font-semibold">Price Range</h3>
@@ -170,11 +167,10 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
         </div>
       </div>
 
-      {/* Categories */}
       <div>
         <h3 className="text-lg font-semibold mb-3">Categories</h3>
         <div className="space-y-2">
-          {['Electronics', 'Fashion', 'Home', 'Books'].map((category) => (
+          {['Accessories', 'Fashion', 'Home Decor', 'Books'].map((category) => (
             <div key={category} className="flex items-center space-x-2">
               <Checkbox
                 id={category}
@@ -192,7 +188,6 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
         </div>
       </div>
 
-      {/* Rating */}
       <div>
         <h3 className="text-lg font-semibold mb-3">Rating</h3>
         <Select value={filters.rating} onValueChange={handleRatingChange}>
@@ -208,7 +203,6 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
         </Select>
       </div>
 
-      {/* Availability */}
       <div>
         <h3 className="text-lg font-semibold mb-3">Availability</h3>
         <Select value={filters.availability} onValueChange={handleAvailabilityChange}>
@@ -223,7 +217,6 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
         </Select>
       </div>
 
-      {/* Clear All Filters */}
       {activeFilterCount > 0 && (
         <Button 
           variant="outline" 

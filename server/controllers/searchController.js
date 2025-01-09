@@ -36,7 +36,6 @@ const getSearchSuggestions = async (req, res) => {
       return res.status(400).json({ message: "Search query is required" });
     }
 
-    // Get product name suggestions
     const products = await Product.find({
       name: { $regex: query, $options: 'i' },
       isListed: true
@@ -45,7 +44,6 @@ const getSearchSuggestions = async (req, res) => {
     .populate('category', 'name')
     .limit(5);
 
-    // Get category suggestions
     const categories = await Product.aggregate([
       {
         $match: {

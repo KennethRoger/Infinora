@@ -165,7 +165,6 @@ const ProductViewPage = () => {
     <div className="pt-[75px]">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Left side - Image gallery */}
           <div className="md:col-span-1 flex md:flex-col gap-2 order-2 md:order-1">
             {product.images.map((image, index) => (
               <button
@@ -229,7 +228,6 @@ const ProductViewPage = () => {
               </div>
             </div>
 
-            {/* Price and Stock */}
             <div>
               {product.variants?.length > 0 ? (
                 Object.values(selectedVariants).every((value) => value) ? (
@@ -297,7 +295,6 @@ const ProductViewPage = () => {
               </div>
             </div>
 
-            {/* Description */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-2">Description</h3>
               <p className="text-gray-600 text-sm line-clamp-3">
@@ -305,7 +302,6 @@ const ProductViewPage = () => {
               </p>
             </div>
 
-            {/* Variants */}
             {product.variants?.length > 0 &&
               product.variants.map((variant) => (
                 <div key={variant._id}>
@@ -331,7 +327,6 @@ const ProductViewPage = () => {
                 </div>
               ))}
 
-            {/* Buttons */}
             <div className="flex gap-4">
               <button
                 className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
@@ -359,7 +354,6 @@ const ProductViewPage = () => {
               </button>
             </div>
 
-            {/* Additional Details */}
             {product.additionalDetails && (
               <div className="border-t pt-4">
                 <h3 className="font-medium mb-2">Additional Details</h3>
@@ -374,7 +368,6 @@ const ProductViewPage = () => {
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Product Info */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-4">Product Information</h2>
             <div className="grid grid-cols-2 gap-4">
@@ -400,11 +393,9 @@ const ProductViewPage = () => {
           </div>
         </div>
 
-        {/* Reviews section */}
         <div className="mt-12 bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-2xl font-semibold mb-6">Customer Reviews</h2>
 
-          {/* Review Summary */}
           <div className="flex items-center justify-between mb-8 border-b pb-6">
             <div className="flex items-center space-x-4">
               <div className="text-4xl font-bold">{product.rating}</div>
@@ -428,7 +419,6 @@ const ProductViewPage = () => {
             </div>
           </div>
 
-          {/* Review List */}
           <div className="space-y-6">
             {product.reviews?.map((review, index) => (
               <div key={index} className="border-b pb-6">
@@ -471,7 +461,6 @@ const ProductViewPage = () => {
           </div>
         </div>
 
-        {/* Similar Products */}
         {otherVendorProducts.length > 0 && (
           <div className="mt-12">
             <h2 className="text-2xl font-semibold mb-6">

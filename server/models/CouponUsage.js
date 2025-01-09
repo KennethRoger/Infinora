@@ -20,7 +20,6 @@ const couponUsageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Compound index to efficiently query by both couponId and userId
 couponUsageSchema.index({ couponId: 1, userId: 1 }, { unique: true });
 
 const CouponUsage = mongoose.model("CouponUsage", couponUsageSchema);

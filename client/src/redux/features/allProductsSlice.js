@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { initializeApp } from "firebase/app";
 
 export const fetchAllProducts = createAsyncThunk(
   "allProducts/fetchAll",

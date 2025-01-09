@@ -27,7 +27,6 @@ export default function ReviewPage() {
     let basePrice = item.productId.price;
     const quantity = item.quantity;
 
-    // Add variant combination price adjustment if it exists
     if (item.variants && item.productId.variantCombinations?.length > 0) {
       const matchingCombination = item.productId.variantCombinations.find(combo => 
         Object.entries(combo.variants).every(
@@ -39,11 +38,9 @@ export default function ReviewPage() {
       }
     }
 
-    // Apply product discount if any
     const discount = item.productId.discount || 0;
     const discountedPrice = basePrice * (1 - discount / 100);
 
-    // Get coupon discount for this item if any
     const appliedCoupon = getAppliedCoupons().find(
       (coupon) => coupon.productId === item.productId._id
     );
@@ -128,7 +125,6 @@ export default function ReviewPage() {
         return;
       }
 
-      // Get applied coupons for each item
       const appliedCoupons = cart.items.map((item) => {
         const coupon = getAppliedCoupons().find(
           (c) => c.productId === item.productId._id

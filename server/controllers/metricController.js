@@ -198,7 +198,6 @@ const getSalesReport = async (req, res) => {
 
     const vendorId = decoded.id;
 
-    // Calculate date range based on report type
     let queryStartDate, queryEndDate;
     const today = new Date();
 
@@ -228,26 +227,21 @@ const getSalesReport = async (req, res) => {
         queryEndDate = new Date(endDate);
     }
 
-    // Fetch orders
     const orders = await Order.find({
       vendor: vendorId,
       createdAt: { $gte: queryStartDate, $lte: queryEndDate },
     });
 
-    // Calculate summary with default values and null checks
     const summary = orders.reduce(
       (acc, order) => {
-        // Only count non-cancelled orders in total amount
         if (order.status !== "cancelled") {
           acc.totalAmount += order.totalAmount || 0;
         }
 
-        // Calculate total discount (difference between total and final amount)
         const totalDiscount =
           (order.totalAmount || 0) - (order.finalAmount || 0);
         acc.totalDiscount += totalDiscount;
 
-        // Calculate coupon discounts
         if (order.appliedCoupon && order.appliedCoupon.couponDiscount) {
           acc.couponDiscount += order.appliedCoupon.couponDiscount;
         }
@@ -262,7 +256,6 @@ const getSalesReport = async (req, res) => {
       }
     );
 
-    // Format order data with null checks
     const formattedOrders = orders.map((order) => ({
       orderId: order.orderId,
       createdAt: order.createdAt,
@@ -304,7 +297,6 @@ const getAdminSalesReport = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Calculate date range based on report type
     let queryStartDate, queryEndDate;
     const today = new Date();
 
@@ -334,35 +326,28 @@ const getAdminSalesReport = async (req, res) => {
         queryEndDate = new Date(endDate);
     }
 
-    // Build query
     const query = {
       createdAt: { $gte: queryStartDate, $lte: queryEndDate },
     };
 
-    // Add vendor filter if specified
     if (vendorId) {
       query.vendor = vendorId;
     }
 
-    // Fetch orders with vendor details from User model
     const orders = await Order.find(query).populate({
       path: "vendor",
       model: User,
       select: "name email",
     });
 
-    // Calculate platform metrics
     const platformMetrics = orders.reduce(
       (acc, order) => {
         if (order.status !== "cancelled") {
-          // Total platform revenue
           acc.totalRevenue += order.finalAmount || 0;
 
-          // Commission calculation (assuming 10% commission)
           const commission = (order.finalAmount || 0) * 0.1;
           acc.totalCommission += commission;
 
-          // Track vendor performance
           const vendorId = order.vendor._id.toString();
           if (!acc.vendorPerformance[vendorId]) {
             acc.vendorPerformance[vendorId] = {
@@ -385,12 +370,10 @@ const getAdminSalesReport = async (req, res) => {
       }
     );
 
-    // Convert vendor performance to array and sort by revenue
     const topVendors = Object.values(platformMetrics.vendorPerformance)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    // Format order data
     const formattedOrders = orders.map((order) => ({
       orderId: order.orderId,
       createdAt: order.createdAt,

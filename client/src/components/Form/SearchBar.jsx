@@ -85,7 +85,6 @@ export default function SearchBar({ placeholder }) {
         </button>
       </div>
 
-      {/* Suggestions Dropdown */}
       {showSuggestions && (searchTerm || recentSearches.length > 0) && (
         <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
           {loading ? (

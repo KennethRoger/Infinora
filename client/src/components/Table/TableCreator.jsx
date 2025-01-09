@@ -53,14 +53,13 @@ export default function TableCreator({
                         <span className="flex-1">{row[head.field]}</span>
                       </div>
                     </div>
-                  ) : head.field === "profileImagePath" ||
-                    head.field === "image" ? (
+                  ) : head.field === "profileImagePath" || head.field === "image" ? (
                     <div className="flex items-center justify-center">
                       {row[head.field] ? (
                         <div className="h-12 w-12 rounded-full overflow-hidden">
                           <img
                             src={row[head.field]}
-                            alt={row.name || "Image"}
+                            alt={row.name || "Profile"}
                             className="h-full w-full object-cover"
                             onError={(e) => {
                               e.target.src = "https://via.placeholder.com/48";
@@ -76,6 +75,8 @@ export default function TableCreator({
                       )}
                     </div>
                   ) : head.field === "actions" && actionsRenderer ? (
+                    actionsRenderer(row)
+                  ) : head.field === "verificationId" && extraActionRenderer ? (
                     extraActionRenderer(row)
                   ) : (
                     row[head.field] || "N/A"
@@ -130,7 +131,7 @@ export default function TableCreator({
                 ) : head.field === "actions" && actionsRenderer ? (
                   actionsRenderer(row)
                 ) : head.field === "verificationId" && extraActionRenderer ? (
-                  extraActionRenderer(row)
+                  typeof extraActionRenderer === 'function' ? extraActionRenderer(row) : null
                 ) : (
                   row[head.field] || "N/A"
                 )}

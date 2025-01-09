@@ -51,7 +51,7 @@ const verifyPayment = async (req, res) => {
           "razorpay.orderId": razorpay_order_id,
           "razorpay.paymentId": razorpay_payment_id,
           "razorpay.signature": razorpay_signature,
-          paymentStatus: "completed",
+          paymentStatus: "verified",
         },
         { new: true }
       );
