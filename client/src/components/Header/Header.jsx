@@ -73,7 +73,7 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <Link className="flex items-center gap-1">
+              <Link to={"/home/profile/favorites"} className="flex items-center gap-1">
                 <GrFavorite />
                 <p>Favorites</p>
               </Link>

@@ -28,6 +28,7 @@ import { MoreHorizontal } from "lucide-react";
 import { formatPrice, formatDate, cn } from "@/lib/utils";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { acceptReturnOrder } from "@/api/order/orderApi";
 
 const orderStatusColors = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -35,6 +36,7 @@ const orderStatusColors = {
   shipped: "bg-purple-100 text-purple-800 border-purple-200",
   delivered: "bg-green-100 text-green-800 border-green-200",
   cancelled: "bg-red-100 text-red-800 border-red-200",
+  return_requested: "bg-blue-100 text-blue-800 border-blue-200",
 };
 
 const paymentStatusColors = {
@@ -53,7 +55,7 @@ export default function UserOrderDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    console.log("working")
+    console.log("working");
     fetchOrders();
   }, []);
 
@@ -87,6 +89,16 @@ export default function UserOrderDashboard() {
       toast.error(
         error.response?.data?.message || "Failed to update order status"
       );
+    }
+  };
+
+  const handleAcceptReturn = async (orderId) => {
+    try {
+      await acceptReturnOrder(orderId);
+      toast.success("Return request accepted successfully");
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.message || "Failed to accept return");
     }
   };
 
@@ -163,7 +175,7 @@ export default function UserOrderDashboard() {
       case "quantity":
         return order.quantity;
       case "price":
-        return formatPrice(order.price); // Show base price per unit
+        return formatPrice(order.price);
       case "totalAmount":
         return (
           <TooltipProvider>
@@ -182,12 +194,19 @@ export default function UserOrderDashboard() {
                 <div className="space-y-1 text-sm">
                   <div>Subtotal: {formatPrice(order.totalAmount)}</div>
                   {order.discount > 0 && (
-                    <div>Product Discount: -{formatPrice(order.productDiscount)}</div>
+                    <div>
+                      Product Discount: -{formatPrice(order.productDiscount)}
+                    </div>
                   )}
                   {order.appliedCoupon && (
-                    <div>Coupon Discount: -{formatPrice(order.appliedCoupon.couponDiscount)}</div>
+                    <div>
+                      Coupon Discount: -
+                      {formatPrice(order.appliedCoupon.couponDiscount)}
+                    </div>
                   )}
-                  <div className="font-medium">Final Amount: {formatPrice(order.finalAmount)}</div>
+                  <div className="font-medium">
+                    Final Amount: {formatPrice(order.finalAmount)}
+                  </div>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -261,6 +280,16 @@ export default function UserOrderDashboard() {
                       Mark as Delivered
                     </DropdownMenuItem>
                   )}
+                  {order.status === "return_requested" && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => handleAcceptReturn(order._id)}
+                        className="text-green-500"
+                      >
+                        Accept Return
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </>
               )}
             </DropdownMenuContent>
@@ -302,6 +331,7 @@ export default function UserOrderDashboard() {
               <SelectItem value="shipped">Shipped</SelectItem>
               <SelectItem value="delivered">Delivered</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="return_requested">Return Request</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sort} onValueChange={setSort}>

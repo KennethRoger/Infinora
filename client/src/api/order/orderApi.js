@@ -30,7 +30,7 @@ export const getUserOrders = async () => {
 export const cancelOrder = async (orderId) => {
   try {
     const response = await axios.patch(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/admin/${orderId}/cancel`,
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/${orderId}/cancel`,
       {},
       { withCredentials: true }
     );
@@ -66,3 +66,44 @@ export const confirmDelivered = async (orderId) => {
   }
 };
 
+export const returnOrder = async (orderId) => {
+  try {
+    const response = await axios.patch(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/${orderId}/return`,
+      {},
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to return order:", error);
+    throw error.response?.data || error;
+  }
+};
+
+export const cancelReturnRequest = async (orderId) => {
+  try {
+    const response = await axios.patch(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/${orderId}/cancel-return`,
+      {},
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to cancel return request:", error);
+    throw error.response?.data || error;
+  }
+};
+
+export const acceptReturnOrder = async (orderId) => {
+  try {
+    const response = await axios.patch(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/vendor/${orderId}/accept-return`,
+      {},
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to accept return order:", error);
+    throw error.response?.data || error;
+  }
+};

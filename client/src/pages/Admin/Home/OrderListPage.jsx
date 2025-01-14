@@ -2,23 +2,30 @@ import SearchBarAdmin from "@/components/Form/SearchBarAdmin";
 import TableCreator from "@/components/Table/TableCreator";
 import { orderTableHead } from "@/constants/admin/orders/orderList";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { fetchAllOrders } from "@/redux/features/allOrdersSlice";
 import { toast } from "react-hot-toast";
 import { adminCancelOrder, confirmDelivered } from "@/api/order/orderApi";
+import Modal from "@/components/Modal/Modal";
 
 export default function OrderListPage() {
   const dispatch = useDispatch();
   const { orders, loading, error } = useSelector((state) => state.allOrders);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDeliveredModal, setShowDeliveredModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAllOrders());
+    console.log(orders);
   }, [dispatch]);
 
   const handleCancelOrder = async (orderId) => {
     try {
       await adminCancelOrder(orderId);
       toast.success("Order cancelled successfully");
+      setShowCancelModal(false);
+      setSelectedOrder(null);
     } catch (error) {
       toast.error(error.message || "Failed to cancel order");
     } finally {
@@ -30,6 +37,8 @@ export default function OrderListPage() {
     try {
       await confirmDelivered(orderId);
       toast.success("Order marked as completed");
+      setShowDeliveredModal(false);
+      setSelectedOrder(null);
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to complete order");
@@ -39,40 +48,40 @@ export default function OrderListPage() {
   };
 
   const tableActions = (order) => {
+    console.log(order);
     return (
       <div className="flex justify-center gap-2">
         <>
-        {order?.status === "delivered" && ["pending", "verified"].includes(order.paymentStatus) && (
+          {order?.status === "delivered" && (
             <button
-              onClick={() => handleCompleteOrder(order._id)}
+              onClick={() => {
+                setSelectedOrder(order);
+                setShowDeliveredModal(true);
+              }}
               className={`px-3 py-1 text-sm font-medium text-white rounded hover:opacity-90 ${
-                order?.paymentStatus === "verified" 
-                ? "bg-blue-600 hover:bg-blue-700" 
-                : "bg-green-600 hover:bg-green-700"
+                order?.paymentStatus === "completed"
+                  ? "bg-blue-600 hover:bg-blue-700 pointer-events-none"
+                  : "bg-green-600 hover:bg-green-700"
               }`}
-              disabled={order?.paymentStatus === "verified"}
+              disabled={order?.paymentStatus === "confirmed"}
             >
-              {order?.paymentStatus === "verified" ? "Order Confirmed" : "Confirm Delivered"}
+              {order?.paymentStatus === "completed"
+                ? "Order Confirmed"
+                : "Confirm Delivered"}
             </button>
           )}
-          {order?.status !== "delivered" && order?.status !== "cancelled" && (
+          {!["delivered", "cancelled"].includes(order?.status) && (
             <button
-              onClick={() => handleCancelOrder(order._id)}
+              onClick={() => {
+                setSelectedOrder(order);
+                setShowCancelModal(true);
+              }}
               className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700"
             >
               Cancel Order
             </button>
           )}
         </>
-        {order?.status && (
-          <span
-            className={`px-2 py-1 text-sm rounded ${getStatusColor(
-              order.status
-            )}`}
-          >
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-          </span>
-        )}
       </div>
     );
   };
@@ -107,11 +116,61 @@ export default function OrderListPage() {
         tableHead={orderTableHead}
         tableBody={orders.map((order) => ({
           ...order,
+          "user.email": order?.user?.email,
           "product.name": order.product?.name || "N/A",
           "user.name": order.user?.name || "N/A",
         }))}
         actionsRenderer={tableActions}
       />
+      <Modal isOpen={showCancelModal}>
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-4">Cancel Order</h3>
+          <p className="mb-6">Are you sure you want to cancel this order?</p>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => handleCancelOrder(selectedOrder?._id)}
+              className="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700"
+            >
+              Yes, Cancel
+            </button>
+            <button
+              onClick={() => {
+                setShowCancelModal(false);
+                setSelectedOrder(null);
+              }}
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+            >
+              No, Keep Order
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={showDeliveredModal}>
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-4">Confirm Delivery</h3>
+          <p className="mb-6">
+            Are you sure you want to mark this order as delivered?
+          </p>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => handleCompleteOrder(selectedOrder?._id)}
+              className="px-4 py-2 text-white bg-green-600 rounded hover:bg-green-700"
+            >
+              Yes, Confirm
+            </button>
+            <button
+              onClick={() => {
+                setShowDeliveredModal(false);
+                setSelectedOrder(null);
+              }}
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+            >
+              No, Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

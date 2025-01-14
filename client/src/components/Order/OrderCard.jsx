@@ -9,10 +9,12 @@ import {
   ChevronUp,
   AlertCircle,
   CreditCard,
+  X,
+  RotateCcw,
 } from "lucide-react";
 import { useState } from "react";
 import Modal from "@/components/Modal/Modal";
-import { cancelOrder } from "@/api/order/orderApi";
+import { cancelOrder, returnOrder, cancelReturnRequest } from "@/api/order/orderApi";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { fetchUserOrders } from "@/redux/features/userOrderSlice";
@@ -23,12 +25,17 @@ const orderStatusColors = {
   shipped: "bg-purple-50 text-purple-700 border-purple-200",
   delivered: "bg-green-50 text-green-700 border-green-200",
   cancelled: "bg-red-50 text-red-700 border-red-200",
+  return_requested: "bg-yellow-50 text-yellow-700 border-yellow-200",
 };
 
-export default function OrderCard({ order, showPaymentStatus = false, showDeliveryStatus = false }) {
+export default function OrderCard({ order, showDeliveryStatus = false }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [showCancelReturnModal, setShowCancelReturnModal] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [returning, setReturning] = useState(false);
+  const [cancellingReturn, setCancellingReturn] = useState(false);
   const dispatch = useDispatch();
 
   const handleCancel = async () => {
@@ -45,6 +52,34 @@ export default function OrderCard({ order, showPaymentStatus = false, showDelive
     }
   };
 
+  const handleReturnOrder = async () => {
+    setReturning(true);
+    try {
+      await returnOrder(order._id);
+      toast.success("Return request submitted successfully");
+      setShowReturnModal(false);
+      dispatch(fetchUserOrders());
+    } catch (error) {
+      toast.error(error.message || "Failed to submit return request");
+    } finally {
+      setReturning(false);
+    }
+  };
+
+  const handleCancelReturnRequest = async () => {
+    setCancellingReturn(true);
+    try {
+      await cancelReturnRequest(order._id);
+      toast.success("Return request cancelled successfully");
+      setShowCancelReturnModal(false);
+      dispatch(fetchUserOrders());
+    } catch (error) {
+      toast.error(error.message || "Failed to cancel return request");
+    } finally {
+      setCancellingReturn(false);
+    }
+  };
+
   return (
     <div className="border rounded-lg p-4 bg-white shadow-sm">
       <div className="flex justify-between items-start mb-4">
@@ -58,18 +93,6 @@ export default function OrderCard({ order, showPaymentStatus = false, showDelive
             >
               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
             </span>
-            {/* {showPaymentStatus && (
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  paymentStatusColors[order.paymentStatus]
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  <CreditCard className="h-3 w-3" />
-                  {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
-                </div>
-              </span>
-            )} */}
           </div>
           <p className="text-sm text-gray-500">
             Ordered on {formatDate(order.createdAt)}
@@ -168,24 +191,40 @@ export default function OrderCard({ order, showPaymentStatus = false, showDelive
             </div>
           )}
 
-          {order.status !== "cancelled" && order.status !== "delivered" && (
+          {order.status !== "cancelled" && (
             <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setShowCancelModal(true)}
-                className="text-red-600 hover:text-red-700 text-sm font-medium"
-              >
-                Cancel Order
-              </button>
+              {order.status === "delivered" ? (
+                <button
+                  onClick={() => setShowReturnModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Return Order
+                </button>
+              ) : order.status === "return_requested" ? (
+                <button
+                  onClick={() => setShowCancelReturnModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                >
+                  <X className="h-4 w-4" />
+                  Cancel Return Request
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                >
+                  <X className="h-4 w-4" />
+                  Cancel Order
+                </button>
+              )}
             </div>
           )}
         </div>
       )}
 
-      <Modal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        title="Cancel Order"
-      >
+      {/* Cancel Order Modal */}
+      <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancel Order">
         <div className="p-4">
           <div className="flex items-center gap-2 mb-4 text-amber-600">
             <AlertCircle className="h-5 w-5" />
@@ -205,6 +244,58 @@ export default function OrderCard({ order, showPaymentStatus = false, showDelive
               disabled={cancelling}
             >
               {cancelling ? "Cancelling..." : "Yes, Cancel Order"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Return Order Modal */}
+      <Modal isOpen={showReturnModal} onClose={() => setShowReturnModal(false)} title="Return Order">
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4 text-amber-600">
+            <AlertCircle className="h-5 w-5" />
+            <p>Would you like to initiate a return for this order?</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowReturnModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+              disabled={returning}
+            >
+              No, Keep Order
+            </button>
+            <button
+              onClick={handleReturnOrder}
+              className="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+              disabled={returning}
+            >
+              {returning ? "Processing..." : "Yes, Return Order"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Cancel Return Request Modal */}
+      <Modal isOpen={showCancelReturnModal} onClose={() => setShowCancelReturnModal(false)} title="Cancel Return Request">
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4 text-amber-600">
+            <AlertCircle className="h-5 w-5" />
+            <p>Are you sure you want to cancel your return request?</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowCancelReturnModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+              disabled={cancellingReturn}
+            >
+              No, Keep Request
+            </button>
+            <button
+              onClick={handleCancelReturnRequest}
+              className="px-4 py-2 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-md disabled:opacity-50"
+              disabled={cancellingReturn}
+            >
+              {cancellingReturn ? "Cancelling..." : "Yes, Cancel Request"}
             </button>
           </div>
         </div>

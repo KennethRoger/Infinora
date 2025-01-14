@@ -337,10 +337,6 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    if (status === "shipped") {
-      console.log(`Updating order ${id} to shipped status`);
-    }
-
     order.status = status;
     const updatedOrder = await order.save();
 
@@ -671,29 +667,10 @@ const confirmDelivered = async (req, res) => {
     order.paymentStatus = "completed";
     await order.save();
 
-    const wallet = await Wallet.findOneAndUpdate(
-      { userId: order.vendor._id },
-      {
-        userId: order.vendor._id,
-        $inc: { balance: order.finalAmount },
-      },
-      { upsert: true, new: true }
-    );
-
-    await createWalletTransaction({
-      userId: order.vendor._id,
-      amount: order.finalAmount,
-      type: "credit",
-      description: `Payment received for order ${order.orderId}`,
-      reference: order.orderId,
-      orderId: order._id,
-      paymentMethod: order.paymentMethod
-    });
-
     res.status(200).json({
       success: true,
       message: "Order delivered and payment completed",
-      data: { order, wallet },
+      data: { order },
     });
   } catch (error) {
     console.error("Error in confirmDelivered:", error);
@@ -705,14 +682,222 @@ const confirmDelivered = async (req, res) => {
   }
 };
 
+const returnOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (order.user.toString() !== decoded.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to return this order",
+      });
+    }
+
+    if (order.status !== "delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Order must be delivered before it can be returned",
+      });
+    }
+
+    order.status = "return_requested";
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Return request submitted successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Error in returnOrder:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process return request",
+    });
+  }
+};
+
+const cancelReturnRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (order.user.toString() !== decoded.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to cancel return request for this order",
+      });
+    }
+
+    if (order.status !== "return_requested") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is not in return requested state",
+      });
+    }
+
+    order.status = "delivered";
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Return request cancelled successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Error in cancelReturnRequest:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel return request",
+      error: error.message,
+    });
+  }
+};
+
+const acceptReturnOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    if (decoded.role !== "vendor") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to accept returns",
+      });
+    }
+
+    const order = await Order.findById(id).populate("user");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const product = await Product.findById(order.product);
+    if (!product || product.vendor.toString() !== decoded.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to accept returns for this product",
+      });
+    }
+
+    if (order.status !== "return_requested") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is not in return requested state",
+      });
+    }
+
+    try {
+      // 1. Update product stock
+      if (product.variants?.length > 0 && order.variants) {
+        const updatedCombinations = product.variantCombinations.map((combo) => {
+          if (
+            Object.entries(combo.variants).every(
+              ([key, value]) => order.variants[key] === value
+            )
+          ) {
+            return {
+              ...combo,
+              stock: combo.stock + order.quantity,
+            };
+          }
+          return combo;
+        });
+        product.variantCombinations = updatedCombinations;
+      } else {
+        product.stock += order.quantity;
+      }
+      await product.save();
+
+      const refundAmount = order.finalAmount;
+      await createWalletTransaction({
+        userId: order.user._id,
+        amount: refundAmount,
+        type: "credit",
+        description: `Refund for order ${order.orderId}`,
+        reference: "order_return",
+        paymentMethod: "refund",
+        orderId: order._id,
+      });
+
+      order.status = "returned";
+      await order.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Return accepted and refund processed",
+        order,
+      });
+    } catch (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error in acceptReturnOrder:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process return",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
   getOrderById,
   updateOrderStatus,
   cancelOrder,
+  returnOrder,
+  cancelReturnRequest,
   getVendorOrders,
   getAllOrders,
   adminCancelOrder,
   confirmDelivered,
+  acceptReturnOrder,
 };
