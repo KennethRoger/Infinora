@@ -3,14 +3,19 @@ import { Box, Card, Typography, Button, Container } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { addMoneyToWallet, verifyWalletPayment } from "@/api/wallet/walletApi";
+import Modal from "@/components/Modal/Modal";
 
 const WalletPage = () => {
   const [walletBalance, setWalletBalance] = useState(0);
+  const [amount, setAmount] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
 
   useEffect(() => {
     fetchWalletBalance();
   }, []);
-  
+
   const fetchWalletBalance = async () => {
     try {
       const response = await axios.get(
@@ -25,6 +30,65 @@ const WalletPage = () => {
       toast.error(
         error.response?.data?.message || "Failed to fetch wallet balance"
       );
+    }
+  };
+
+  const handleAddMoney = async () => {
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await addMoneyToWallet(Number(amount));
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: amount * 100,
+        currency: "INR",
+        name: "Infinora",
+        description: "Add money to wallet",
+        order_id: response.order.id,
+        handler: async function (response) {
+          try {
+            const verificationData = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: amount,
+            };
+
+            const verificationResponse = await verifyWalletPayment(
+              verificationData
+            );
+            if (verificationResponse.success) {
+              toast.success("Money added to wallet successfully!");
+              setAmount("");
+              fetchWalletBalance();
+              setShowAddMoneyModal(false);
+            } else {
+              throw new Error("Payment verification failed");
+            }
+          } catch (error) {
+            toast.error(error.message || "Failed to verify payment");
+          }
+        },
+        prefill: {
+          name: "",
+          email: "",
+        },
+        theme: {
+          color: "#4338ca",
+        },
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
+    } catch (error) {
+      toast.error(error.message || "Failed to process payment");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -129,6 +193,7 @@ const WalletPage = () => {
         <Button
           variant="contained"
           size="large"
+          onClick={() => setShowAddMoneyModal(true)}
           sx={{
             px: 6,
             py: 1.5,
@@ -150,6 +215,43 @@ const WalletPage = () => {
           Add Money
         </Button>
       </Box>
+
+      <Modal isOpen={showAddMoneyModal}>
+        <h2 className="text-2xl font-semibold mb-4">Add Money to Wallet</h2>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="amount"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Enter Amount
+            </label>
+            <input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowAddMoneyModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddMoney}
+              disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md disabled:opacity-50"
+            >
+              {loading ? "Processing..." : "Proceed to Pay"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </Container>
   );
 };

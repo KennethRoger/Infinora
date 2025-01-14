@@ -9,7 +9,7 @@ import { fetchUserCart } from "@/redux/features/userCartSlice";
 import { clearCart } from "@/redux/features/userCartSlice";
 import { clearCheckout } from "@/redux/features/userOrderSlice";
 import { getAppliedCoupons } from "@/utils/couponStorage";
-import Spinner from "@/components/Spinner/Spinner";
+import PageSpinner from "@/components/Spinner/PageSpinner";
 import { createOrder } from "@/api/order/orderApi";
 import { createRazorpayOrder, verifyPayment } from "@/api/payment/paymentApi";
 import toast from "react-hot-toast";
@@ -28,10 +28,11 @@ export default function ReviewPage() {
     const quantity = item.quantity;
 
     if (item.variants && item.productId.variantCombinations?.length > 0) {
-      const matchingCombination = item.productId.variantCombinations.find(combo => 
-        Object.entries(combo.variants).every(
-          ([key, value]) => item.variants[key] === value
-        )
+      const matchingCombination = item.productId.variantCombinations.find(
+        (combo) =>
+          Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
+          )
       );
       if (matchingCombination) {
         basePrice += matchingCombination.priceAdjustment || 0;
@@ -50,7 +51,7 @@ export default function ReviewPage() {
       basePrice: basePrice * quantity,
       discount: (basePrice * discount * quantity) / 100,
       couponDiscount,
-      finalPrice: (discountedPrice * quantity) - couponDiscount,
+      finalPrice: discountedPrice * quantity - couponDiscount,
     };
   };
 
@@ -125,19 +126,21 @@ export default function ReviewPage() {
         return;
       }
 
-      const appliedCoupons = cart.items.map((item) => {
-        const coupon = getAppliedCoupons().find(
-          (c) => c.productId === item.productId._id
-        );
-        return coupon
-          ? {
-              productId: item.productId._id,
-              couponCode: coupon.couponCode,
-              couponDiscount: coupon.couponDiscount,
-              variants: coupon.variants,
-            }
-          : null;
-      }).filter(Boolean);
+      const appliedCoupons = cart.items
+        .map((item) => {
+          const coupon = getAppliedCoupons().find(
+            (c) => c.productId === item.productId._id
+          );
+          return coupon
+            ? {
+                productId: item.productId._id,
+                couponCode: coupon.couponCode,
+                couponDiscount: coupon.couponDiscount,
+                variants: coupon.variants,
+              }
+            : null;
+        })
+        .filter(Boolean);
 
       const orderData = {
         addressId: selectedAddressId,
@@ -178,7 +181,9 @@ export default function ReviewPage() {
                 orderId: orderResponse.orders[0]._id,
               };
 
-              const verificationResponse = await verifyPayment(verificationData);
+              const verificationResponse = await verifyPayment(
+                verificationData
+              );
               if (verificationResponse.success) {
                 handleOrderSuccess();
               } else {
@@ -195,6 +200,12 @@ export default function ReviewPage() {
           },
           theme: {
             color: "#2563eb",
+          },
+          modal: {
+            ondismiss: function () {
+              setOrderProcessing(false);
+              toast.error("Payment cancelled");
+            },
           },
         };
 
@@ -232,8 +243,6 @@ export default function ReviewPage() {
     navigate("/home/profile/orders", { replace: true });
   };
 
-  if (orderProcessing) return <Spinner />;
-
   if (!cart?.items?.length) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-4">
@@ -246,7 +255,8 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
+    <div className="max-w-4xl mx-auto p-4 space-y-6 z-0 relative">
+      {orderProcessing && <PageSpinner />}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-lg font-semibold">
@@ -293,7 +303,10 @@ export default function ReviewPage() {
                     (t) => t.name === typeName
                   );
                   if (typeof variantType?.imageIndex === "number") {
-                    return item.productId.images[variantType.imageIndex] || item.productId.images[0];
+                    return (
+                      item.productId.images[variantType.imageIndex] ||
+                      item.productId.images[0]
+                    );
                   }
                 }
               }
@@ -314,13 +327,17 @@ export default function ReviewPage() {
                   <h3 className="font-medium">{item.productId.name}</h3>
                   <div className="text-sm text-gray-500 space-y-1">
                     {item.variants &&
-                      Object.entries(item.variants).map(([variantName, typeName]) => (
-                        <p key={variantName}>
-                          {variantName}: {typeName}
-                        </p>
-                      ))}
+                      Object.entries(item.variants).map(
+                        ([variantName, typeName]) => (
+                          <p key={variantName}>
+                            {variantName}: {typeName}
+                          </p>
+                        )
+                      )}
                     <p>Quantity: {item.quantity}</p>
-                    <p className="text-xs">Base Price: ₹{basePrice.toFixed(2)}</p>
+                    <p className="text-xs">
+                      Base Price: ₹{basePrice.toFixed(2)}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <p className="text-sm line-through text-gray-500">
