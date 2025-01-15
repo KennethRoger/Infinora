@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import OrderCard from "@/components/Order/OrderCard";
 import { ShoppingBag } from "lucide-react";
 import Spinner from "@/components/Spinner/Spinner";
+import FailedOrdersSection from "./FailedOrdersSection";
 import {
   fetchUserOrders,
   clearOrders,
@@ -85,7 +86,8 @@ export default function OrderPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <FailedOrdersSection />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">My Orders</h1>
         <div className="flex gap-4">

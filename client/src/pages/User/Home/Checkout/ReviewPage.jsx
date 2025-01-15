@@ -12,6 +12,7 @@ import { getAppliedCoupons } from "@/utils/couponStorage";
 import PageSpinner from "@/components/Spinner/PageSpinner";
 import { createOrder } from "@/api/order/orderApi";
 import { createRazorpayOrder, verifyPayment } from "@/api/payment/paymentApi";
+import { createTempOrder } from "@/api/order/tempOrderApi";
 import toast from "react-hot-toast";
 import axios from "axios";
 
@@ -117,6 +118,8 @@ export default function ReviewPage() {
             productId: item.productId._id,
             quantity: item.quantity,
             variants: item.variants || {},
+            price: item.productId.price,
+            discount: item.productId.discount || 0,
           };
         })
         .filter(Boolean);
@@ -160,11 +163,6 @@ export default function ReviewPage() {
           throw new Error("Failed to create Razorpay order");
         }
 
-        const orderResponse = await createOrder(orderData);
-        if (!orderResponse.success) {
-          throw new Error("Failed to create order");
-        }
-
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: total * 100,
@@ -172,27 +170,44 @@ export default function ReviewPage() {
           name: "Infinora",
           description: "Payment for your order",
           order_id: razorpayResponse.order.id,
+          retry: {
+            enabled: false,
+          },
           handler: async function (response) {
             try {
               const verificationData = {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                orderId: orderResponse.orders[0]._id,
               };
 
-              const verificationResponse = await verifyPayment(
-                verificationData
-              );
+              const verificationResponse = await verifyPayment(verificationData);
               if (verificationResponse.success) {
-                handleOrderSuccess();
+
+                const orderResponse = await createOrder({
+                  ...orderData,
+                  paymentDetails: verificationResponse.paymentDetails,
+                });
+                if (orderResponse.success) {
+                  handleOrderSuccess();
+                } else {
+                  throw new Error("Failed to create order");
+                }
               } else {
                 throw new Error("Payment verification failed");
               }
             } catch (error) {
-              toast.error("Payment verification failed");
               setOrderProcessing(false);
+              toast.error("Payment verification failed");
             }
+          },
+          modal: {
+            ondismiss: function () {
+              setOrderProcessing(false);
+              toast.error("Payment cancelled");
+            },
+            escape: true,
+            animation: true 
           },
           prefill: {
             name: selectedAddress?.fullName || "",
@@ -201,15 +216,29 @@ export default function ReviewPage() {
           theme: {
             color: "#2563eb",
           },
-          modal: {
-            ondismiss: function () {
-              setOrderProcessing(false);
-              toast.error("Payment cancelled");
-            },
-          },
+        };
+
+        const handlePaymentFailed = async function(response) {
+          console.log("Payment failed event triggered", response);
+          window.paymentFailed = true;
+          await createTempOrder({
+            razorpayOrderId: razorpayResponse.order.id,
+            items: orderItems,
+            shippingAddress: selectedAddress,
+            totalAmount: total,
+            appliedCoupons,
+            status: "failed",
+          });
+          dispatch(clearCart());
+          setOrderProcessing(false);
+          toast.error("Payment failed. You can retry from your orders page.");
+          razorpayInstance.off('payment.failed', handlePaymentFailed);
+          navigate('/home/profile/orders')
         };
 
         const razorpayInstance = new window.Razorpay(options);
+        razorpayInstance.off('payment.failed');
+        razorpayInstance.on('payment.failed', handlePaymentFailed);
         razorpayInstance.open();
       }
     } catch (error) {
