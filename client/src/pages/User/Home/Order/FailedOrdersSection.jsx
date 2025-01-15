@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getUserTempOrders } from "@/api/order/tempOrderApi";
+import { getUserTempOrders, deleteTempOrder } from "@/api/order/tempOrderApi";
 import { AlertCircle } from "lucide-react";
 import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
 import { createRazorpayOrder } from "@/api/payment/paymentApi";
@@ -18,7 +18,6 @@ export default function FailedOrdersSection() {
         const response = await getUserTempOrders();
         if (response.success) {
           setFailedOrders(response.data);
-          console.log(response)
         }
       } catch (error) {
         console.error("Error fetching failed orders:", error);
@@ -72,8 +71,10 @@ export default function FailedOrdersSection() {
               });
 
               if (orderResponse.success) {
+                // Delete the temp order
+                await deleteTempOrder(order._id);
                 toast.success("Order placed successfully!");
-                // Remove this order from failed orders list
+                // Remove from UI
                 setFailedOrders(prev => prev.filter(o => o._id !== order._id));
               }
             }
