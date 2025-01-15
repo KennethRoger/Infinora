@@ -26,6 +26,7 @@ const walletRoutes = require("./routes/walletRoutes");
 const favoriteRoutes = require("./routes/favoriteRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const metricRoutes = require("./routes/metricRoutes");
+const tempOrderRoutes = require("./routes/tempOrderRoutes");
 
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -57,6 +58,7 @@ app.use("/api/wallet", walletRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/metrics", metricRoutes);
+app.use("/api/temp-order", tempOrderRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

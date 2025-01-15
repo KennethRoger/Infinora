@@ -58,7 +58,7 @@ const calculateOrderAmount = async (items, appliedCoupons = []) => {
 
 const createOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod, items, appliedCoupons } = req.body;
+    const { addressId, paymentMethod, items, appliedCoupons, paymentDetails } = req.body;
     const token = req.cookies.token;
 
     if (!token) {
@@ -186,10 +186,17 @@ const createOrder = async (req, res) => {
         productDiscount: productDiscount, // Product discount amount
         finalAmount: finalAmount, // Final amount after all discounts
         status: "pending",
+        paymentStatus: paymentMethod === "cod" ? "pending" : "verified",
+        ...(paymentMethod === "online" && paymentDetails && {
+          razorpay: {
+            orderId: paymentDetails.orderId,
+            paymentId: paymentDetails.paymentId,
+            signature: paymentDetails.signature,
+          }
+        })
       });
 
       await product.save();
-
       orders.push(order);
     }
 
@@ -577,6 +584,12 @@ const adminCancelOrder = async (req, res) => {
     }
 
     const product = await Product.findById(order.product);
+    if (!product || product.vendor.toString() !== decoded.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to cancel orders for this product",
+      });
+    }
 
     if (order.variants) {
       const updatedCombinations = product.variantCombinations.map((combo) => {
