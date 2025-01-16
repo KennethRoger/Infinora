@@ -25,17 +25,13 @@ export default function FailedOrdersSection() {
         setLoading(false);
       }
     };
-
     fetchFailedOrders();
   }, []);
 
   const handleRetryPayment = async (order) => {
     try {
       setProcessing(true);
-      // Create new Razorpay order
-      const razorpayResponse = await createRazorpayOrder({
-        amount: order.totalAmount,
-      });
+      const razorpayResponse = await createRazorpayOrder(order.totalAmount);
 
       if (!razorpayResponse.success) {
         throw new Error(razorpayResponse.message);
@@ -61,21 +57,20 @@ export default function FailedOrdersSection() {
 
             const verificationResponse = await verifyPayment(verificationData);
             if (verificationResponse.success) {
-              // Create actual order with payment details
               const orderResponse = await createOrder({
                 items: order.items,
-                shippingAddress: order.shippingAddress,
+                addressId: order.shippingAddress,
                 appliedCoupons: order.appliedCoupons,
                 paymentMethod: "online",
                 paymentDetails: verificationResponse.paymentDetails,
               });
 
               if (orderResponse.success) {
-                // Delete the temp order
                 await deleteTempOrder(order._id);
                 toast.success("Order placed successfully!");
-                // Remove from UI
-                setFailedOrders(prev => prev.filter(o => o._id !== order._id));
+                setFailedOrders((prev) =>
+                  prev.filter((o) => o._id !== order._id)
+                );
               }
             }
           } catch (error) {
@@ -94,7 +89,7 @@ export default function FailedOrdersSection() {
             window.paymentFailed = false;
           },
           escape: true,
-          animation: true
+          animation: true,
         },
         prefill: {
           name: order.shippingAddress?.name || "",
@@ -105,17 +100,17 @@ export default function FailedOrdersSection() {
         },
       };
 
-      const handlePaymentFailed = async function(response) {
+      const handlePaymentFailed = async function (response) {
         console.log("Payment failed event triggered", response);
         window.paymentFailed = true;
         toast.error("Payment failed. Please try again.");
-        razorpayInstance.off('payment.failed', handlePaymentFailed);
+        razorpayInstance.off("payment.failed", handlePaymentFailed);
         setProcessing(false);
       };
 
       const razorpayInstance = new window.Razorpay(options);
-      razorpayInstance.off('payment.failed');
-      razorpayInstance.on('payment.failed', handlePaymentFailed);
+      razorpayInstance.off("payment.failed");
+      razorpayInstance.on("payment.failed", handlePaymentFailed);
       razorpayInstance.open();
     } catch (error) {
       console.error("Error retrying payment:", error);
@@ -133,14 +128,19 @@ export default function FailedOrdersSection() {
         <AlertCircle className="text-red-500" />
         <h2 className="text-lg font-semibold text-red-700">Failed Orders</h2>
       </div>
-      
+
       <div className="space-y-4">
         {failedOrders.map((order) => (
-          <div key={order._id} className="bg-white p-4 rounded-md border border-red-200">
+          <div
+            key={order._id}
+            className="bg-white p-4 rounded-md border border-red-200"
+          >
             <div className="flex justify-between items-start mb-2">
               <div>
                 <p className="font-medium">Order ID: {order.razorpayOrderId}</p>
-                <p className="text-sm text-gray-600">Amount: ₹{order.totalAmount}</p>
+                <p className="text-sm text-gray-600">
+                  Amount: ₹{order.totalAmount}
+                </p>
               </div>
               <ButtonPrimary
                 onClick={() => handleRetryPayment(order)}
@@ -150,7 +150,8 @@ export default function FailedOrdersSection() {
               </ButtonPrimary>
             </div>
             <div className="text-sm text-gray-500">
-              {order.items.length} items • Failed on {new Date(order.createdAt).toLocaleDateString()}
+              {order.items.length} items • Failed on{" "}
+              {new Date(order.createdAt).toLocaleDateString()}
             </div>
           </div>
         ))}

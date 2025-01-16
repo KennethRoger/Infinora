@@ -50,3 +50,15 @@ export const updateTempOrderStatus = async (id, statusData) => {
     throw error.response?.data || error;
   }
 };
+
+export const deleteTempOrder = async (id) => {
+  try {
+    const response = await axios.delete(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/temp-order/${id}`,
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
