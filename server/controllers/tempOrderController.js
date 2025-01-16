@@ -123,8 +123,57 @@ const getUserTempOrders = async (req, res) => {
   }
 };
 
+const deleteTempOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login to delete order",
+      });
+    }
+
+    const decoded = verifyToken(token);
+    const userId = decoded.id;
+
+    const tempOrder = await TempOrder.findById(id);
+
+    if (!tempOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Temporary order not found",
+      });
+    }
+
+    if (tempOrder.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this order",
+      });
+    }
+
+    await TempOrder.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Temporary order deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error in deleteTempOrder:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete temporary order",
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   createTempOrder,
   getTempOrderById,
   getUserTempOrders,
+  deleteTempOrder
 };
