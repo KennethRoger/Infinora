@@ -78,10 +78,15 @@ export default function OrderPage() {
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <ShoppingBag className="h-16 w-16 text-gray-400" />
-        <p className="text-gray-500">No orders found</p>
-      </div>
+      <>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <FailedOrdersSection />
+        </div>
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <ShoppingBag className="h-16 w-16 text-gray-400" />
+          <p className="text-gray-500">No orders found</p>
+        </div>
+      </>
     );
   }
 

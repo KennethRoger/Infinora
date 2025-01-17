@@ -1,5 +1,6 @@
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const TempOrder = require("../models/TempOrder");
 const { verifyToken } = require("../utils/tokenValidator");
 
 const addToCart = async (req, res) => {
@@ -36,9 +37,10 @@ const addToCart = async (req, res) => {
       if (!variants && !item.variants) return true;
       if (!variants || !item.variants) return false;
 
-      const itemVariants = item.variants instanceof Map
-        ? Object.fromEntries(item.variants)
-        : item.variants;
+      const itemVariants =
+        item.variants instanceof Map
+          ? Object.fromEntries(item.variants)
+          : item.variants;
 
       if (Object.keys(variants).length !== Object.keys(itemVariants).length)
         return false;
@@ -113,6 +115,8 @@ const addToCart = async (req, res) => {
 
     await cart.save();
 
+    await TempOrder.deleteMany({ userId: userId });
+
     res.status(200).json({
       success: true,
       message: "Product added to cart successfully",
@@ -143,7 +147,8 @@ const getCart = async (req, res) => {
 
     const cart = await Cart.findOne({ userId }).populate({
       path: "items.productId",
-      select: "name images variants variantCombinations price stock vendor discount",
+      select:
+        "name images variants variantCombinations price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
@@ -198,9 +203,10 @@ const removeFromCart = async (req, res) => {
       if (!variants && !item.variants) return true;
       if (!variants || !item.variants) return false;
 
-      const itemVariants = item.variants instanceof Map
-        ? Object.fromEntries(item.variants)
-        : item.variants;
+      const itemVariants =
+        item.variants instanceof Map
+          ? Object.fromEntries(item.variants)
+          : item.variants;
 
       if (Object.keys(variants).length !== Object.keys(itemVariants).length)
         return false;
@@ -219,16 +225,19 @@ const removeFromCart = async (req, res) => {
 
     cart.items.splice(itemIndex, 1);
     await cart.save();
-
+    
     await cart.populate({
       path: "items.productId",
-      select: "name images variants variantCombinations price stock vendor discount",
+      select:
+      "name images variants variantCombinations price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
       },
     });
 
+    await TempOrder.deleteMany({ userId: userId });
+    
     res.status(200).json({
       success: true,
       message: "Item removed from cart",
@@ -259,7 +268,7 @@ const incrementCartItem = async (req, res) => {
 
     const [cart, product] = await Promise.all([
       Cart.findOne({ userId }),
-      Product.findById(productId)
+      Product.findById(productId),
     ]);
 
     if (!cart) {
@@ -282,9 +291,10 @@ const incrementCartItem = async (req, res) => {
       if (!variants && !item.variants) return true;
       if (!variants || !item.variants) return false;
 
-      const itemVariants = item.variants instanceof Map
-        ? Object.fromEntries(item.variants)
-        : item.variants;
+      const itemVariants =
+        item.variants instanceof Map
+          ? Object.fromEntries(item.variants)
+          : item.variants;
 
       if (Object.keys(variants).length !== Object.keys(itemVariants).length)
         return false;
@@ -310,13 +320,18 @@ const incrementCartItem = async (req, res) => {
 
     if (product.variants?.length > 0) {
       if (variants) {
-        const matchingCombination = product.variantCombinations.find((combo) => {
-          return Object.entries(variants).every(
-            ([key, val]) => combo.variants[key] === val
-          );
-        });
+        const matchingCombination = product.variantCombinations.find(
+          (combo) => {
+            return Object.entries(variants).every(
+              ([key, val]) => combo.variants[key] === val
+            );
+          }
+        );
 
-        if (!matchingCombination || matchingCombination.stock <= cart.items[itemIndex].quantity) {
+        if (
+          !matchingCombination ||
+          matchingCombination.stock <= cart.items[itemIndex].quantity
+        ) {
           return res.status(400).json({
             success: false,
             message: "Selected combination is out of stock",
@@ -335,12 +350,15 @@ const incrementCartItem = async (req, res) => {
 
     await cart.populate({
       path: "items.productId",
-      select: "name images variants variantCombinations price stock vendor discount",
+      select:
+        "name images variants variantCombinations price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
       },
     });
+
+    await TempOrder.deleteMany({ userId: userId });
 
     res.status(200).json({
       success: true,
@@ -384,9 +402,10 @@ const decrementCartItem = async (req, res) => {
       if (!variants && !item.variants) return true;
       if (!variants || !item.variants) return false;
 
-      const itemVariants = item.variants instanceof Map
-        ? Object.fromEntries(item.variants)
-        : item.variants;
+      const itemVariants =
+        item.variants instanceof Map
+          ? Object.fromEntries(item.variants)
+          : item.variants;
 
       if (Object.keys(variants).length !== Object.keys(itemVariants).length)
         return false;
@@ -413,16 +432,22 @@ const decrementCartItem = async (req, res) => {
 
     await cart.populate({
       path: "items.productId",
-      select: "name images variants variantCombinations price stock vendor discount",
+      select:
+        "name images variants variantCombinations price stock vendor discount",
       populate: {
         path: "vendor",
         select: "name profileImagePath",
       },
     });
 
+    await TempOrder.deleteMany({ userId: userId });
+
     res.status(200).json({
       success: true,
-      message: itemIndex < cart.items.length ? "Item quantity decreased" : "Item removed from cart",
+      message:
+        itemIndex < cart.items.length
+          ? "Item quantity decreased"
+          : "Item removed from cart",
       cart,
     });
   } catch (error) {
@@ -435,6 +460,7 @@ const decrementCartItem = async (req, res) => {
 };
 
 const clearCart = async (req, res) => {
+  console.log("reached")
   try {
     const token = req.cookies.token;
 

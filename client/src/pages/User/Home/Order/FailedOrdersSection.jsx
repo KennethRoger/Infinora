@@ -5,6 +5,7 @@ import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
 import { createRazorpayOrder } from "@/api/payment/paymentApi";
 import { createOrder } from "@/api/order/orderApi";
 import { verifyPayment } from "@/api/payment/paymentApi";
+import { clearCart } from "@/api/cart/cartApi";
 import { toast } from "react-hot-toast";
 
 export default function FailedOrdersSection() {
@@ -67,6 +68,7 @@ export default function FailedOrdersSection() {
 
               if (orderResponse.success) {
                 await deleteTempOrder(order._id);
+                await clearCart();
                 toast.success("Order placed successfully!");
                 setFailedOrders((prev) =>
                   prev.filter((o) => o._id !== order._id)

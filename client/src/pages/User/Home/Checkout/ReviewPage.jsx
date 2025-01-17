@@ -6,15 +6,15 @@ import { MapPin, Banknote, ShoppingBag } from "lucide-react";
 import AddedAddress from "@/components/Address/AddedAddress";
 import { fetchUserAddresses } from "@/redux/features/userAddressSlice";
 import { fetchUserCart } from "@/redux/features/userCartSlice";
-import { clearCart } from "@/redux/features/userCartSlice";
 import { clearCheckout } from "@/redux/features/userOrderSlice";
 import { getAppliedCoupons } from "@/utils/couponStorage";
 import PageSpinner from "@/components/Spinner/PageSpinner";
 import { createOrder } from "@/api/order/orderApi";
 import { createRazorpayOrder, verifyPayment } from "@/api/payment/paymentApi";
 import { createTempOrder } from "@/api/order/tempOrderApi";
+import { processWalletPayment } from "@/api/wallet/walletApi";
 import toast from "react-hot-toast";
-import axios from "axios";
+import { clearCart } from "@/api/cart/cartApi";
 
 export default function ReviewPage() {
   const navigate = useNavigate();
@@ -181,9 +181,10 @@ export default function ReviewPage() {
                 razorpay_signature: response.razorpay_signature,
               };
 
-              const verificationResponse = await verifyPayment(verificationData);
+              const verificationResponse = await verifyPayment(
+                verificationData
+              );
               if (verificationResponse.success) {
-
                 const orderResponse = await createOrder({
                   ...orderData,
                   paymentDetails: verificationResponse.paymentDetails,
@@ -207,7 +208,7 @@ export default function ReviewPage() {
               toast.error("Payment cancelled");
             },
             escape: true,
-            animation: true 
+            animation: true,
           },
           prefill: {
             name: selectedAddress?.fullName || "",
@@ -218,8 +219,7 @@ export default function ReviewPage() {
           },
         };
 
-        const handlePaymentFailed = async function(response) {
-          console.log("Payment failed event triggered", response);
+        const handlePaymentFailed = async function (response) {
           window.paymentFailed = true;
           await createTempOrder({
             razorpayOrderId: razorpayResponse.order.id,
@@ -227,19 +227,52 @@ export default function ReviewPage() {
             shippingAddress: selectedAddress,
             totalAmount: total,
             appliedCoupons,
-            status: "failed",
+            status: "faile d",
           });
-          dispatch(clearCart());
+          
           setOrderProcessing(false);
           toast.error("Payment failed. You can retry from your orders page.");
-          razorpayInstance.off('payment.failed', handlePaymentFailed);
-          navigate('/home/profile/orders')
+          razorpayInstance.off("payment.failed", handlePaymentFailed);
+          navigate("/home/profile/orders");
         };
 
         const razorpayInstance = new window.Razorpay(options);
-        razorpayInstance.off('payment.failed');
-        razorpayInstance.on('payment.failed', handlePaymentFailed);
+        razorpayInstance.off("payment.failed");
+        razorpayInstance.on("payment.failed", handlePaymentFailed);
         razorpayInstance.open();
+      } else if (selectedPaymentMethod === "wallet") {
+        try {
+          setOrderProcessing(true);
+          const walletResponse = await processWalletPayment(total);
+
+          if (walletResponse.success) {
+            const orderResponse = await createOrder({
+              items: orderItems,
+              addressId: selectedAddress._id,
+              appliedCoupons,
+              paymentMethod: "wallet",
+              paymentDetails: {
+                method: "wallet",
+                amount: total,
+                status: "completed",
+                transactionId: walletResponse.transactionId,
+              },
+            });
+
+            if (orderResponse.success) {
+              handleOrderSuccess();
+            }
+          }
+        } catch (error) {
+          console.error("Error processing wallet payment:", error);
+          toast.error(
+            error.response?.data?.message || "Insufficient wallet balance"
+          );
+
+          navigate("/home/profile/orders");
+        } finally {
+          setOrderProcessing(false);
+        }
       }
     } catch (error) {
       console.error("Error placing order:", error);
@@ -257,16 +290,9 @@ export default function ReviewPage() {
     localStorage.removeItem("selectedAddress");
     localStorage.removeItem("selectedPayment");
     localStorage.removeItem("appliedCoupons");
-
-    dispatch(clearCart());
+    
     dispatch(clearCheckout());
-
-    await axios.delete(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
-      {
-        withCredentials: true,
-      }
-    );
+    await clearCart();
 
     toast.success("Order placed successfully!");
     navigate("/home/profile/orders", { replace: true });

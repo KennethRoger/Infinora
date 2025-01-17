@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ButtonPrimary from "@/components/Buttons/ButtonPrimary";
-import { BadgeIndianRupee, Banknote } from "lucide-react";
+import { BadgeIndianRupee, Banknote, Wallet } from "lucide-react";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserCart } from "@/redux/features/userCartSlice";
 
 const paymentMethods = [
   {
@@ -16,14 +18,36 @@ const paymentMethods = [
     name: "Online Payment",
     description: "Pay securely online",
     icon: BadgeIndianRupee,
-  }
+  },
+  {
+    id: "wallet",
+    name: "Wallet Payment",
+    description: "Pay with your money in wallet",
+    icon: Wallet,
+  },
 ];
 
 export default function PaymentPage() {
   const navigate = useNavigate();
+  const { cart } = useSelector((state) => state.userCart);
+  const dispatch = useDispatch();
+
   const [selectedPayment, setSelectedPayment] = useState(
     localStorage.getItem("selectedPayment")
   );
+
+  cart.items.reduce((acc, item) => {
+    item.productId.variantCombinatins.find((combo) => {
+      const matchedCombination = Object.keys(combo.variants).every(
+        (key) => item.variants[key] === combo.variants(key)
+      );
+
+      if (matchedCombination) {
+        acc += matchedCombination.priceAdjustment;
+      }
+    });
+    return (acc += item.productId.price);
+  }, 0);
 
   useEffect(() => {
     const selectedAddress = localStorage.getItem("selectedAddress");
@@ -41,6 +65,10 @@ export default function PaymentPage() {
       setSelectedPayment(null);
     }
   }, [navigate, selectedPayment]);
+
+  useEffect(() => {
+    dispatch(fetchUserCart());
+  }, [dispatch, navigate]);
 
   const handleMethodSelect = (methodId) => {
     localStorage.setItem("selectedPayment", methodId);

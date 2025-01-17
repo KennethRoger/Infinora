@@ -245,7 +245,6 @@ const getSalesReport = async (req, res) => {
         if (order.appliedCoupon && order.appliedCoupon.couponDiscount) {
           acc.couponDiscount += order.appliedCoupon.couponDiscount;
         }
-
         return acc;
       },
       {
