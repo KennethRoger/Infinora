@@ -1,60 +1,9 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
-const Wallet = require("../models/Wallet");
-const User = require("../models/User");
-// const Cart = require("../models/Cart");
 const { verifyToken } = require("../utils/tokenValidator");
 const { generateOrderId } = require("../utils/generateOrderId");
 const Address = require("../models/Address");
 const createWalletTransaction = require("../utils/walletUtils");
-
-const calculateOrderAmount = async (items, appliedCoupons = []) => {
-  let totalAmount = 0;
-  let totalDiscount = 0;
-  let totalCouponDiscount = 0;
-
-  for (const item of items) {
-    const product = await Product.findById(item.productId);
-    if (!product) {
-      throw new Error(`Product not found: ${item.productId}`);
-    }
-
-    let basePrice = product.price;
-
-    if (item.variants && product.variantCombinations?.length > 0) {
-      const matchingCombination = product.variantCombinations.find((combo) =>
-        Object.entries(combo.variants).every(
-          ([key, value]) => item.variants[key] === value
-        )
-      );
-      if (matchingCombination) {
-        basePrice += matchingCombination.priceAdjustment || 0;
-      }
-    }
-
-    const itemTotal = basePrice * item.quantity;
-    const productDiscount = (itemTotal * (product.discount || 0)) / 100;
-    totalDiscount += productDiscount;
-
-    const appliedCoupon = appliedCoupons.find(
-      (c) => c.productId === item.productId.toString()
-    );
-    if (appliedCoupon) {
-      totalCouponDiscount += appliedCoupon.couponDiscount;
-    }
-
-    totalAmount += itemTotal;
-  }
-
-  const finalAmount = totalAmount - totalDiscount - totalCouponDiscount;
-
-  return {
-    totalAmount,
-    totalDiscount,
-    totalCouponDiscount,
-    finalAmount,
-  };
-};
 
 const createOrder = async (req, res) => {
   try {

@@ -3,8 +3,14 @@ const { verifyToken } = require("../utils/tokenValidator");
 
 const createTempOrder = async (req, res) => {
   try {
-    const { razorpayOrderId, items, shippingAddress, totalAmount, appliedCoupons } = req.body;
-    
+    const {
+      razorpayOrderId,
+      items,
+      shippingAddress,
+      totalAmount,
+      appliedCoupons,
+    } = req.body;
+
     const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({
@@ -16,6 +22,8 @@ const createTempOrder = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
+    await TempOrder.deleteMany({ userId: userId });
+
     const tempOrder = await TempOrder.create({
       razorpayOrderId,
       items,
@@ -24,7 +32,6 @@ const createTempOrder = async (req, res) => {
       totalAmount,
       appliedCoupons,
     });
-
 
     res.status(201).json({
       success: true,
@@ -44,7 +51,7 @@ const createTempOrder = async (req, res) => {
 const getTempOrderById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({
@@ -100,14 +107,13 @@ const getUserTempOrders = async (req, res) => {
 
     const decoded = verifyToken(token);
     const userId = decoded.id;
-    console.log(userId)
+    console.log(userId);
 
     const tempOrders = await TempOrder.find({
-      userId
+      userId,
     })
       .populate("items.productId")
       .sort({ createdAt: -1 });
-
 
     res.status(200).json({
       success: true,
@@ -126,7 +132,7 @@ const getUserTempOrders = async (req, res) => {
 const deleteTempOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({
@@ -170,10 +176,9 @@ const deleteTempOrder = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createTempOrder,
   getTempOrderById,
   getUserTempOrders,
-  deleteTempOrder
+  deleteTempOrder,
 };

@@ -68,3 +68,17 @@ export const removeFromCart = async (data) => {
     throw error;
   }
 };
+
+export const clearCart = async () => {
+  try {
+    console.log("reached")
+    const response = await axios.delete(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/cart/clear`,
+      { withCredentials: true }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error while removing from cart: ", error);
+    throw error;
+  }
+};
