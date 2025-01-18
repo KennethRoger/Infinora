@@ -1,10 +1,10 @@
 import { useUser } from "@/context/UserContext";
 import imagePlaceholder from "../../assets/images/banner-img.jpg";
 import profilePlaceHolder from "../../assets/images/holding-shoes.jpg";
-import StorePerformance from "./SalesReport/StorePerformance";
 import { useEffect } from "react";
-import FinancialAnalytics from "./SalesReport/FinancialAnalytics";
 import SalesReport from "./SalesReport/SalesReport";
+import ProductPerformance from "./SalesReport/ProductPerformance";
+import SalesAndOrdersChart from "./SalesReport/SalesAndOrdersChart";
 
 export default function CreatorOverview() {
   const { user, refreshUser } = useUser();
@@ -48,10 +48,14 @@ export default function CreatorOverview() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* <StorePerformance /> */}
-        {/* <FinancialAnalytics /> */}
-        <SalesReport />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="space-y-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <ProductPerformance />
+            <SalesAndOrdersChart />
+            <SalesReport />
+          </div>
+        </div>
       </div>
     </div>
   );

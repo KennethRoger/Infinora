@@ -18,6 +18,7 @@ import { cancelOrder, returnOrder, cancelReturnRequest } from "@/api/order/order
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { fetchUserOrders } from "@/redux/features/userOrderSlice";
+import { downloadInvoice } from "@/utils/invoice";
 
 const orderStatusColors = {
   pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -192,33 +193,51 @@ export default function OrderCard({ order, showDeliveryStatus = false }) {
           )}
 
           {order.status !== "cancelled" && (
-            <div className="mt-4 flex justify-end">
-              {order.status === "delivered" ? (
-                <button
-                  onClick={() => setShowReturnModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Return Order
-                </button>
-              ) : order.status === "return_requested" ? (
-                <button
-                  onClick={() => setShowCancelReturnModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <X className="h-4 w-4" />
-                  Cancel Return Request
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowCancelModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200"
-                >
-                  <X className="h-4 w-4" />
-                  Cancel Order
-                </button>
-              )}
-            </div>
+          <div className="mt-4 flex gap-5 justify-end">
+            <button
+              onClick={() => downloadInvoice(order)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Download Invoice
+            </button>
+            {order.status === "delivered" ? (
+              <button
+                onClick={() => setShowReturnModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Return Order
+              </button>
+            ) : order.status === "return_requested" ? (
+              <button
+                onClick={() => setShowCancelReturnModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              >
+                <X className="h-4 w-4" />
+                Cancel Return Request
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200"
+              >
+                <X className="h-4 w-4" />
+                Cancel Order
+              </button>
+            )}
+          </div>
           )}
         </div>
       )}

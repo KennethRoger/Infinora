@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
+const mongoose = require('mongoose'); // mongoose import added
 const {
   startOfDay,
   endOfDay,
@@ -11,176 +12,6 @@ const {
   endOfYear,
 } = require("date-fns");
 const { verifyToken } = require("../utils/tokenValidator");
-
-const getStorePerformance = async (req, res) => {
-  try {
-    const { timeRange = "7d" } = req.query;
-    const token = req.cookies.token;
-    if (!token) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized access" });
-    }
-    const decoded = verifyToken(token);
-    const vendorId = decoded.id;
-
-    const endDate = endOfDay(new Date());
-    let startDate;
-    switch (timeRange) {
-      case "30d":
-        startDate = startOfDay(subDays(endDate, 30));
-        break;
-      case "90d":
-        startDate = startOfDay(subDays(endDate, 90));
-        break;
-      case "1y":
-        startDate = startOfDay(subDays(endDate, 365));
-        break;
-      default:
-        startDate = startOfDay(subDays(endDate, 7));
-    }
-
-    const orders = await Order.find({
-      vendor: vendorId,
-      createdAt: { $gte: startDate, $lte: endDate },
-      status: { $ne: "cancelled" },
-    }).populate("product");
-
-    const revenueByDay = {};
-    orders.forEach((order) => {
-      const date = order.createdAt.toISOString().split("T")[0];
-      revenueByDay[date] = (revenueByDay[date] || 0) + order.finalAmount;
-    });
-
-    const revenue = Object.entries(revenueByDay).map(([date, amount]) => ({
-      date,
-      amount,
-    }));
-
-    const orderCount = orders.length;
-    const totalRevenue = orders.reduce(
-      (sum, order) => sum + order.finalAmount,
-      0
-    );
-    const avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0;
-
-    const productSales = {};
-    orders.forEach((order) => {
-      const productId = order.product._id.toString();
-      if (!productSales[productId]) {
-        productSales[productId] = {
-          id: productId,
-          name: order.product.name,
-          image: order.product.images[0],
-          soldCount: 0,
-          revenue: 0,
-        };
-      }
-      productSales[productId].soldCount += order.quantity;
-      productSales[productId].revenue += order.finalAmount;
-    });
-
-    const bestSellers = Object.values(productSales)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
-
-    res.json({
-      revenue,
-      orderCount,
-      avgOrderValue,
-      bestSellers,
-      totalRevenue,
-    });
-  } catch (error) {
-    console.error("Error fetching store metrics:", error);
-    res.status(500).json({ message: "Failed to fetch store metrics" });
-  }
-};
-
-const getFinancialAnalytics = async (req, res) => {
-  try {
-    const { timeRange = "7d" } = req.query;
-    const token = req.cookies.token;
-    if (!token) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-
-    const vendorId = decoded.userId;
-
-    const endDate = endOfDay(new Date());
-    let startDate;
-    switch (timeRange) {
-      case "30d":
-        startDate = startOfDay(subDays(endDate, 30));
-        break;
-      case "90d":
-        startDate = startOfDay(subDays(endDate, 90));
-        break;
-      case "1y":
-        startDate = startOfDay(subDays(endDate, 365));
-        break;
-      default:
-        startDate = startOfDay(subDays(endDate, 7));
-    }
-
-    const orders = await Order.find({
-      vendor: vendorId,
-      createdAt: { $gte: startDate, $lte: endDate },
-    });
-
-    const totalRevenue = orders.reduce((sum, order) => {
-      if (order.status !== "cancelled") {
-        return sum + order.finalAmount;
-      }
-      return sum;
-    }, 0);
-
-    const commission = totalRevenue * 0.1;
-    const revenueAfterCommission = totalRevenue - commission;
-
-    const paymentMethods = orders.reduce((acc, order) => {
-      if (order.status === "cancelled") return acc;
-
-      const method = order.paymentMethod;
-      const existingMethod = acc.find((m) => m.name === method);
-
-      if (existingMethod) {
-        existingMethod.value += 1;
-      } else {
-        acc.push({ name: method, value: 1 });
-      }
-
-      return acc;
-    }, []);
-
-    const refundedOrders = orders.filter(
-      (order) => order.status === "cancelled"
-    );
-    const refundStats = {
-      totalRefunds: refundedOrders.length,
-      refundRate: orders.length > 0 ? refundedOrders.length / orders.length : 0,
-      refundAmount: refundedOrders.reduce(
-        (sum, order) => sum + order.finalAmount,
-        0
-      ),
-    };
-
-    res.json({
-      totalRevenue,
-      revenueAfterCommission,
-      paymentMethods,
-      refundStats,
-    });
-  } catch (error) {
-    console.error("Error in getFinancialAnalytics:", error);
-    res.status(500).json({ message: "Failed to fetch financial analytics" });
-  }
-};
 
 const getSalesReport = async (req, res) => {
   try {
@@ -406,9 +237,280 @@ const getAdminSalesReport = async (req, res) => {
   }
 };
 
+const calculateDateRange = (timeRange, startDate, endDate) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  switch (timeRange) {
+    case 'today':
+      return {
+        startDate: startOfDay(today),
+        endDate: endOfDay(today)
+      };
+    case '7d':
+      return {
+        startDate: startOfDay(subDays(today, 7)),
+        endDate: endOfDay(today)
+      };
+    case '30d':
+      return {
+        startDate: startOfDay(subDays(today, 30)),
+        endDate: endOfDay(today)
+      };
+    case '1y':
+      return {
+        startDate: startOfDay(subDays(today, 365)),
+        endDate: endOfDay(today)
+      };
+    case 'custom':
+      if (!startDate || !endDate) {
+        return {
+          startDate: startOfDay(subDays(today, 7)),
+          endDate: endOfDay(today)
+        };
+      }
+      return {
+        startDate: startOfDay(new Date(startDate)),
+        endDate: endOfDay(new Date(endDate))
+      };
+    default:
+      return {
+        startDate: startOfDay(subDays(today, 7)),
+        endDate: endOfDay(today)
+      };
+  }
+};
+
+const getProductPerformance = async (req, res) => {
+  try {
+    const { timeRange } = req.query;
+    const token = req.cookies.token;
+    const decoded = verifyToken(token);
+    const vendorId = decoded.id;
+
+    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+    const vendorObjectId = new mongoose.Types.ObjectId(vendorId);
+
+    const productPerformance = await Order.aggregate([
+      {
+        $match: {
+          vendor: vendorObjectId,
+          status: { $ne: "cancelled" },
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
+        }
+      },
+      {
+        $group: {
+          _id: "$product",
+          totalRevenue: { $sum: "$finalAmount" },
+          totalQuantity: { $sum: "$quantity" },
+          ordersCount: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      {
+        $unwind: "$productDetails"
+      },
+      {
+        $project: {
+          name: "$productDetails.name",
+          image: { $arrayElemAt: ["$productDetails.images", 0] },
+          totalRevenue: 1,
+          totalQuantity: 1,
+          ordersCount: 1,
+          averageOrderValue: { $divide: ["$totalRevenue", "$ordersCount"] }
+        }
+      },
+      {
+        $sort: { totalRevenue: -1 }
+      },
+      {
+        $limit: 5
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: productPerformance
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getSalesAndOrdersMetrics = async (req, res) => {
+  try {
+    const { timeRange } = req.query;
+    const token = req.cookies.token;
+    const decoded = verifyToken(token);
+    const vendorId = decoded.id;
+
+    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+    const vendorObjectId = new mongoose.Types.ObjectId(vendorId);
+
+    const metrics = await Order.aggregate([
+      {
+        $match: {
+          vendor: vendorObjectId,
+          status: { $ne: "cancelled" },
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt"
+            }
+          },
+          totalSales: { $sum: "$finalAmount" },
+          orderCount: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      },
+      {
+        $project: {
+          date: "$_id",
+          totalSales: 1,
+          orderCount: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: metrics
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getAdminRevenueMetrics = async (req, res) => {
+  try {
+    const { timeRange } = req.query;
+    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+
+    const metrics = await Order.aggregate([
+      {
+        $match: {
+          status: { $ne: "cancelled" },
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt"
+            }
+          },
+          totalRevenue: { $sum: "$finalAmount" },
+          platformFees: { $sum: { $multiply: ["$finalAmount", 0.1] } }, // Assuming 10% platform fee
+          vendorEarnings: { $sum: { $multiply: ["$finalAmount", 0.9] } } // 90% goes to vendor
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      },
+      {
+        $project: {
+          date: "$_id",
+          totalRevenue: 1,
+          platformFees: 1,
+          vendorEarnings: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: metrics
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getUserActivityMetrics = async (req, res) => {
+  try {
+    const { timeRange } = req.query;
+    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+
+    // Get user activity metrics
+    const userMetrics = await User.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
+        }
+      },
+      {
+        $group: {
+          _id: "$role",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          role: "$_id",
+          count: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    // Get order statistics
+    const orderMetrics = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
+        }
+      },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          status: "$_id",
+          count: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        users: userMetrics,
+        orders: orderMetrics
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
-  getStorePerformance,
-  getFinancialAnalytics,
   getSalesReport,
   getAdminSalesReport,
+  getProductPerformance,
+  getSalesAndOrdersMetrics,
+  getAdminRevenueMetrics,
+  getUserActivityMetrics
 };

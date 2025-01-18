@@ -5,6 +5,7 @@ import { BadgeIndianRupee, Banknote, Wallet } from "lucide-react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserCart } from "@/redux/features/userCartSlice";
+import { getAppliedCoupons } from "@/utils/couponStorage";
 
 const paymentMethods = [
   {
@@ -36,18 +37,49 @@ export default function PaymentPage() {
     localStorage.getItem("selectedPayment")
   );
 
-  cart.items.reduce((acc, item) => {
-    item.productId.variantCombinatins.find((combo) => {
-      const matchedCombination = Object.keys(combo.variants).every(
-        (key) => item.variants[key] === combo.variants(key)
-      );
+  let subtotal = 0;
+  let discount = 0;
+  let couponDiscount = 0;
 
-      if (matchedCombination) {
-        acc += matchedCombination.priceAdjustment;
+  cart?.items?.forEach((item) => {
+    if (!item?.productId) return;
+
+    let basePrice = item.productId.price || 0;
+
+    if (item.variants && item.productId.variantCombinations?.length > 0) {
+      const matchingCombination = item.productId.variantCombinations.find(
+        (combo) =>
+          Object.entries(combo.variants).every(
+            ([key, value]) => item.variants[key] === value
+          )
+      );
+      if (matchingCombination) {
+        basePrice += matchingCombination.priceAdjustment || 0;
       }
-    });
-    return (acc += item.productId.price);
-  }, 0);
+    }
+
+    const quantity = item.quantity;
+    const itemDiscount = (basePrice * (item.productId?.discount || 0)) / 100;
+
+    subtotal += basePrice * quantity;
+    discount += itemDiscount * quantity;
+
+    const appliedCoupon = getAppliedCoupons().find(
+      (coupon) => coupon.productId === item.productId._id
+    );
+    if (appliedCoupon) {
+      couponDiscount += appliedCoupon.couponDiscount;
+    }
+  });
+
+  const total = subtotal - discount - couponDiscount;
+
+  const availablePaymentMethods = paymentMethods.filter((method) => {
+    if (method.id === "cod" && total >= 10000) {
+      return false;
+    }
+    return true;
+  });
 
   useEffect(() => {
     const selectedAddress = localStorage.getItem("selectedAddress");
@@ -89,7 +121,7 @@ export default function PaymentPage() {
         <h2 className="text-xl font-semibold mb-6">Select Payment Method</h2>
 
         <div className="space-y-4">
-          {paymentMethods.map((method) => (
+          {availablePaymentMethods.map((method) => (
             <div
               key={method.id}
               className={`relative border rounded-lg p-4 cursor-pointer transition-all ${

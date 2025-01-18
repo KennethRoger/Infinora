@@ -60,7 +60,7 @@ export default function SalesReport() {
           reportType,
         });
         setSalesData(data);
-        console.log(salesData)
+        console.log(salesData);
       } catch (error) {
         console.error("Failed to fetch sales report:", error);
         toast.error(error.message || "Failed to fetch sales report");
