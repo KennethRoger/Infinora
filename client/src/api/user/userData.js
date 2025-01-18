@@ -1,7 +1,5 @@
 import axios from "axios";
 
-// Uncanny edit user API. Because I am dumb
-
 export const fetchUser = async () => {
   try {
     const response = await axios.get(

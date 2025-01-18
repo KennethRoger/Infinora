@@ -107,3 +107,16 @@ export const acceptReturnOrder = async (orderId) => {
     throw error.response?.data || error;
   }
 };
+
+export const getOrderForInvoice = async (orderId) => {
+  try {
+    const { data } = await axios.get(
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/invoice/${orderId}`,
+      { withCredentials: true }
+    );
+    return data;
+  } catch (error) {
+    console.error("Failed to get order invoice:", error);
+    throw error;
+  }
+};

@@ -4,6 +4,7 @@ const { verifyToken } = require("../utils/tokenValidator");
 const { generateOrderId } = require("../utils/generateOrderId");
 const Address = require("../models/Address");
 const createWalletTransaction = require("../utils/walletUtils");
+const User = require("../models/User");
 
 const createOrder = async (req, res) => {
   try {
@@ -796,7 +797,6 @@ const acceptReturnOrder = async (req, res) => {
     }
 
     try {
-      // 1. Update product stock
       if (product.variants?.length > 0 && order.variants) {
         const updatedCombinations = product.variantCombinations.map((combo) => {
           if (
@@ -849,6 +849,33 @@ const acceptReturnOrder = async (req, res) => {
   }
 };
 
+const getOrderForInvoice = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findOne({ orderId })
+      .populate("user", "name email phoneNumber")
+      .populate({
+        path: "vendor",
+        model: "User",
+        select: "name email phoneNumber"
+      })
+      .populate({
+        path: "product",
+        select: "name description images price variants category subCategory"
+      });
+
+    if (!order) {
+      res.status(404);
+      throw new Error("Order not found");
+    }
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getUserOrders,
@@ -862,4 +889,5 @@ module.exports = {
   adminCancelOrder,
   confirmDelivered,
   acceptReturnOrder,
+  getOrderForInvoice,
 };
