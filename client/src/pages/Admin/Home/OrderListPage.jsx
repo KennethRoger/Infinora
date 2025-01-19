@@ -7,10 +7,11 @@ import { fetchAllOrders } from "@/redux/features/allOrdersSlice";
 import { toast } from "react-hot-toast";
 import { adminCancelOrder, confirmDelivered } from "@/api/order/orderApi";
 import Modal from "@/components/Modal/Modal";
+import Pagination from "@/components/Pagination";
 
 export default function OrderListPage() {
   const dispatch = useDispatch();
-  const { orders, loading, error } = useSelector((state) => state.allOrders);
+  const { orders, loading, error, pagination } = useSelector((state) => state.allOrders);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeliveredModal, setShowDeliveredModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -20,16 +21,19 @@ export default function OrderListPage() {
     console.log(orders);
   }, [dispatch]);
 
+  const handlePageChange = (page) => {
+    dispatch(fetchAllOrders({ page }));
+  };
+
   const handleCancelOrder = async (orderId) => {
     try {
       await adminCancelOrder(orderId);
       toast.success("Order cancelled successfully");
       setShowCancelModal(false);
       setSelectedOrder(null);
+      dispatch(fetchAllOrders());
     } catch (error) {
       toast.error(error.message || "Failed to cancel order");
-    } finally {
-      dispatch(fetchAllOrders());
     }
   };
 
@@ -39,11 +43,10 @@ export default function OrderListPage() {
       toast.success("Order marked as completed");
       setShowDeliveredModal(false);
       setSelectedOrder(null);
+      dispatch(fetchAllOrders());
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to complete order");
-    } finally {
-      dispatch(fetchAllOrders());
     }
   };
 
@@ -122,6 +125,17 @@ export default function OrderListPage() {
         }))}
         actionsRenderer={tableActions}
       />
+
+      {!loading && pagination?.totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
+
       <Modal isOpen={showCancelModal}>
         <div className="text-center">
           <h3 className="text-lg font-semibold mb-4">Cancel Order</h3>

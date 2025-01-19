@@ -44,5 +44,5 @@ export const sideMenuItems = [
     icon: <RiUserStarLine />,
     path: "creator-list",
   },
-  { id: 8, label: "Logout", icon: <AiOutlineLogout />, path: "admin/logout" },
+  { id: 8, label: "Logout", icon: <AiOutlineLogout />, path: "logout" },
 ];

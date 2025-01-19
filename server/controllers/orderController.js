@@ -8,7 +8,8 @@ const User = require("../models/User");
 
 const createOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod, items, appliedCoupons, paymentDetails } = req.body;
+    const { addressId, paymentMethod, items, appliedCoupons, paymentDetails } =
+      req.body;
     const token = req.cookies.token;
 
     if (!token) {
@@ -137,13 +138,14 @@ const createOrder = async (req, res) => {
         finalAmount: finalAmount, // Final amount after all discounts
         status: "pending",
         paymentStatus: paymentMethod === "cod" ? "pending" : "verified",
-        ...(paymentMethod === "online" && paymentDetails && {
-          razorpay: {
-            orderId: paymentDetails.orderId,
-            paymentId: paymentDetails.paymentId,
-            signature: paymentDetails.signature,
-          }
-        })
+        ...(paymentMethod === "online" &&
+          paymentDetails && {
+            razorpay: {
+              orderId: paymentDetails.orderId,
+              paymentId: paymentDetails.paymentId,
+              signature: paymentDetails.signature,
+            },
+          }),
       });
 
       await product.save();
@@ -188,8 +190,17 @@ const getUserOrders = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments({ user: userId });
+    const totalPages = Math.ceil(totalOrders / limit);
+
     const orders = await Order.find({ user: userId })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate({
         path: "product",
         select: "name images variants variantCombinations price",
@@ -202,6 +213,12 @@ const getUserOrders = async (req, res) => {
     res.status(200).json({
       success: true,
       orders,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalOrders,
+        hasMore: page < totalPages,
+      },
     });
   } catch (error) {
     console.error("Error in getUserOrders:", error);
@@ -428,6 +445,13 @@ const getVendorOrders = async (req, res) => {
     const decoded = verifyToken(token);
     const vendorId = decoded.id;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments({ vendor: vendorId });
+    const totalPages = Math.ceil(totalOrders / limit);
+
     const orders = await Order.find({ vendor: vendorId })
       .sort({ createdAt: -1 })
       .populate({
@@ -438,11 +462,19 @@ const getVendorOrders = async (req, res) => {
           select: "name",
         },
       })
-      .populate("user", "name email");
+      .populate("user", "name email")
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
       orders,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalOrders,
+        hasMore: page < totalPages,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -473,6 +505,13 @@ const getAllOrders = async (req, res) => {
       });
     }
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalOrders = await Order.countDocuments();
+    const totalPages = Math.ceil(totalOrders / limit);
+
     const orders = await Order.find()
       .sort({ createdAt: -1 })
       .populate({
@@ -483,11 +522,19 @@ const getAllOrders = async (req, res) => {
           select: "name",
         },
       })
-      .populate("user", "name email");
+      .populate("user", "name email")
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
       orders,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalOrders,
+        hasMore: page < totalPages,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -858,11 +905,11 @@ const getOrderForInvoice = async (req, res) => {
       .populate({
         path: "vendor",
         model: "User",
-        select: "name email phoneNumber"
+        select: "name email phoneNumber",
       })
       .populate({
         path: "product",
-        select: "name description images price variants category subCategory"
+        select: "name description images price variants category subCategory",
       });
 
     if (!order) {

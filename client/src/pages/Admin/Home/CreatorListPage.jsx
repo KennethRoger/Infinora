@@ -10,24 +10,38 @@ import { nonVerifiedCreatorTableHead } from "@/constants/admin/creators/creatorA
 import { fetchUsers } from "@/redux/features/userSlice";
 import { approveVendor, rejectVendor } from "@/api/admin/adminAuth";
 import axios from "axios";
+import Pagination from "@/components/Pagination";
+import { formatDate } from "@/utils/dateFormatter";
 
 export default function CreatorListPage() {
   const dispatch = useDispatch();
-  const { users, loading, error } = useSelector((state) => state.users);
+  const { users, loading, error, pagination } = useSelector((state) => state.users);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedCreator, setSelectedCreator] = useState(null);
+  const [activeTable, setActiveTable] = useState('pending');
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const pendingCreators = users.filter(
-    (user) => user.isVerified && user.vendorStatus === "pending"
+  const handlePageChange = (page) => {
+    dispatch(fetchUsers({ page }));
+  };
+
+  const formatCreators = (creators) => {
+    return creators.map(creator => ({
+      ...creator,
+      createdAt: formatDate(creator.createdAt)
+    }));
+  };
+
+  const pendingCreators = formatCreators(
+    users.filter((user) => user.isVerified && user.vendorStatus === "pending")
   );
 
-  const approvedCreators = users.filter(
-    (user) => user.isVerified && user.vendorStatus === "approved"
+  const approvedCreators = formatCreators(
+    users.filter((user) => user.isVerified && user.vendorStatus === "approved")
   );
 
   const handleApproveClick = (creator) => {
@@ -205,6 +219,7 @@ export default function CreatorListPage() {
         actionsRenderer={tableActions}
         extraActionRenderer={creatorVerificationButton}
       />
+
       <h1 className="text-4xl mt-10 font-bold">Creators</h1>
       <SearchBarAdmin />
       <TableCreator
@@ -213,7 +228,16 @@ export default function CreatorListPage() {
         actionsRenderer={creatorTableActions}
       />
 
-      {/* Approve Modal */}
+      {pagination?.totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
+
       <Modal isOpen={showApproveModal}>
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-4">Confirm Creator Approval</h2>

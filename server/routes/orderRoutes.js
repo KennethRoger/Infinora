@@ -20,7 +20,6 @@ router.post("/", createOrder);
 router.get("/", getUserOrders);
 router.get("/vendor", getVendorOrders);
 router.get("/all", getAllOrders);
-// Invoice route should be before the ID route
 router.get("/invoice/:orderId", getOrderForInvoice);
 router.get("/:id", getOrderById);
 router.patch("/:id/status", updateOrderStatus);

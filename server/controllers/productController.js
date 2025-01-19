@@ -3,15 +3,30 @@ const { verifyToken } = require("../utils/tokenValidator");
 
 const getAllProducts = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalProducts = await Product.countDocuments({ isListed: true });
+    const totalPages = Math.ceil(totalProducts / limit);
+
     const products = await Product.find({ isListed: true })
       .populate("category", "name")
       .populate("subCategory", "name")
       .populate("vendor", "name email profileImagePath")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
       products,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalProducts,
+        hasMore: page < totalPages
+      }
     });
   } catch (error) {
     console.error("Error fetching all products:", error);
@@ -65,15 +80,30 @@ const getVendorProducts = async (req, res) => {
     const decoded = verifyToken(token);
     const vendorId = decoded.id;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalProducts = await Product.countDocuments({ vendor: vendorId });
+    const totalPages = Math.ceil(totalProducts / limit);
+
     const products = await Product.find({ vendor: vendorId })
       .populate("category", "name")
       .populate("subCategory", "name")
       .populate("vendor", "name email profileImagePath")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
       products,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalProducts,
+        hasMore: page < totalPages
+      }
     });
   } catch (error) {
     console.error("Error fetching vendor products:", error);

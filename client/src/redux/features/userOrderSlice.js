@@ -5,6 +5,12 @@ const initialState = {
   orders: [],
   loading: false,
   error: null,
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalOrders: 0,
+    hasMore: false
+  },
   checkout: {
     selectedAddressId: null,
     selectedPaymentMethod: null,
@@ -13,9 +19,9 @@ const initialState = {
 
 export const fetchUserOrders = createAsyncThunk(
   "userOrder/fetchUserOrders",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
-      const response = await getUserOrders();
+      const response = await getUserOrders(page, limit);
       return response;
     } catch (error) {
       console.error("Error in fetchUserOrders:", error);
@@ -33,6 +39,7 @@ const userOrderSlice = createSlice({
     clearOrders(state) {
       state.orders = [];
       state.error = null;
+      state.pagination = initialState.pagination;
     },
     setSelectedAddress(state, action) {
       state.checkout.selectedAddressId = action.payload;
@@ -53,21 +60,15 @@ const userOrderSlice = createSlice({
       })
       .addCase(fetchUserOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload.orders || [];
-        state.error = null;
+        state.orders = action.payload.orders;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchUserOrders.rejected, (state, action) => {
         state.loading = false;
-        state.orders = [];
-        state.error = action.payload || "Failed to fetch orders";
+        state.error = action.payload;
       });
   },
 });
-
-export const selectUserOrders = (state) => state.userOrder.orders;
-export const selectUserOrdersLoading = (state) => state.userOrder.loading;
-export const selectUserOrdersError = (state) => state.userOrder.error;
-export const selectCheckout = (state) => state.userOrder.checkout;
 
 export const {
   clearOrders,
@@ -75,5 +76,11 @@ export const {
   setSelectedPayment,
   clearCheckout,
 } = userOrderSlice.actions;
+
+export const selectUserOrders = (state) => state.userOrder.orders;
+export const selectUserOrdersLoading = (state) => state.userOrder.loading;
+export const selectUserOrdersError = (state) => state.userOrder.error;
+export const selectCheckout = (state) => state.userOrder.checkout;
+export const selectUserOrdersPagination = (state) => state.userOrder.pagination;
 
 export default userOrderSlice.reducer;

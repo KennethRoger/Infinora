@@ -22,7 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchVendorProducts } from "@/redux/features/vendorProductsSlice";
+import { 
+  fetchVendorProducts,
+  selectVendorProducts,
+  selectVendorProductsLoading,
+  selectVendorProductsError,
+  selectVendorProductsPagination
+} from "@/redux/features/vendorProductsSlice";
 import axios from "axios";
 import { PRODUCT_TABLE_COLUMNS } from "@/constants/creator/tableColumns";
 import {
@@ -31,13 +37,27 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Pagination from "@/components/Pagination";
 
 export default function CreatorProductDashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { products, loading, error } = useSelector(
-    (state) => state.vendorProducts
-  );
+  const products = useSelector(selectVendorProducts);
+  const loading = useSelector(selectVendorProductsLoading);
+  const error = useSelector(selectVendorProductsError);
+  const pagination = useSelector(selectVendorProductsPagination);
+
+  const fetchProducts = (page) => {
+    dispatch(fetchVendorProducts({ page, limit: 10 }));
+  };
+
+  useEffect(() => {
+    fetchProducts(1);
+  }, [dispatch]);
+
+  const handlePageChange = (newPage) => {
+    fetchProducts(newPage);
+  };
 
   const calculateTotalStock = (product) => {
     if (!product) return 0;
@@ -49,16 +69,10 @@ export default function CreatorProductDashboard() {
       );
     }
     
-    return parseInt(product.stock) || 0;
+    return product.stock || 0;
   };
 
-  useEffect(() => {
-    dispatch(fetchVendorProducts());
-  }, [dispatch]);
 
-  const handleAddProduct = () => {
-    navigate("add");
-  };
 
   const handleToggleListing = async (productId) => {
     try {
@@ -235,45 +249,13 @@ export default function CreatorProductDashboard() {
 
   if (loading) return <div>Loading...</div>;
   return (
-    <div className="p-8">
+    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">
-            Manage your products and inventory
-          </p>
-        </div>
-        <Button onClick={handleAddProduct}>
-          <Plus className="mr-2 h-4 w-4" /> Add Product
+        <h1 className="text-2xl font-semibold">Products</h1>
+        <Button onClick={() => navigate("add")}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Product
         </Button>
-      </div>
-
-      <div className="flex justify-between items-center mb-6">
-        <SearchBarAdmin placeholder="Search products..." />
-        <div className="flex gap-2">
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Products</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select defaultValue="newest">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="stock-high">Stock: High to Low</SelectItem>
-              <SelectItem value="stock-low">Stock: Low to High</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       <DataTable
@@ -281,6 +263,16 @@ export default function CreatorProductDashboard() {
         data={products}
         renderCell={renderCell}
       />
+
+      {!loading && pagination.totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

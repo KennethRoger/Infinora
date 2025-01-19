@@ -8,16 +8,25 @@ import { BsCart3 } from "react-icons/bs";
 import { FiPackage } from "react-icons/fi";
 import { GrFavorite } from "react-icons/gr";
 import SearchBar from "../Form/SearchBar";
+import { useUser } from "@/context/UserContext";
 
 export default function Header() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, refreshUser } = useUser();
+
+  useEffect(() => {
+    refreshUser();
+  }, [navigate]); 
 
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
         const result = await verifyUser();
-        setIsAuthenticated(result.authenticated && (result.role === "user" || result.role === "vendor"));
+        setIsAuthenticated(
+          result.authenticated &&
+            (result.role === "user" || result.role === "vendor")
+        );
       } catch (error) {
         console.error("Authentication check failed:", error);
       }
@@ -51,7 +60,7 @@ export default function Header() {
               {isAuthenticated ? (
                 <Link to={"/home/profile"} className="flex items-center gap-1">
                   <FaRegUser />
-                  <p>Profile</p>
+                  <p>{user.name || "Profile"}</p>
                 </Link>
               ) : (
                 <Link to={"/login"} className="flex items-center gap-1">
@@ -61,19 +70,28 @@ export default function Header() {
               )}
             </li>
             <li>
-              <Link to={"/home/profile/cart"} className="flex items-center gap-1">
+              <Link
+                to={"/home/profile/cart"}
+                className="flex items-center gap-1"
+              >
                 <BsCart3 />
                 <p>Cart</p>
               </Link>
             </li>
             <li>
-              <Link to={"/home/profile/orders"} className="flex items-center gap-1">
+              <Link
+                to={"/home/profile/orders"}
+                className="flex items-center gap-1"
+              >
                 <FiPackage />
                 <p>Orders</p>
               </Link>
             </li>
             <li>
-              <Link to={"/home/profile/favorites"} className="flex items-center gap-1">
+              <Link
+                to={"/home/profile/favorites"}
+                className="flex items-center gap-1"
+              >
                 <GrFavorite />
                 <p>Favorites</p>
               </Link>
