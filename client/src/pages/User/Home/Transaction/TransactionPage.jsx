@@ -16,30 +16,43 @@ import PendingIcon from '@mui/icons-material/Pending';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { formatPrice, formatDate } from '@/lib/utils';
+import Pagination from '@/components/Pagination';
 
 const TransactionPage = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalTransactions: 0,
+    hasMore: false
+  });
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (page = 1) => {
     try {
+      setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/wallet/transactions`,
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/wallet/transactions?page=${page}&limit=10`,
         { withCredentials: true }
       );
       
       if (response.data.success) {
         setTransactions(response.data.transactions);
+        setPagination(response.data.pagination);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to fetch transactions");
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchTransactions(1);
+  }, []);
+
+  const handlePageChange = (newPage) => {
+    fetchTransactions(newPage);
   };
 
   const getTransactionIcon = (type) => {
@@ -87,48 +100,60 @@ const TransactionPage = () => {
           </Typography>
         </Paper>
       ) : (
-        <Paper elevation={2} sx={{ borderRadius: 2 }}>
-          <List>
-            {transactions.map((transaction) => (
-              <ListItem
-                key={transaction._id}
-                divider
-                sx={{ 
-                  py: 2,
-                  '&:last-child': { borderBottom: 'none' }
-                }}
-              >
-                <ListItemIcon>
-                  {getTransactionIcon(transaction.type)}
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography variant="subtitle1" component="span">
-                        {transaction.description}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={transaction.status}
-                        color={getStatusColor(transaction.status)}
-                      />
-                    </Box>
-                  }
-                  secondary={formatDate(transaction.createdAt)}
-                />
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    color: transaction.type === 'credit' ? 'success.main' : 'error.main',
-                    fontWeight: 600
+        <>
+          <Paper elevation={2} sx={{ borderRadius: 2 }}>
+            <List>
+              {transactions.map((transaction) => (
+                <ListItem
+                  key={transaction._id}
+                  divider
+                  sx={{ 
+                    py: 2,
+                    '&:last-child': { borderBottom: 'none' }
                   }}
                 >
-                  {transaction.type === 'credit' ? '+' : '-'}{formatPrice(transaction.amount)}
-                </Typography>
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
+                  <ListItemIcon>
+                    {getTransactionIcon(transaction.type)}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Typography variant="subtitle1" component="span">
+                          {transaction.description}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={transaction.status}
+                          color={getStatusColor(transaction.status)}
+                        />
+                      </Box>
+                    }
+                    secondary={formatDate(transaction.createdAt)}
+                  />
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      color: transaction.type === 'credit' ? 'success.main' : 'error.main',
+                      fontWeight: 600
+                    }}
+                  >
+                    {transaction.type === 'credit' ? '+' : '-'}{formatPrice(transaction.amount)}
+                  </Typography>
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+          
+          {pagination.totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+              />
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );

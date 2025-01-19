@@ -14,10 +14,7 @@ export default function DataTable({ columns, data, renderCell }) {
         <TableHeader>
           <TableRow className="bg-gray-100 hover:bg-gray-100">
             {columns.map((column) => (
-              <TableHead
-                key={column.key}
-                className={column.className}
-              >
+              <TableHead key={column.key} className={column.className}>
                 {column.label}
               </TableHead>
             ))}

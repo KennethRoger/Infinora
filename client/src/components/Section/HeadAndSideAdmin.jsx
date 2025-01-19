@@ -1,11 +1,35 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import infinoraLogoWhite from "../../assets/images/logo/Infinora-black-transparent.png";
 import { IoIosArrowDropdown } from "react-icons/io";
 import { useState } from "react";
 import { sideMenuItems } from "@/constants/admin/menu/sideMenuItems";
+import { logout } from "@/api/user/userAuth";
+import { toast } from "react-hot-toast";
 
 export default function HeadAndSideAdmin({ children }) {
   const [activeIndex, setActiveIndex] = useState(null);
+  const navigate = useNavigate();
+
+  const handleItemClick = async (item, index) => {
+    setActiveIndex(index);
+    
+    if (item.path === "logout") {
+      try {
+        const response = await logout();
+        if (response.success) {
+          toast.success("Logged out successfully");
+          navigate("/admin/login");
+        } else {
+          toast.error("Logout failed");
+        }
+      } catch (error) {
+        console.error("Logout error:", error);
+        toast.error("Logout failed");
+      }
+    } else {
+      navigate(item.path);
+    }
+  };
 
   return (
     <>
@@ -43,12 +67,12 @@ export default function HeadAndSideAdmin({ children }) {
                       ? "bg-[#4880FF] text-white"
                       : "hover:bg-[#4880FF] hover:text-white"
                   }`}
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => handleItemClick(item, index)}
                 >
-                  <Link to={item.path} className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     {item.icon}
                     <p>{item.label}</p>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>

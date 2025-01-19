@@ -96,4 +96,3 @@ export const logout = async () => {
     console.error("Logout Error:", error);
   }
 };
-

@@ -44,13 +44,28 @@ const getWalletTransactions = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalTransactions = await Transaction.countDocuments({ userId });
+    const totalPages = Math.ceil(totalTransactions / limit);
+
     const transactions = await Transaction.find({ userId })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('orderId');
 
     res.json({
       success: true,
-      transactions
+      transactions,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalTransactions,
+        hasMore: page < totalPages
+      }
     });
   } catch (error) {
     res.status(500).json({

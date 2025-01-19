@@ -292,10 +292,24 @@ const logout = (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}, { password: 0 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalUsers = await User.countDocuments();
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    const users = await User.find({}, { password: 0 }).skip(skip).limit(limit);
+
     res.status(200).json({
       success: true,
       data: users,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalUsers,
+        hasMore: page < totalPages,
+      },
     });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -413,7 +427,7 @@ const generateOTPForForgotPass = async (req, res) => {
 const confirmOTP = async (req, res) => {
   try {
     const { tempUserId, otp } = req.body;
-    
+
     if (!tempUserId || !otp)
       return res
         .status(400)

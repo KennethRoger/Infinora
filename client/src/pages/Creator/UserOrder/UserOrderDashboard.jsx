@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Pagination from "@/components/Pagination";
 
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal } from "lucide-react";
@@ -53,20 +54,26 @@ export default function UserOrderDashboard() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("newest");
   const [searchQuery, setSearchQuery] = useState("");
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalOrders: 0,
+    hasMore: false,
+  });
 
   useEffect(() => {
-    console.log("working");
-    fetchOrders();
+    fetchOrders(1);
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (page = 1) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/vendor`,
+        `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order/vendor?page=${page}&limit=10`,
         { withCredentials: true }
       );
       setOrders(response.data.orders);
+      setPagination(response.data.pagination);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to fetch orders");
     } finally {
@@ -84,7 +91,7 @@ export default function UserOrderDashboard() {
         { withCredentials: true }
       );
       toast.success("Order status updated successfully");
-      fetchOrders();
+      fetchOrders(pagination.currentPage);
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to update order status"
@@ -96,10 +103,14 @@ export default function UserOrderDashboard() {
     try {
       await acceptReturnOrder(orderId);
       toast.success("Return request accepted successfully");
-      fetchOrders();
+      fetchOrders(pagination.currentPage);
     } catch (error) {
       toast.error(error.message || "Failed to accept return");
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    fetchOrders(newPage);
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -366,6 +377,16 @@ export default function UserOrderDashboard() {
         data={sortedOrders}
         renderCell={renderCell}
       />
+
+      {!loading && pagination.totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

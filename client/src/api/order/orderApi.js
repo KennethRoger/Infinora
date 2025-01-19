@@ -14,16 +14,15 @@ export const createOrder = async (orderData) => {
   }
 };
 
-export const getUserOrders = async () => {
+export const getUserOrders = async (page = 1, limit = 10) => {
   try {
     const response = await axios.get(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order`,
+      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/order?page=${page}&limit=${limit}`,
       { withCredentials: true }
     );
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch user orders:", error);
-    throw error.response?.data || error;
+    throw error;
   }
 };
 

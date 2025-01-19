@@ -21,7 +21,7 @@ import { fetchAllProducts } from "@/redux/features/allProductsSlice";
 const LandingPage = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { products, loading, error } = useSelector(
+  const { products, loading, error, pagination } = useSelector(
     (state) => state.allProducts
   );
   const dispatch = useDispatch();
@@ -32,7 +32,7 @@ const LandingPage = () => {
       setIsAuthenticated(result.authenticated);
     };
     checkAuthentication();
-    dispatch(fetchAllProducts());
+    dispatch(fetchAllProducts({ page: 1, limit: 10 }));
   }, [dispatch]);
 
   return (
@@ -125,10 +125,24 @@ const LandingPage = () => {
               </p>
             </div>
           </div>
-          <ProductScroll 
-            products={products} 
-            title="Featured Products" 
-          />
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 text-center h-40 flex items-center justify-center">
+              Error loading products. Please try again later.
+            </div>
+          ) : products?.length > 0 ? (
+            <ProductScroll
+              products={products || []}
+              title="Featured Products"
+            />
+          ) : (
+            <div className="text-gray-500 text-center h-40 flex items-center justify-center">
+              No products available.
+            </div>
+          )}
         </section>
         <CreatorBanner />
         <section className="py-12 px-10">

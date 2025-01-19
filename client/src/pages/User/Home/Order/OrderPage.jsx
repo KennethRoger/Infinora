@@ -1,44 +1,52 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import OrderCard from "@/components/Order/OrderCard";
-import { ShoppingBag } from "lucide-react";
-import Spinner from "@/components/Spinner/Spinner";
-import FailedOrdersSection from "./FailedOrdersSection";
 import {
   fetchUserOrders,
-  clearOrders,
   selectUserOrders,
   selectUserOrdersLoading,
   selectUserOrdersError,
+  selectUserOrdersPagination,
+  clearOrders,
 } from "@/redux/features/userOrderSlice";
+import OrderCard from "@/components/Order/OrderCard";
+import Pagination from "@/components/Pagination";
+import { ShoppingBag } from "lucide-react";
+import Spinner from "@/components/Spinner/Spinner";
+import FailedOrdersSection from "./FailedOrdersSection";
 
 export default function OrderPage() {
   const dispatch = useDispatch();
   const orders = useSelector(selectUserOrders);
   const loading = useSelector(selectUserOrdersLoading);
   const error = useSelector(selectUserOrdersError);
+  const pagination = useSelector(selectUserOrdersPagination);
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("recent");
 
-  useEffect(() => {
-    dispatch(fetchUserOrders())
+  const fetchOrders = (page) => {
+    dispatch(fetchUserOrders({ page, limit: 10 }))
       .unwrap()
       .catch((error) => {
         console.error("Error fetching orders:", error);
       });
+  };
 
+  useEffect(() => {
+    fetchOrders(1);
     return () => {
       dispatch(clearOrders());
     };
   }, [dispatch]);
 
+  const handlePageChange = (newPage) => {
+    fetchOrders(newPage);
+  };
+
   const getFilteredOrders = () => {
     let filtered = [...orders];
-
     if (filter !== "all") {
       filtered = filtered.filter((order) => order.status === filter);
     }
-
     switch (sort) {
       case "recent":
         filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -55,7 +63,6 @@ export default function OrderPage() {
       default:
         break;
     }
-
     return filtered;
   };
 
@@ -121,7 +128,7 @@ export default function OrderPage() {
         </div>
       </div>
 
-      <div className="grid gap-6">
+      <div className="space-y-4">
         {getFilteredOrders().map((order) => (
           <OrderCard
             key={order._id}
@@ -131,6 +138,20 @@ export default function OrderPage() {
           />
         ))}
       </div>
+
+      {!loading && orders.length > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={handlePageChange}
+        />
+      )}
+
+      {!loading && orders.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No orders found</p>
+        </div>
+      )}
     </div>
   );
 }
