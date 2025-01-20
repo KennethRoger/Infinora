@@ -8,6 +8,9 @@ import { getAdminSalesReport } from "@/api/admin/adminMetrics";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
+import Pagination from "@/components/Pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 const REPORT_TYPES = [
   { label: "Today", value: "1d" },
@@ -30,13 +33,13 @@ export default function AdminSalesReport() {
     summary: {
       totalOrders: 0,
       totalRevenue: 0,
-      totalCommission: 0,
       topVendors: [],
     },
   });
 
   const [loading, setLoading] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const {
     register,
@@ -56,6 +59,15 @@ export default function AdminSalesReport() {
   const endDate = watch("endDate");
   const reportType = watch("reportType");
 
+  const totalPages = Math.ceil(salesData.orders.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentOrders = salesData.orders.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   const fetchReport = async (data) => {
     try {
       setLoading(true);
@@ -66,6 +78,7 @@ export default function AdminSalesReport() {
         selectedVendor
       );
       setSalesData(response);
+      setCurrentPage(1); // Reset to first page when new data is loaded
     } catch (error) {
       toast.error("Failed to fetch sales report");
     } finally {
@@ -140,7 +153,6 @@ export default function AdminSalesReport() {
     const summaryData = [
       ["Total Orders", salesData.summary.totalOrders],
       ["Total Revenue", formatCurrency(salesData.summary.totalRevenue)],
-      ["Total Commission", formatCurrency(salesData.summary.totalCommission)],
     ];
 
     doc.autoTable({
@@ -176,7 +188,6 @@ export default function AdminSalesReport() {
       formatCurrency(order.totalAmount),
       formatCurrency(calculateTotalDiscount(order)),
       order.appliedCoupon?.couponCode || "-",
-      formatCurrency(order.commission),
       (order.status || "pending").toUpperCase(),
     ]);
 
@@ -190,7 +201,6 @@ export default function AdminSalesReport() {
           "Amount",
           "Discount",
           "Coupon",
-          "Commission",
           "Status",
         ],
       ],
@@ -222,7 +232,7 @@ export default function AdminSalesReport() {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div className="bg-white p-4 rounded-lg shadow">
               <p className="text-sm text-gray-500">Total Orders</p>
               <p className="text-2xl font-semibold">
@@ -233,12 +243,6 @@ export default function AdminSalesReport() {
               <p className="text-sm text-gray-500">Platform Revenue</p>
               <p className="text-2xl font-semibold text-green-600">
                 {formatCurrency(salesData.summary.totalRevenue)}
-              </p>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-500">Commission Earned</p>
-              <p className="text-2xl font-semibold text-blue-600">
-                {formatCurrency(salesData.summary.totalCommission)}
               </p>
             </div>
           </div>
@@ -285,15 +289,12 @@ export default function AdminSalesReport() {
                     Final Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Commission
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {salesData.orders.map((order) => (
+                {currentOrders.map((order) => (
                   <tr key={order.orderId}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {order.orderId}
@@ -313,9 +314,6 @@ export default function AdminSalesReport() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatCurrency(order.finalAmount)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                      {formatCurrency(order.commission)}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -329,6 +327,14 @@ export default function AdminSalesReport() {
                 ))}
               </tbody>
             </table>
+
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
           </div>
         </div>
       </Card>

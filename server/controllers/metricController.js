@@ -1,7 +1,7 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
-const mongoose = require('mongoose'); // mongoose import added
+const mongoose = require("mongoose");
 const {
   startOfDay,
   endOfDay,
@@ -242,41 +242,41 @@ const calculateDateRange = (timeRange, startDate, endDate) => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   switch (timeRange) {
-    case 'today':
+    case "today":
       return {
         startDate: startOfDay(today),
-        endDate: endOfDay(today)
+        endDate: endOfDay(today),
       };
-    case '7d':
+    case "7d":
       return {
         startDate: startOfDay(subDays(today, 7)),
-        endDate: endOfDay(today)
+        endDate: endOfDay(today),
       };
-    case '30d':
+    case "30d":
       return {
         startDate: startOfDay(subDays(today, 30)),
-        endDate: endOfDay(today)
+        endDate: endOfDay(today),
       };
-    case '1y':
+    case "1y":
       return {
         startDate: startOfDay(subDays(today, 365)),
-        endDate: endOfDay(today)
+        endDate: endOfDay(today),
       };
-    case 'custom':
+    case "custom":
       if (!startDate || !endDate) {
         return {
           startDate: startOfDay(subDays(today, 7)),
-          endDate: endOfDay(today)
+          endDate: endOfDay(today),
         };
       }
       return {
         startDate: startOfDay(new Date(startDate)),
-        endDate: endOfDay(new Date(endDate))
+        endDate: endOfDay(new Date(endDate)),
       };
     default:
       return {
         startDate: startOfDay(subDays(today, 7)),
-        endDate: endOfDay(today)
+        endDate: endOfDay(today),
       };
   }
 };
@@ -288,7 +288,11 @@ const getProductPerformance = async (req, res) => {
     const decoded = verifyToken(token);
     const vendorId = decoded.id;
 
-    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+    const dateRange = calculateDateRange(
+      timeRange,
+      req.query.startDate,
+      req.query.endDate
+    );
     const vendorObjectId = new mongoose.Types.ObjectId(vendorId);
 
     const productPerformance = await Order.aggregate([
@@ -296,27 +300,27 @@ const getProductPerformance = async (req, res) => {
         $match: {
           vendor: vendorObjectId,
           status: { $ne: "cancelled" },
-          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
-        }
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate },
+        },
       },
       {
         $group: {
           _id: "$product",
           totalRevenue: { $sum: "$finalAmount" },
           totalQuantity: { $sum: "$quantity" },
-          ordersCount: { $sum: 1 }
-        }
+          ordersCount: { $sum: 1 },
+        },
       },
       {
         $lookup: {
           from: "products",
           localField: "_id",
           foreignField: "_id",
-          as: "productDetails"
-        }
+          as: "productDetails",
+        },
       },
       {
-        $unwind: "$productDetails"
+        $unwind: "$productDetails",
       },
       {
         $project: {
@@ -325,20 +329,20 @@ const getProductPerformance = async (req, res) => {
           totalRevenue: 1,
           totalQuantity: 1,
           ordersCount: 1,
-          averageOrderValue: { $divide: ["$totalRevenue", "$ordersCount"] }
-        }
+          averageOrderValue: { $divide: ["$totalRevenue", "$ordersCount"] },
+        },
       },
       {
-        $sort: { totalRevenue: -1 }
+        $sort: { totalRevenue: -1 },
       },
       {
-        $limit: 5
-      }
+        $limit: 5,
+      },
     ]);
 
     res.json({
       success: true,
-      data: productPerformance
+      data: productPerformance,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -352,7 +356,11 @@ const getSalesAndOrdersMetrics = async (req, res) => {
     const decoded = verifyToken(token);
     const vendorId = decoded.id;
 
-    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+    const dateRange = calculateDateRange(
+      timeRange,
+      req.query.startDate,
+      req.query.endDate
+    );
     const vendorObjectId = new mongoose.Types.ObjectId(vendorId);
 
     const metrics = await Order.aggregate([
@@ -360,37 +368,37 @@ const getSalesAndOrdersMetrics = async (req, res) => {
         $match: {
           vendor: vendorObjectId,
           status: { $ne: "cancelled" },
-          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
-        }
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate },
+        },
       },
       {
         $group: {
           _id: {
             $dateToString: {
               format: "%Y-%m-%d",
-              date: "$createdAt"
-            }
+              date: "$createdAt",
+            },
           },
           totalSales: { $sum: "$finalAmount" },
-          orderCount: { $sum: 1 }
-        }
+          orderCount: { $sum: 1 },
+        },
       },
       {
-        $sort: { "_id": 1 }
+        $sort: { _id: 1 },
       },
       {
         $project: {
           date: "$_id",
           totalSales: 1,
           orderCount: 1,
-          _id: 0
-        }
-      }
+          _id: 0,
+        },
+      },
     ]);
 
     res.json({
       success: true,
-      data: metrics
+      data: metrics,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -400,30 +408,34 @@ const getSalesAndOrdersMetrics = async (req, res) => {
 const getAdminRevenueMetrics = async (req, res) => {
   try {
     const { timeRange } = req.query;
-    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+    const dateRange = calculateDateRange(
+      timeRange,
+      req.query.startDate,
+      req.query.endDate
+    );
 
     const metrics = await Order.aggregate([
       {
         $match: {
           status: { $ne: "cancelled" },
-          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
-        }
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate },
+        },
       },
       {
         $group: {
           _id: {
             $dateToString: {
               format: "%Y-%m-%d",
-              date: "$createdAt"
-            }
+              date: "$createdAt",
+            },
           },
           totalRevenue: { $sum: "$finalAmount" },
-          platformFees: { $sum: { $multiply: ["$finalAmount", 0.1] } }, // Assuming 10% platform fee
-          vendorEarnings: { $sum: { $multiply: ["$finalAmount", 0.9] } } // 90% goes to vendor
-        }
+          platformFees: { $sum: { $multiply: ["$finalAmount", 0.1] } },
+          vendorEarnings: { $sum: { $multiply: ["$finalAmount", 0.9] } },
+        },
       },
       {
-        $sort: { "_id": 1 }
+        $sort: { _id: 1 },
       },
       {
         $project: {
@@ -431,14 +443,14 @@ const getAdminRevenueMetrics = async (req, res) => {
           totalRevenue: 1,
           platformFees: 1,
           vendorEarnings: 1,
-          _id: 0
-        }
-      }
+          _id: 0,
+        },
+      },
     ]);
 
     res.json({
       success: true,
-      data: metrics
+      data: metrics,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -448,61 +460,368 @@ const getAdminRevenueMetrics = async (req, res) => {
 const getUserActivityMetrics = async (req, res) => {
   try {
     const { timeRange } = req.query;
-    const dateRange = calculateDateRange(timeRange, req.query.startDate, req.query.endDate);
+    const dateRange = calculateDateRange(
+      timeRange,
+      req.query.startDate,
+      req.query.endDate
+    );
 
-    // Get user activity metrics
     const userMetrics = await User.aggregate([
       {
         $match: {
-          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
-        }
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate },
+        },
       },
       {
         $group: {
           _id: "$role",
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       {
         $project: {
           role: "$_id",
           count: 1,
-          _id: 0
-        }
-      }
+          _id: 0,
+        },
+      },
     ]);
 
-    // Get order statistics
     const orderMetrics = await Order.aggregate([
       {
         $match: {
-          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate }
-        }
+          createdAt: { $gte: dateRange.startDate, $lte: dateRange.endDate },
+        },
       },
       {
         $group: {
           _id: "$status",
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       {
         $project: {
           status: "$_id",
           count: 1,
-          _id: 0
-        }
-      }
+          _id: 0,
+        },
+      },
     ]);
 
     res.json({
       success: true,
       data: {
         users: userMetrics,
-        orders: orderMetrics
-      }
+        orders: orderMetrics,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getBestSellingProducts = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const vendorId = decoded.id;
+
+    const bestSellingProducts = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          },
+          status: { $ne: "cancelled" },
+        },
+      },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "productDetails",
+        },
+      },
+      { $unwind: "$productDetails" },
+      {
+        $match: {
+          "productDetails.vendor": new mongoose.Types.ObjectId(vendorId),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            productId: "$items.product",
+            variantCombo: "$items.selectedVariants",
+          },
+          name: { $first: "$productDetails.name" },
+          images: { $first: "$productDetails.images" },
+          basePrice: { $first: "$productDetails.price" },
+          discount: { $first: "$productDetails.discount" },
+          variants: { $first: "$productDetails.variants" },
+          variantCombinations: {
+            $first: "$productDetails.variantCombinations",
+          },
+          selectedVariants: { $first: "$items.selectedVariants" },
+          totalQuantitySold: { $sum: "$items.quantity" },
+          totalRevenue: {
+            $sum: {
+              $multiply: [
+                "$items.quantity",
+                {
+                  $subtract: [
+                    "$items.price",
+                    {
+                      $multiply: [
+                        "$items.price",
+                        {
+                          $divide: [
+                            { $ifNull: ["$productDetails.discount", 0] },
+                            100,
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          variantName: {
+            $reduce: {
+              input: { $objectToArray: "$selectedVariants" },
+              initialValue: "",
+              in: {
+                $concat: [
+                  "$$value",
+                  { $cond: [{ $eq: ["$$value", ""] }, "", " - "] },
+                  "$$this.v",
+                ],
+              },
+            },
+          },
+          mainImage: { $arrayElemAt: ["$images", 0] },
+          variantImage: {
+            $let: {
+              vars: {
+                variantImageIndexes: {
+                  $reduce: {
+                    input: "$variants",
+                    initialValue: [],
+                    in: {
+                      $concatArrays: [
+                        "$$value",
+                        {
+                          $map: {
+                            input: "$$this.variantTypes",
+                            as: "type",
+                            in: {
+                              name: "$$type.name",
+                              imageIndex: "$$type.imageIndex",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              in: {
+                $let: {
+                  vars: {
+                    matchedVariant: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$$variantImageIndexes",
+                            as: "vi",
+                            cond: {
+                              $and: [
+                                { $ne: ["$$vi.imageIndex", null] },
+                                {
+                                  $in: [
+                                    "$$vi.name",
+                                    { $objectToArray: "$selectedVariants" }.v,
+                                  ],
+                                },
+                              ],
+                            },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    $cond: {
+                      if: "$$matchedVariant",
+                      then: {
+                        $arrayElemAt: [
+                          "$images",
+                          "$$matchedVariant.imageIndex",
+                        ],
+                      },
+                      else: { $arrayElemAt: ["$images", 0] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$_id.productId",
+          name: { $first: "$name" },
+          mainImage: { $first: "$mainImage" },
+          basePrice: { $first: "$basePrice" },
+          discount: { $first: "$discount" },
+          variants: {
+            $push: {
+              combination: "$selectedVariants",
+              variantName: "$variantName",
+              image: "$variantImage",
+              quantitySold: "$totalQuantitySold",
+              revenue: "$totalRevenue",
+            },
+          },
+          totalQuantitySold: { $sum: "$totalQuantitySold" },
+          totalRevenue: { $sum: "$totalRevenue" },
+        },
+      },
+      { $sort: { totalQuantitySold: -1 } },
+      { $limit: 5 },
+    ]);
+
+    res.json({
+      success: true,
+      products: bestSellingProducts,
+    });
+  } catch (error) {
+    console.error("Error getting best selling products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching best selling products",
+    });
+  }
+};
+
+const getBestSellingCategories = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const categoryMetrics = await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate)
+          },
+          status: { $ne: "cancelled" },
+          paymentStatus: "completed"
+        }
+      },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "productDetails.category",
+          foreignField: "_id",
+          as: "categoryDetails"
+        }
+      },
+      { $unwind: "$categoryDetails" },
+      {
+        $group: {
+          _id: "$categoryDetails._id",
+          name: { $first: "$categoryDetails.name" },
+          parent_id: { $first: "$categoryDetails.parent_id" },
+          totalOrders: { $sum: 1 },
+          totalQuantity: { $sum: "$items.quantity" },
+          totalRevenue: {
+            $sum: {
+              $multiply: [
+                "$items.quantity",
+                {
+                  $subtract: [
+                    "$items.price",
+                    {
+                      $multiply: [
+                        "$items.price",
+                        { $divide: [{ $ifNull: ["$productDetails.discount", 0] }, 100] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "parent_id",
+          foreignField: "_id",
+          as: "parentCategory"
+        }
+      },
+      {
+        $addFields: {
+          parentName: {
+            $cond: {
+              if: { $gt: [{ $size: "$parentCategory" }, 0] },
+              then: { $arrayElemAt: ["$parentCategory.name", 0] },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $sort: { totalRevenue: -1 }
+      },
+      {
+        $limit: 10
+      }
+    ]);
+
+    res.json({
+      success: true,
+      categories: categoryMetrics
+    });
+  } catch (error) {
+    console.error("Error getting best selling categories:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching best selling categories"
+    });
   }
 };
 
@@ -512,5 +831,7 @@ module.exports = {
   getProductPerformance,
   getSalesAndOrdersMetrics,
   getAdminRevenueMetrics,
-  getUserActivityMetrics
+  getUserActivityMetrics,
+  getBestSellingProducts,
+  getBestSellingCategories
 };
