@@ -458,7 +458,7 @@ export default function CreatorEditProduct() {
       const response = await axios.put(
         `${
           import.meta.env.VITE_USERS_API_BASE_URL
-        }/api/vendor/products/${productId}`,
+        }/api/vendor/product/${productId}`,
         formData,
         {
           headers: {
@@ -471,7 +471,7 @@ export default function CreatorEditProduct() {
       if (response.data.success) {
         stopLoading();
         toast.success("Product updated successfully!");
-        navigate("/creator/products");
+        navigate("/home/profile/creator/products");
       }
     } catch (error) {
       console.error("Error updating product:", error);

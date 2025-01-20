@@ -9,6 +9,8 @@ import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { FiDownload } from "react-icons/fi";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import Pagination from "@/components/Pagination";
+import BestSellingProducts from "./BestSellingProducts";
 
 const REPORT_TYPES = [
   { label: "Custom Range", value: "custom" },
@@ -26,6 +28,8 @@ const STATUS_COLORS = {
   shipped: "bg-blue-100 text-blue-800",
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function SalesReport() {
   const [salesData, setSalesData] = useState({
     orders: [],
@@ -37,6 +41,7 @@ export default function SalesReport() {
     },
   });
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { register, control, watch, setValue } = useForm({
     defaultValues: {
@@ -49,6 +54,15 @@ export default function SalesReport() {
   const reportType = watch("reportType");
   const startDate = watch("startDate");
   const endDate = watch("endDate");
+
+  const totalPages = Math.ceil(salesData.orders.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentOrders = salesData.orders.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   useEffect(() => {
     const fetchSalesReport = async () => {
@@ -300,6 +314,15 @@ export default function SalesReport() {
           </div>
         </div>
 
+        {/* <div className="mb-6">
+          <BestSellingProducts
+            dateRange={{
+              startDate: watch("startDate"),
+              endDate: watch("endDate"),
+            }}
+          />
+        </div> */}
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -331,7 +354,7 @@ export default function SalesReport() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {salesData.orders.map((order) => (
+              {currentOrders.map((order) => (
                 <tr key={order.orderId}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {order.orderId}
@@ -391,6 +414,14 @@ export default function SalesReport() {
               ))}
             </tbody>
           </table>
+
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
       </Card>
     </div>

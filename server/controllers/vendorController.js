@@ -407,6 +407,7 @@ const addVendorProducts = async (req, res) => {
 };
 
 const editVendorProduct = async (req, res) => {
+  console.log("Edit started")
   try {
     const {
       name,
@@ -426,6 +427,7 @@ const editVendorProduct = async (req, res) => {
       existingImages,
     } = req.body;
     const productId = req.params.productId;
+    console.log("Checing")
 
     const token = req.cookies.token;
     if (!token) {

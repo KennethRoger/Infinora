@@ -60,7 +60,7 @@ export default function Header() {
               {isAuthenticated ? (
                 <Link to={"/home/profile"} className="flex items-center gap-1">
                   <FaRegUser />
-                  <p>{user.name || "Profile"}</p>
+                  <p>{user ? user?.name : "Profile"}</p>
                 </Link>
               ) : (
                 <Link to={"/login"} className="flex items-center gap-1">

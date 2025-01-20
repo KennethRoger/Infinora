@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import SearchBarAdmin from "@/components/Form/SearchBarAdmin";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/Table/DataTable";
 import {
@@ -11,23 +10,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useDispatch, useSelector } from "react-redux";
-import { 
+import {
   fetchVendorProducts,
   selectVendorProducts,
   selectVendorProductsLoading,
   selectVendorProductsError,
-  selectVendorProductsPagination
+  selectVendorProductsPagination,
 } from "@/redux/features/vendorProductsSlice";
 import axios from "axios";
 import { PRODUCT_TABLE_COLUMNS } from "@/constants/creator/tableColumns";
@@ -38,6 +31,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Pagination from "@/components/Pagination";
+import toast from "react-hot-toast";
 
 export default function CreatorProductDashboard() {
   const navigate = useNavigate();
@@ -61,31 +55,30 @@ export default function CreatorProductDashboard() {
 
   const calculateTotalStock = (product) => {
     if (!product) return 0;
-    
+
     if (product.variantCombinations?.length > 0) {
       return product.variantCombinations.reduce(
         (sum, combo) => sum + (parseInt(combo.stock) || 0),
         0
       );
     }
-    
+
     return product.stock || 0;
   };
 
-
-
   const handleToggleListing = async (productId) => {
     try {
-      await axios
-        .patch(
-          `${
-            import.meta.env.VITE_USERS_API_BASE_URL
-          }/api/products/toggle-listing`,
-          { productId }
-        )
-        .then(() => {
-          dispatch(fetchVendorProducts());
-        });
+      const { data } = await axios.patch(
+        `${
+          import.meta.env.VITE_USERS_API_BASE_URL
+        }/api/products/toggle-listing`,
+        { productId }
+      );
+
+      if (data.success) {
+        dispatch(fetchVendorProducts({ page: pagination.currentPage, limit: 10 }));
+        toast.success(data.message);
+      }
     } catch (error) {
       console.error("Error toggling listing:", error);
     }
@@ -104,7 +97,9 @@ export default function CreatorProductDashboard() {
           </TooltipTrigger>
           <TooltipContent>
             <div className="p-2 max-w-sm">
-              <div className="text-sm font-medium mb-2">Variant Combinations:</div>
+              <div className="text-sm font-medium mb-2">
+                Variant Combinations:
+              </div>
               <div className="space-y-2">
                 {combinations.map((combo, index) => (
                   <div key={combo._id || index} className="text-xs">
@@ -116,7 +111,7 @@ export default function CreatorProductDashboard() {
                       </span>
                       <span className="ml-2">
                         Stock: {combo.stock}
-                        {combo.priceAdjustment > 0 && 
+                        {combo.priceAdjustment > 0 &&
                           `, +${formatPrice(combo.priceAdjustment)}`}
                       </span>
                     </div>
@@ -143,7 +138,9 @@ export default function CreatorProductDashboard() {
           </TooltipTrigger>
           <TooltipContent>
             <div className="p-2 max-w-sm">
-              <div className="text-sm font-medium mb-2">Available Variants:</div>
+              <div className="text-sm font-medium mb-2">
+                Available Variants:
+              </div>
               <div className="space-y-2">
                 {variants.map((variant) => (
                   <div key={variant._id} className="text-xs">
@@ -181,9 +178,7 @@ export default function CreatorProductDashboard() {
         return product.subCategory?.name || "N/A";
       case "price":
         return (
-          <div className="whitespace-nowrap">
-            {formatPrice(product.price)}
-          </div>
+          <div className="whitespace-nowrap">{formatPrice(product.price)}</div>
         );
       case "stock":
         return (
