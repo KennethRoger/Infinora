@@ -11,6 +11,7 @@ import vendorCouponsReducer from "../features/vendorCouponSlice";
 import favoriteReducer from "../features/userFavoriteSlice";
 import searchReducer from "../features/searchSlice";
 import allOrdersReducer from "../features/allOrdersSlice";
+import vendorReducer from "../features/allVendorSlice";
 
 const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ const store = configureStore({
     favorites: favoriteReducer,
     search: searchReducer,
     allOrders: allOrdersReducer,
+    vendors: vendorReducer,
   },
 });
 

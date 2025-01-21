@@ -4,6 +4,7 @@ const { sendEmail } = require("../utils/emailService");
 const TempUser = require("../models/TempUser");
 const User = require("../models/User");
 const { generateToken, verifyToken } = require("../utils/tokenValidator");
+const { PerformanceNodeTiming } = require("perf_hooks");
 
 const cookieOptions = {
   httpOnly: true,
@@ -486,6 +487,46 @@ const newPassword = async (req, res) => {
   }
 };
 
+const getAllVendors = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const token = req.cookies.token;
+    const decoded = verifyToken(token);
+    if (decoded.role && decoded.role != "admin") {
+      res.status(400).json({ success: false, message: "Unauthorized access" });
+    }
+
+    const totalVendors = await User.countDocuments({
+      isVerified: true,
+      role: "vendor",
+    });
+
+    const vendors = await User.find({ isVerified: true, role: "vendor" })
+      .skip(skip)
+      .limit(limit);
+    const verifiedUsers = await User.find({ isVerified: true, vendorStatus: "pending",  role: "user" });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        verifiedUsers,
+        vendors,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalVendors / limit),
+          totalVendors,
+        },
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 module.exports = {
   generateOTP,
   verifyOTP,
@@ -499,4 +540,5 @@ module.exports = {
   generateOTPForForgotPass,
   confirmOTP,
   newPassword,
+  getAllVendors,
 };

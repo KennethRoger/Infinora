@@ -6,12 +6,11 @@ export default function ProfileLayout() {
   const { user, loading, refreshUser } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'creator'
+  const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
     refreshUser();
-    // Check if current path is in creator routes
-    const isCreatorRoute = location.pathname.includes('/creator/');
+    const isCreatorRoute = location.pathname.includes('creator');
     setActiveTab(isCreatorRoute ? 'creator' : 'profile');
   }, [location.pathname]);
 

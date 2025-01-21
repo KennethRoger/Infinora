@@ -46,7 +46,7 @@ export default function CreatorSection() {
       }
     };
     loadUser();
-  }, [refreshUser]);
+  }, [formValues]);
 
   const onSubmit = async (e) => {
     try {
@@ -96,10 +96,9 @@ export default function CreatorSection() {
     }
   };
 
-  const handleStartAsCreator = async () => {
+  const handleStartAsCreator = () => {
     if (loading) return;
-    await refreshUser();
-
+    console.log("Checking")
     if (!user) {
       navigate("/login");
       return;
