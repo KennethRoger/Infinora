@@ -24,10 +24,9 @@ export default function UserListPage() {
 
   useEffect(() => {
     if (userStatus === "succeeded") {
-      // Format the date for each user
-      const formattedUsers = users.map(user => ({
+      const formattedUsers = users.map((user) => ({
         ...user,
-        createdAt: formatDate(user.createdAt)
+        createdAt: formatDate(user.createdAt),
       }));
       setLocalUsers(formattedUsers);
     }
