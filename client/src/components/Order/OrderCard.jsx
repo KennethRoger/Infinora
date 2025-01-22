@@ -11,14 +11,18 @@ import {
   CreditCard,
   X,
   RotateCcw,
+  Star,
 } from "lucide-react";
 import { useState } from "react";
 import Modal from "@/components/Modal/Modal";
+import { useForm } from "react-hook-form";
 import { cancelOrder, returnOrder, cancelReturnRequest } from "@/api/order/orderApi";
+import { createReview } from "@/api/review/reviewApi";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { fetchUserOrders } from "@/redux/features/userOrderSlice";
 import { downloadInvoice } from "@/utils/invoice";
+import StarRating from "@/components/Rating/StarRating";
 
 const orderStatusColors = {
   pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -34,10 +38,21 @@ export default function OrderCard({ order, showDeliveryStatus = false }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [showCancelReturnModal, setShowCancelReturnModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [rating, setRating] = useState(0);
   const [cancelling, setCancelling] = useState(false);
   const [returning, setReturning] = useState(false);
   const [cancellingReturn, setCancellingReturn] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
   const dispatch = useDispatch();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
 
   const handleCancel = async () => {
     try {
@@ -78,6 +93,40 @@ export default function OrderCard({ order, showDeliveryStatus = false }) {
       toast.error(error.message || "Failed to cancel return request");
     } finally {
       setCancellingReturn(false);
+    }
+  };
+
+  const handleReviewClick = (product) => {
+    setSelectedProduct(product);
+    setShowReviewModal(true);
+    reset();
+    setRating(0);
+  };
+
+  const onSubmitReview = async (data) => {
+    if (rating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      await createReview({
+        productId: selectedProduct._id,
+        orderId: order._id,
+        rating,
+        title: data.title,
+        review: data.review,
+      });
+
+      toast.success("Review submitted successfully");
+      setShowReviewModal(false);
+      reset();
+      setRating(0);
+    } catch (error) {
+      toast.error(error.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -193,54 +242,159 @@ export default function OrderCard({ order, showDeliveryStatus = false }) {
           )}
 
           {order.status !== "cancelled" && (
-          <div className="mt-4 flex gap-5 justify-end">
-            <button
-              onClick={() => downloadInvoice(order)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Download Invoice
-            </button>
-            {order.status === "delivered" ? (
+            <div className="mt-4 flex gap-5 justify-end">
               <button
-                onClick={() => setShowReturnModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200"
+                onClick={() => downloadInvoice(order)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
               >
-                <RotateCcw className="h-4 w-4" />
-                Return Order
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Download Invoice
               </button>
-            ) : order.status === "return_requested" ? (
-              <button
-                onClick={() => setShowCancelReturnModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-              >
-                <X className="h-4 w-4" />
-                Cancel Return Request
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowCancelModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200"
-              >
-                <X className="h-4 w-4" />
-                Cancel Order
-              </button>
-            )}
-          </div>
+              {order.status === "delivered" ? (
+                <button
+                  onClick={() => setShowReturnModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors duration-200"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Return Order
+                </button>
+              ) : order.status === "return_requested" ? (
+                <button
+                  onClick={() => setShowCancelReturnModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                >
+                  <X className="h-4 w-4" />
+                  Cancel Return Request
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                >
+                  <X className="h-4 w-4" />
+                  Cancel Order
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
+
+      {/* Review Modal */}
+      <Modal isOpen={showReviewModal}>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Write a Review</h2>
+            <button
+              onClick={() => setShowReviewModal(false)}
+              className="p-1 hover:bg-gray-100 rounded-full"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {selectedProduct && (
+            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <img
+                src={selectedProduct.images[0]}
+                alt={selectedProduct.name}
+                className="w-16 h-16 object-cover rounded-md"
+              />
+              <div>
+                <h3 className="font-medium">{selectedProduct.name}</h3>
+                <p className="text-sm text-gray-500">
+                  {selectedProduct.description}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmitReview)} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Rating
+              </label>
+              <StarRating
+                rating={rating}
+                onChange={(newRating) => setRating(newRating)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Title
+              </label>
+              <input
+                type="text"
+                {...register("title", {
+                  required: "Title is required",
+                  maxLength: {
+                    value: 100,
+                    message: "Title cannot exceed 100 characters",
+                  },
+                })}
+                className="w-full p-2 border rounded-md"
+                placeholder="Summarize your review"
+              />
+              {errors.title && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.title.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Review
+              </label>
+              <textarea
+                {...register("review", {
+                  required: "Review is required",
+                  maxLength: {
+                    value: 1000,
+                    message: "Review cannot exceed 1000 characters",
+                  },
+                })}
+                className="w-full p-2 border rounded-md h-32"
+                placeholder="Share your experience with this product"
+              />
+              {errors.review && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.review.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-4">
+              <button
+                type="button"
+                onClick={() => setShowReviewModal(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submittingReview}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {submittingReview ? "Submitting..." : "Submit Review"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </Modal>
 
       {/* Cancel Order Modal */}
       <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancel Order">
@@ -304,7 +458,7 @@ export default function OrderCard({ order, showDeliveryStatus = false }) {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setShowCancelReturnModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+              className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-md"
               disabled={cancellingReturn}
             >
               No, Keep Request
@@ -319,6 +473,20 @@ export default function OrderCard({ order, showDeliveryStatus = false }) {
           </div>
         </div>
       </Modal>
+
+      {/* Add Review Button for delivered orders */}
+      {order.status === "delivered" && (
+        <div className="mt-4">
+          <h3 className="text-sm font-medium mb-2">Write a Review</h3>
+          <button
+            onClick={() => handleReviewClick(order.product)}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+          >
+            <Star className="h-4 w-4" />
+            Rate this product
+          </button>
+        </div>
+      )}
     </div>
   );
 }

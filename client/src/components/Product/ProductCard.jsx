@@ -7,11 +7,15 @@ import {
   fetchUserFavorites,
   toggleProductFavorite,
 } from "@/redux/features/userFavoriteSlice";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getProductReviewStats } from "@/api/review/reviewApi";
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [isHovered, setIsHovered] = useState(false);
+  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
+
   const { items: favorites, loading: favoritesLoading } = useSelector(
     (state) => state.favorites
   );
@@ -19,6 +23,23 @@ export default function ProductCard({ product }) {
   useEffect(() => {
     dispatch(fetchUserFavorites());
   }, [dispatch]);
+
+  useEffect(() => {
+    fetchReviewStats();
+  }, [product._id]);
+
+  const fetchReviewStats = async () => {
+    try {
+      const stats = await getProductReviewStats(product._id);
+      setReviewStats(stats);
+    } catch (error) {
+      console.error("Error fetching review stats:", error);
+    }
+  };
+
+  const isFavorited = favorites.some(
+    (favorite) => favorite.productId._id === product._id
+  );
 
   const handleProductClick = async () => {
     try {
@@ -28,9 +49,6 @@ export default function ProductCard({ product }) {
       console.error("Error fetching product:", error);
     }
   };
-  const isFavorited = favorites.some(
-    (favorite) => favorite.productId._id === product?._id
-  );
 
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
@@ -83,7 +101,12 @@ export default function ProductCard({ product }) {
             {product.vendor.name}
           </p>
           <h3 className="font-bold text-base truncate">{product.name}</h3>
-          <StarRating rating={product.rating} />
+          <div className="flex items-center gap-1">
+            <StarRating rating={reviewStats.averageRating} />
+            <span className="text-sm text-gray-500">
+              ({reviewStats.totalReviews})
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <p className="font-bold text-xl text-black">
