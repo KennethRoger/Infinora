@@ -9,16 +9,16 @@ const searchProducts = async (req, res) => {
 
     const searchCriteria = {
       $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { description: { $regex: query, $options: 'i' } },
-        { tags: { $regex: query, $options: 'i' } }
+        { name: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } },
+        { tags: { $regex: query, $options: "i" } },
       ],
-      isListed: true
+      isListed: true,
     };
 
     const products = await Product.find(searchCriteria)
-      .populate('category')
-      .select('name description images price discount category tags vendor')
+      .populate("category")
+      .select("name description images price discount category tags vendor")
       .limit(10);
 
     res.json(products);
@@ -31,38 +31,38 @@ const searchProducts = async (req, res) => {
 const getSearchSuggestions = async (req, res) => {
   try {
     const { query } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({ message: "Search query is required" });
     }
 
     const products = await Product.find({
-      name: { $regex: query, $options: 'i' },
-      isListed: true
+      name: { $regex: query, $options: "i" },
+      isListed: true,
     })
-    .select('name category')
-    .populate('category', 'name')
-    .limit(5);
+      .select("name category")
+      .populate("category", "name")
+      .limit(5);
 
     const categories = await Product.aggregate([
       {
         $match: {
-          'category.name': { $regex: query, $options: 'i' },
-          isListed: true
-        }
+          "category.name": { $regex: query, $options: "i" },
+          isListed: true,
+        },
       },
       {
         $group: {
-          _id: '$category',
-          count: { $sum: 1 }
-        }
+          _id: "$category",
+          count: { $sum: 1 },
+        },
       },
-      { $limit: 3 }
+      { $limit: 3 },
     ]);
 
     res.json({
       products,
-      categories
+      categories,
     });
   } catch (error) {
     console.error("Suggestion error:", error);
@@ -72,5 +72,5 @@ const getSearchSuggestions = async (req, res) => {
 
 module.exports = {
   searchProducts,
-  getSearchSuggestions
+  getSearchSuggestions,
 };

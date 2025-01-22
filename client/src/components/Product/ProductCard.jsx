@@ -14,7 +14,10 @@ export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [isHovered, setIsHovered] = useState(false);
-  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
+  const [reviewStats, setReviewStats] = useState({
+    averageRating: 0,
+    totalReviews: 0,
+  });
 
   const { items: favorites, loading: favoritesLoading } = useSelector(
     (state) => state.favorites

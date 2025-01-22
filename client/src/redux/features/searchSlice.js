@@ -7,12 +7,21 @@ export const searchProducts = createAsyncThunk(
   "search/searchProducts",
   async (searchTerm, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/search/products`,
-        { 
-          params: { query: searchTerm }
-        }
-      );
+      const response = await axios.get(`${API_BASE_URL}/api/search/products`, {
+        params: { query: searchTerm },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const getAllProducts = createAsyncThunk(
+  "search/getAllProducts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/products`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -26,8 +35,8 @@ export const getSearchSuggestions = createAsyncThunk(
     try {
       const response = await axios.get(
         `${API_BASE_URL}/api/search/suggestions`,
-        { 
-          params: { query: searchTerm }
+        {
+          params: { query: searchTerm },
         }
       );
       return response.data;
@@ -44,11 +53,11 @@ const searchSlice = createSlice({
     results: [],
     suggestions: {
       products: [],
-      categories: []
+      categories: [],
     },
     loading: false,
     error: null,
-    recentSearches: JSON.parse(localStorage.getItem('recentSearches') || '[]')
+    recentSearches: JSON.parse(localStorage.getItem("recentSearches") || "[]"),
   },
   reducers: {
     setSearchTerm: (state, action) => {
@@ -58,15 +67,18 @@ const searchSlice = createSlice({
       if (!state.recentSearches.includes(action.payload)) {
         state.recentSearches = [
           action.payload,
-          ...state.recentSearches.slice(0, 2)
+          ...state.recentSearches.slice(0, 2),
         ];
-        localStorage.setItem('recentSearches', JSON.stringify(state.recentSearches));
+        localStorage.setItem(
+          "recentSearches",
+          JSON.stringify(state.recentSearches)
+        );
       }
     },
     clearRecentSearches: (state) => {
       state.recentSearches = [];
-      localStorage.removeItem('recentSearches');
-    }
+      localStorage.removeItem("recentSearches");
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -93,9 +105,23 @@ const searchSlice = createSlice({
       .addCase(getSearchSuggestions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(getAllProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getAllProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.results = action.payload;
+        state.searchTerm = "";
+      })
+      .addCase(getAllProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
-  }
+  },
 });
 
-export const { setSearchTerm, addRecentSearch, clearRecentSearches } = searchSlice.actions;
+export const { setSearchTerm, addRecentSearch, clearRecentSearches } =
+  searchSlice.actions;
 export default searchSlice.reducer;

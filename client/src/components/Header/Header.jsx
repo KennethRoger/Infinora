@@ -9,10 +9,12 @@ import { FiPackage } from "react-icons/fi";
 import { GrFavorite } from "react-icons/gr";
 import SearchBar from "../Form/SearchBar";
 import { useUser } from "@/context/UserContext";
+import CategoryDropdown from "./CategoryDropdown";
 
 export default function Header() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
   const { user, refreshUser } = useUser();
 
   useEffect(() => {
@@ -47,11 +49,16 @@ export default function Header() {
                 alt="Infinora white colored logo"
               />
             </li>
-            <li>
+            <li 
+              className="relative"
+              onMouseEnter={() => setShowCategories(true)}
+              onMouseLeave={() => setShowCategories(false)}
+            >
               <Link to={"/categories"} className="flex items-center">
                 <p>Categories</p>
                 <RiArrowDropDownLine className="text-4xl" />
               </Link>
+              {showCategories && <CategoryDropdown />}
             </li>
             <li className="flex-1">
               <SearchBar placeholder={"Search for your desired product"} />
