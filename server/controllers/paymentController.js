@@ -1,19 +1,18 @@
 const razorpay = require("../config/razorpay");
 const crypto = require("crypto");
-const Order = require("../models/Order");
 
 const createRazorpayOrder = async (req, res) => {
   try {
     const { amount } = req.body;
-    
+
     const options = {
       amount: amount * 100,
       currency: "INR",
       receipt: "receipt_" + Date.now(),
     };
-    
+
     const order = await razorpay.orders.create(options);
-    console.log("RazorPay order: ", order)
+
     res.status(200).json({
       success: true,
       order,
@@ -29,11 +28,8 @@ const createRazorpayOrder = async (req, res) => {
 
 const verifyPayment = async (req, res) => {
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-    } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
@@ -51,7 +47,7 @@ const verifyPayment = async (req, res) => {
           orderId: razorpay_order_id,
           paymentId: razorpay_payment_id,
           signature: razorpay_signature,
-        }
+        },
       });
     } else {
       res.status(400).json({

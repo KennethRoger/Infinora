@@ -25,8 +25,8 @@ const getAllProducts = async (req, res) => {
         currentPage: page,
         totalPages,
         totalProducts,
-        hasMore: page < totalPages
-      }
+        hasMore: page < totalPages,
+      },
     });
   } catch (error) {
     console.error("Error fetching all products:", error);
@@ -46,7 +46,6 @@ const getProductById = async (req, res) => {
       .populate("category", "name")
       .populate("subCategory", "name")
       .populate("vendor", "name email profileImagePath");
-      console.log(product)
 
     if (!product) {
       return res.status(404).json({
@@ -102,8 +101,8 @@ const getVendorProducts = async (req, res) => {
         currentPage: page,
         totalPages,
         totalProducts,
-        hasMore: page < totalPages
-      }
+        hasMore: page < totalPages,
+      },
     });
   } catch (error) {
     console.error("Error fetching vendor products:", error);

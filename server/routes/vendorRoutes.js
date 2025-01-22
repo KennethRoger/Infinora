@@ -60,6 +60,7 @@ const {
   registerVendorDetails,
   addVendorProducts,
   editVendorProduct,
+  getAVendorProducts,
 } = require("../controllers/vendorController");
 
 const handleRegistrationUpload = (req, res, next) => {
@@ -113,5 +114,6 @@ router.post("/verify", verifyVendor);
 router.post("/register", handleRegistrationUpload, registerVendorDetails);
 router.post("/product", handleProductUpload, addVendorProducts);
 router.put("/product/:productId", handleProductUpload, editVendorProduct);
+router.get("/products/:vendorId", getAVendorProducts);
 
 module.exports = router;
