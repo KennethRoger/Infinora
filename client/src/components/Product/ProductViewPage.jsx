@@ -4,14 +4,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fetchProductById } from "@/redux/features/singleProductSlice";
-import { fetchVendorProducts } from "@/redux/features/vendorProductsSlice";
+import { getVendorProducts } from "@/api/vendor/vendorProduct";
 import { addToCart } from "@/api/cart/cartApi";
+import { getProductReviewStats } from "@/api/review/reviewApi";
 import Spinner from "@/components/Spinner/Spinner";
 import ProductCard from "./ProductCard";
 import MagnifyImage from "../Image/MagnifyImage";
-import { Star } from "lucide-react";
 import toast from "react-hot-toast";
 import StarRating from "../Rating/StarRating";
+import ReviewSection from "../Review/ReviewSection";
 import { toggleProductFavorite } from "@/redux/features/userFavoriteSlice";
 
 const ProductViewPage = () => {
@@ -20,8 +21,10 @@ const ProductViewPage = () => {
   const { product, loading, error } = useSelector(
     (state) => state.singleProduct
   );
-  const { products: vendorProducts, loading: vendorProductsLoading } =
-    useSelector((state) => state.vendorProducts);
+  console.log(product);
+  const [vendorProducts, setVendorProducts] = useState([]);
+  const [vendorProductsLoading, setVendorProductsLoading] = useState(false);
+  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
 
   const { items: favorites, loading: favoritesLoading } = useSelector(
     (state) => state.favorites
@@ -43,14 +46,39 @@ const ProductViewPage = () => {
   useEffect(() => {
     if (productId) {
       dispatch(fetchProductById(productId));
+      fetchReviewStats();
     }
   }, [dispatch, productId]);
 
-  useEffect(() => {
-    if (product?.vendor?._id) {
-      dispatch(fetchVendorProducts());
+  const fetchReviewStats = async () => {
+    try {
+      const stats = await getProductReviewStats(productId);
+      setReviewStats(stats);
+    } catch (error) {
+      console.error("Error fetching review stats:", error);
     }
-  }, [dispatch, product?.vendor?._id]);
+  };
+
+  useEffect(() => {
+    const fetchVendorProducts = async () => {
+      if (product?.vendor?._id) {
+        try {
+          setVendorProductsLoading(true);
+          const response = await getVendorProducts(product.vendor._id);
+          const otherProducts = response.products.filter(
+            (p) => p._id !== product._id
+          );
+          setVendorProducts(otherProducts);
+        } catch (error) {
+          console.error("Error fetching vendor products:", error);
+        } finally {
+          setVendorProductsLoading(false);
+        }
+      }
+    };
+
+    fetchVendorProducts();
+  }, [product]);
 
   useEffect(() => {
     if (product) {
@@ -146,9 +174,6 @@ const ProductViewPage = () => {
     }
   };
 
-  const otherVendorProducts =
-    vendorProducts?.filter((p) => p._id !== productId) || [];
-
   if (loading || vendorProductsLoading)
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -220,9 +245,9 @@ const ProductViewPage = () => {
               <h1 className="text-2xl font-semibold mb-2">{product.name}</h1>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center">
-                  <StarRating rating={product.rating} />
+                  <StarRating rating={reviewStats.averageRating} />
                   <span className="text-sm text-gray-500 ml-2">
-                    ({product.reviews?.length || 0} reviews)
+                    ({reviewStats.totalReviews} reviews)
                   </span>
                 </div>
               </div>
@@ -393,81 +418,15 @@ const ProductViewPage = () => {
           </div>
         </div>
 
-        <div className="mt-12 bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-semibold mb-6">Customer Reviews</h2>
+        <ReviewSection productId={productId} />
 
-          <div className="flex items-center justify-between mb-8 border-b pb-6">
-            <div className="flex items-center space-x-4">
-              <div className="text-4xl font-bold">{product.rating}</div>
-              <div>
-                <div className="flex text-yellow-400 mb-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`h-5 w-5 ${
-                        star <= Math.floor(product.rating)
-                          ? "fill-current"
-                          : "fill-none"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <div className="text-gray-500">
-                  Based on {product.reviews?.length || 0} reviews
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {product.reviews?.map((review, index) => (
-              <div key={index} className="border-b pb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        {review.userId?.name?.[0] || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">
-                        {review.userId?.name || "Anonymous"}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex text-yellow-400">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`h-4 w-4 ${
-                          star <= review.rating ? "fill-current" : "fill-none"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-gray-600">{review.comment}</p>
-              </div>
-            ))}
-
-            {(!product.reviews || product.reviews.length === 0) && (
-              <div className="text-center py-8 text-gray-500">
-                No reviews yet. Be the first to review this product!
-              </div>
-            )}
-          </div>
-        </div>
-
-        {otherVendorProducts.length > 0 && (
+        {vendorProducts.length > 0 && (
           <div className="mt-12">
             <h2 className="text-2xl font-semibold mb-6">
               More from this Vendor
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {otherVendorProducts.slice(0, 4).map((product) => (
+              {vendorProducts.slice(0, 4).map((product) => (
                 <ProductCard key={product._id} product={product} />
               ))}
             </div>

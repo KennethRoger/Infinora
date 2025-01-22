@@ -97,7 +97,14 @@ export function App() {
               </RedirectIfAuthenticated>
             }
           />
-          <Route path="verify-otp" element={<OTPVerificationPage />} />
+          <Route
+            path="verify-otp"
+            element={
+              <RedirectIfAuthenticated>
+                <OTPVerificationPage />
+              </RedirectIfAuthenticated>
+            }
+          />
           <Route
             path="forgot-password"
             element={
