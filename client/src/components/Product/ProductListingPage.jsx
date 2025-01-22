@@ -7,19 +7,25 @@ import { Button } from "@/components/ui/button";
 
 export default function ProductListingPage() {
   const location = useLocation();
-  const { products: initialProducts, type, title: initialTitle } = location.state || {};
+  const {
+    products: initialProducts,
+    type,
+    title: initialTitle,
+  } = location.state || {};
   const [products, setProducts] = useState(initialProducts || []);
   const [title, setTitle] = useState(initialTitle || "All Products");
-  
+
   const [filters, setFilters] = useState({
     priceRange: [0, 10000],
     categories: [],
     rating: 0,
-    availability: 'all'
+    availability: "all",
   });
-  const [sortBy, setSortBy] = useState('default');
+  const [sortBy, setSortBy] = useState("default");
 
-  const { results: searchResults, searchTerm } = useSelector((state) => state.search);
+  const { results: searchResults, searchTerm } = useSelector(
+    (state) => state.search
+  );
 
   useEffect(() => {
     if (location.state?.products) {
@@ -32,38 +38,51 @@ export default function ProductListingPage() {
   }, [location.state, searchResults, searchTerm]);
 
   const getFilteredProducts = () => {
-    return products.filter(product => {
-      const price = product.price * (1 - (product.discount || 0) / 100);
-      
-      if (price < filters.priceRange[0] || price > filters.priceRange[1]) return false;
-      
-      if (filters.categories.length > 0 && !filters.categories.includes(product.category?.name)) {
-        return false;
-      }
-      
-      if (filters.rating > 0 && (product.rating || 0) < filters.rating) return false;
-      
-      if (filters.availability !== 'all') {
-        const inStock = (product.stockQuantity || 0) > 0;
-        if (filters.availability === 'in-stock' && !inStock) return false;
-        if (filters.availability === 'out-of-stock' && inStock) return false;
-      }
-      
-      return true;
-    }).sort((a, b) => {
-      switch (sortBy) {
-        case 'price-low':
-          return (a.price * (1 - (a.discount || 0) / 100)) - (b.price * (1 - (b.discount || 0) / 100));
-        case 'price-high':
-          return (b.price * (1 - (b.discount || 0) / 100)) - (a.price * (1 - (a.discount || 0) / 100));
-        case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        default:
-          return 0;
-      }
-    });
+    return products
+      .filter((product) => {
+        const price = product.price * (1 - (product.discount || 0) / 100);
+
+        if (price < filters.priceRange[0] || price > filters.priceRange[1])
+          return false;
+
+        if (
+          filters.categories.length > 0 &&
+          !filters.categories.includes(product.category?.name)
+        ) {
+          return false;
+        }
+
+        if (filters.rating > 0 && (product.rating || 0) < filters.rating)
+          return false;
+
+        if (filters.availability !== "all") {
+          const inStock = (product.stockQuantity || 0) > 0;
+          if (filters.availability === "in-stock" && !inStock) return false;
+          if (filters.availability === "out-of-stock" && inStock) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "price-low":
+            return (
+              a.price * (1 - (a.discount || 0) / 100) -
+              b.price * (1 - (b.discount || 0) / 100)
+            );
+          case "price-high":
+            return (
+              b.price * (1 - (b.discount || 0) / 100) -
+              a.price * (1 - (a.discount || 0) / 100)
+            );
+          case "rating":
+            return (b.rating || 0) - (a.rating || 0);
+          case "newest":
+            return new Date(b.createdAt) - new Date(a.createdAt);
+          default:
+            return 0;
+        }
+      });
   };
 
   const filteredProducts = getFilteredProducts();
@@ -73,16 +92,16 @@ export default function ProductListingPage() {
       priceRange: [0, 10000],
       categories: [],
       rating: 0,
-      availability: 'all'
+      availability: "all",
     });
-    setSortBy('default');
+    setSortBy("default");
   };
 
   return (
     <div className="container mx-10 py-[100px] relative">
       <div className="flex gap-6 min-h-screen">
         <div className="w-64 flex-shrink-0 sticky top-[80px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto">
-          <ProductListingSidebar 
+          <ProductListingSidebar
             filters={filters}
             setFilters={setFilters}
             sortBy={sortBy}
@@ -92,9 +111,10 @@ export default function ProductListingPage() {
 
         <div className="flex-grow">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">{"Products" ||title}</h2>
+            <h2 className="text-2xl font-semibold">{"Products" || title}</h2>
             <p className="text-gray-600">
-              Showing {filteredProducts.length} result{filteredProducts.length === 1 ? '' : 's'}
+              Showing {filteredProducts.length} result
+              {filteredProducts.length === 1 ? "" : "s"}
             </p>
           </div>
 
@@ -108,7 +128,9 @@ export default function ProductListingPage() {
             <div className="text-center py-12">
               <p className="text-4xl mb-4">😕</p>
               <h3 className="text-xl font-semibold mb-2">No Products Found</h3>
-              <p className="text-gray-600 mb-4">Try adjusting your filters to find what you're looking for</p>
+              <p className="text-gray-600 mb-4">
+                Try adjusting your filters to find what you're looking for
+              </p>
               <Button onClick={resetFilters}>Clear All Filters</Button>
             </div>
           )}

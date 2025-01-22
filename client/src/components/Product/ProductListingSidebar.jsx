@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -10,10 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from '@/components/ui/checkbox';
-import { X } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
+import { X, Loader2 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllProducts } from "@/redux/features/searchSlice";
 
-export default function ProductListingSidebar({ filters, setFilters, sortBy, setSortBy }) {
+export default function ProductListingSidebar({
+  filters,
+  setFilters,
+  sortBy,
+  setSortBy,
+}) {
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.search);
   const [priceRange, setPriceRange] = useState(filters.priceRange);
   const defaultPriceRange = [0, 10000];
 
@@ -21,9 +30,9 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
     const [newMin] = value;
     if (newMin <= priceRange[1]) {
       setPriceRange([newMin, priceRange[1]]);
-      setFilters(prev => ({
+      setFilters((prev) => ({
         ...prev,
-        priceRange: [newMin, prev.priceRange[1]]
+        priceRange: [newMin, prev.priceRange[1]],
       }));
     }
   };
@@ -32,33 +41,33 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
     const [newMax] = value;
     if (newMax >= priceRange[0]) {
       setPriceRange([priceRange[0], newMax]);
-      setFilters(prev => ({
+      setFilters((prev) => ({
         ...prev,
-        priceRange: [prev.priceRange[0], newMax]
+        priceRange: [prev.priceRange[0], newMax],
       }));
     }
   };
 
   const handleCategoryChange = (category) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       categories: prev.categories.includes(category)
-        ? prev.categories.filter(c => c !== category)
-        : [...prev.categories, category]
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category],
     }));
   };
 
   const handleRatingChange = (rating) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      rating: Number(rating)
+      rating: Number(rating),
     }));
   };
 
   const handleAvailabilityChange = (availability) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      availability
+      availability,
     }));
   };
 
@@ -68,25 +77,31 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
       priceRange: defaultPriceRange,
       categories: [],
       rating: 0,
-      availability: 'all'
+      availability: "all",
     });
-    setSortBy('default');
+    setSortBy("default");
   };
 
   const resetPriceRange = () => {
     setPriceRange(defaultPriceRange);
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      priceRange: defaultPriceRange
+      priceRange: defaultPriceRange,
     }));
   };
 
+  const handleViewAllProducts = async () => {
+    resetFilters();
+    await dispatch(getAllProducts());
+  };
+
   const activeFilterCount = [
-    priceRange[0] !== defaultPriceRange[0] || priceRange[1] !== defaultPriceRange[1],
+    priceRange[0] !== defaultPriceRange[0] ||
+      priceRange[1] !== defaultPriceRange[1],
     filters.categories.length > 0,
     filters.rating > 0,
-    filters.availability !== 'all',
-    sortBy !== 'default'
+    filters.availability !== "all",
+    sortBy !== "default",
   ].filter(Boolean).length;
 
   return (
@@ -99,6 +114,22 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
           </Badge>
         )}
       </div>
+
+      <Button
+        onClick={handleViewAllProducts}
+        className="w-full"
+        variant="secondary"
+        disabled={loading}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading...
+          </>
+        ) : (
+          "View All Products"
+        )}
+      </Button>
 
       <div>
         <h3 className="text-lg font-semibold mb-3">Sort By</h3>
@@ -119,9 +150,10 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
       <div>
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-lg font-semibold">Price Range</h3>
-          {(priceRange[0] !== defaultPriceRange[0] || priceRange[1] !== defaultPriceRange[1]) && (
-            <Button 
-              variant="ghost" 
+          {(priceRange[0] !== defaultPriceRange[0] ||
+            priceRange[1] !== defaultPriceRange[1]) && (
+            <Button
+              variant="ghost"
               size="sm"
               onClick={resetPriceRange}
               className="h-8 px-2 text-muted-foreground"
@@ -133,7 +165,9 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
         </div>
         <div className="px-2 space-y-4">
           <div>
-            <label className="text-sm text-muted-foreground">Minimum Price</label>
+            <label className="text-sm text-muted-foreground">
+              Minimum Price
+            </label>
             <Slider
               value={[priceRange[0]]}
               onValueChange={handleMinPriceChange}
@@ -144,7 +178,9 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
             />
           </div>
           <div>
-            <label className="text-sm text-muted-foreground">Maximum Price</label>
+            <label className="text-sm text-muted-foreground">
+              Maximum Price
+            </label>
             <Slider
               value={[priceRange[1]]}
               onValueChange={handleMaxPriceChange}
@@ -157,11 +193,15 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
           <div className="flex justify-between">
             <div className="text-sm">
               <span className="text-muted-foreground">Min: </span>
-              <span className="font-medium">₹{priceRange[0].toLocaleString()}</span>
+              <span className="font-medium">
+                ₹{priceRange[0].toLocaleString()}
+              </span>
             </div>
             <div className="text-sm">
               <span className="text-muted-foreground">Max: </span>
-              <span className="font-medium">₹{priceRange[1].toLocaleString()}</span>
+              <span className="font-medium">
+                ₹{priceRange[1].toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -170,14 +210,14 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
       <div>
         <h3 className="text-lg font-semibold mb-3">Categories</h3>
         <div className="space-y-2">
-          {['Accessories', 'Fashion', 'Home Decor', 'Books'].map((category) => (
+          {["Accessories", "Fashion", "Home Decor", "Books"].map((category) => (
             <div key={category} className="flex items-center space-x-2">
               <Checkbox
                 id={category}
                 checked={filters.categories.includes(category)}
                 onCheckedChange={() => handleCategoryChange(category)}
               />
-              <Label 
+              <Label
                 htmlFor={category}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
@@ -205,7 +245,10 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
 
       <div>
         <h3 className="text-lg font-semibold mb-3">Availability</h3>
-        <Select value={filters.availability} onValueChange={handleAvailabilityChange}>
+        <Select
+          value={filters.availability}
+          onValueChange={handleAvailabilityChange}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select availability..." />
           </SelectTrigger>
@@ -218,11 +261,7 @@ export default function ProductListingSidebar({ filters, setFilters, sortBy, set
       </div>
 
       {activeFilterCount > 0 && (
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={resetFilters}
-        >
+        <Button variant="outline" className="w-full" onClick={resetFilters}>
           Clear All Filters
         </Button>
       )}
