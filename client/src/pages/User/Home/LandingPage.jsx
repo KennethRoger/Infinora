@@ -17,14 +17,18 @@ import Footer from "@/components/Footer/Footer";
 import { verifyUser } from "@/api/auth/verifyUser";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProducts } from "@/redux/features/allProductsSlice";
+import { getTopRatedProducts } from "@/api/section/sectionApi";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { products, loading, error, pagination } = useSelector(
+  const { products, loading: productsLoading, error, pagination } = useSelector(
     (state) => state.allProducts
   );
   const dispatch = useDispatch();
+
+  const [topProducts, setTopProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -33,7 +37,27 @@ const LandingPage = () => {
     };
     checkAuthentication();
     dispatch(fetchAllProducts({ page: 1, limit: 10 }));
+    fetchTopProducts();
   }, [dispatch]);
+
+  const fetchTopProducts = async () => {
+    try {
+      const data = await getTopRatedProducts();
+      setTopProducts(data);
+    } catch (error) {
+      console.error("Error fetching top products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const dummyData = Array.from({ length: 5 }).map(() => ({
+    image: placeholder,
+    review: "Best creative products",
+    userName: "Infinora"
+  }));
+
+  const displayData = topProducts.length > 0 ? topProducts : dummyData;
 
   return (
     <>
@@ -49,20 +73,17 @@ const LandingPage = () => {
           <div className="w-[60%] h-[300px] flex justify-between items-center gap-16">
             <Carousel className="w-[400px] h-full">
               <CarouselContent>
-                {Array.from({ length: 5 }).map((_, index) => (
+                {displayData.map((item, index) => (
                   <CarouselItem key={index}>
                     <div className="relative w-full h-full">
                       <img
-                        src={placeholder}
+                        src={item.image || placeholder}
                         className="w-[400px] h-[300px]"
-                        alt="Carousel Image"
+                        alt="Top Rated Product"
                       />
                       <div className="absolute w-full p-5 bottom-0 text-white bg-gradient-to-b from-transparent via-gray-800 to-black text-center">
-                        <p>
-                          Lorem ipsum dolor sit amet, consectetur adipiscing
-                          elit.
-                        </p>
-                        <p className="text-right">- Creator Name</p>
+                        <p>{item.review}</p>
+                        <p className="text-right">- {item.userName}</p>
                       </div>
                     </div>
                   </CarouselItem>
@@ -125,7 +146,7 @@ const LandingPage = () => {
               </p>
             </div>
           </div>
-          {loading ? (
+          {productsLoading ? (
             <div className="flex justify-center items-center h-40">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>

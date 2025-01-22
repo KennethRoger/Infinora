@@ -5,9 +5,13 @@ import { RiExchangeDollarLine } from "react-icons/ri";
 import { AiOutlineLogout } from "react-icons/ai";
 import { FaListCheck } from "react-icons/fa6";
 import { FaRegUser } from "react-icons/fa";
+import { FaRegAddressBook } from "react-icons/fa";
+import { CgProfile } from "react-icons/cg";
+import { IoIosNotifications } from "react-icons/io";
+import { GiPegasus } from "react-icons/gi";
+import { MdOutlineRateReview } from "react-icons/md";
 import { logout } from "@/api/user/userAuth";
 import toast from "react-hot-toast";
-
 const iconStyle = "text-xl text-[#ff9500] group-hover:text-[#ff7800] transition-colors duration-300";
 
 export const profileSideMenu = [
@@ -38,11 +42,13 @@ export const profileSideMenu = [
         subId: 11,
         subLabel: "Profile Info",
         subPath: "/home/profile",
+        icon: <CgProfile className={iconStyle} />,
       },
       {
         subId: 12,
         subLabel: "Address",
         subPath: "/home/profile/address",
+        icon: <FaRegAddressBook className={iconStyle} />,
       },
     ],
   },
@@ -55,13 +61,13 @@ export const profileSideMenu = [
         subId: 21,
         subLabel: "Wallet",
         subPath: "/home/profile/wallet",
-        icon: <BiWallet className="text-lg text-gray-600 group-hover:text-[#ff9500] transition-colors duration-300" />
+        icon: <BiWallet className={iconStyle} />
       },
       {
         subId: 22,
         subLabel: "Transactions",
         subPath: "/home/profile/transactions",
-        icon: <RiExchangeDollarLine className="text-lg text-gray-600 group-hover:text-[#ff9500] transition-colors duration-300" />
+        icon: <RiExchangeDollarLine className={iconStyle} />
       },
     ],
   },
@@ -74,16 +80,19 @@ export const profileSideMenu = [
         subId: 23,
         subLabel: "Notification",
         subPath: "/home/profile/notification",
+        icon: <IoIosNotifications className={iconStyle} />,
       },
       {
         subId: 24,
         subLabel: "My Visions",
         subPath: "/home/profile/my-visions",
+        icon: <GiPegasus className={iconStyle} />,
       },
       {
         subId: 25,
         subLabel: "My Reviews",
         subPath: "/home/profile/my-reviews",
+        icon: <MdOutlineRateReview className={iconStyle} />,
       },
     ],
   },

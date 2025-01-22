@@ -678,9 +678,41 @@ const editVendorProduct = async (req, res) => {
   }
 };
 
+const getAVendorProducts = async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+
+    if (!vendorId) {
+      return res.status(400).json({
+        success: false,
+        message: "Vendor ID is required"
+      });
+    }
+
+    const products = await Product.find({ vendor: vendorId, isListed: true })
+      .populate("category", "name")
+      .populate("subCategory", "name")
+      .populate("vendor", "name email profileImagePath")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      products
+    });
+  } catch (error) {
+    console.error("Error fetching vendor products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching vendor products",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   verifyVendor,
   registerVendorDetails,
   addVendorProducts,
   editVendorProduct,
+  getAVendorProducts,
 };

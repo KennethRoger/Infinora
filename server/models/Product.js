@@ -15,9 +15,9 @@ const variantTypesSchema = new mongoose.Schema({
 });
 
 const variantCombinationSchema = new mongoose.Schema({
-  variants: { 
+  variants: {
     type: Object,
-    required: true 
+    required: true,
   },
   stock: { type: Number, required: true },
   priceAdjustment: { type: Number, default: 0 },
@@ -32,13 +32,6 @@ const productVariantsSchema = new mongoose.Schema({
     type: [variantTypesSchema],
     required: true,
   },
-});
-
-const reviewSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  comment: { type: String },
-  rating: { type: Number },
-  createdAt: { type: Date, default: Date.now },
 });
 
 const productSchema = new mongoose.Schema(
@@ -69,7 +62,6 @@ const productSchema = new mongoose.Schema(
       default: null,
     },
     rating: { type: Number, default: 0 },
-    reviews: { type: [reviewSchema], default: [] },
     additionalDetails: { type: String, default: "" },
     status: {
       type: String,

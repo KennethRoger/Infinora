@@ -1,5 +1,5 @@
-const Wallet = require('../models/Wallet');
-const Transaction = require('../models/Transactions');
+const Wallet = require("../models/Wallet");
+const Transaction = require("../models/Transactions");
 
 const createWalletTransaction = async ({
   userId,
@@ -8,14 +8,14 @@ const createWalletTransaction = async ({
   description,
   reference,
   paymentMethod,
-  orderId
+  orderId,
 }) => {
   try {
     const wallet = await Wallet.findOneAndUpdate(
       { userId },
-      { 
+      {
         userId,
-        $inc: { balance: type === 'credit' ? amount : -amount }
+        $inc: { balance: type === "credit" ? amount : -amount },
       },
       { upsert: true, new: true }
     );
@@ -29,7 +29,7 @@ const createWalletTransaction = async ({
       paymentMethod,
       orderId,
       balance: wallet.balance,
-      status: 'completed'
+      status: "completed",
     });
 
     return { wallet, transaction };

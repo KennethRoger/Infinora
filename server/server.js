@@ -27,6 +27,8 @@ const favoriteRoutes = require("./routes/favoriteRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const metricRoutes = require("./routes/metricRoutes");
 const tempOrderRoutes = require("./routes/tempOrderRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const sectionRoutes = require("./routes/sectionRoutes");
 
 const corsOptions = {
   origin: "http://localhost:5173",
@@ -59,6 +61,8 @@ app.use("/api/favorites", favoriteRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/metrics", metricRoutes);
 app.use("/api/temp-order", tempOrderRoutes);
+app.use("/api/review", reviewRoutes);
+app.use("/api/sections", sectionRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
