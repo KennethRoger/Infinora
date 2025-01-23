@@ -3,7 +3,10 @@ import { useState, useEffect } from "react";
 import ProductListingSidebar from "./ProductListingSidebar";
 import ProductCard from "./ProductCard";
 import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
+import Pagination from "@/components/Pagination";
+import { searchProducts } from "@/redux/features/searchSlice";
 
 export default function ProductListingPage() {
   const location = useLocation();
@@ -23,21 +26,34 @@ export default function ProductListingPage() {
   });
   const [sortBy, setSortBy] = useState("default");
 
-  const { results: searchResults, searchTerm } = useSelector(
-    (state) => state.search
-  );
+  const dispatch = useDispatch();
+  const {
+    results: searchResults,
+    searchTerm,
+    pagination,
+  } = useSelector((state) => state.search);
 
   useEffect(() => {
     if (location.state?.products) {
       setProducts(location.state.products);
       setTitle(location.state.title || "All Products");
-    } else if (searchResults.length > 0) {
+    } else if (Array.isArray(searchResults)) {
+      console.log("product set to searchResults");
       setProducts(searchResults);
-      setTitle(`Search Results for "${searchTerm}"`);
+      if (searchTerm) {
+        setTitle(`Search Results for "${searchTerm}"`);
+      } else {
+        setTitle("All Products");
+      }
     }
   }, [location.state, searchResults, searchTerm]);
 
   const getFilteredProducts = () => {
+    if (!Array.isArray(products)) {
+      console.log(products);
+      return [];
+    }
+
     return products
       .filter((product) => {
         const price = product.price * (1 - (product.discount || 0) / 100);
@@ -86,6 +102,7 @@ export default function ProductListingPage() {
   };
 
   const filteredProducts = getFilteredProducts();
+  console.log("Filtered products:", filteredProducts);
 
   const resetFilters = () => {
     setFilters({
@@ -97,8 +114,14 @@ export default function ProductListingPage() {
     setSortBy("default");
   };
 
+  const handlePageChange = (newPage) => {
+    if (searchTerm) {
+      dispatch(searchProducts({ searchTerm, page: newPage, limit: 20 }));
+    }
+  };
+
   return (
-    <div className="container mx-10 py-[100px] relative">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex gap-6 min-h-screen">
         <div className="w-64 flex-shrink-0 sticky top-[80px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto">
           <ProductListingSidebar
@@ -111,7 +134,7 @@ export default function ProductListingPage() {
 
         <div className="flex-grow">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">{"Products" || title}</h2>
+            <h2 className="text-2xl font-semibold">{title}</h2>
             <p className="text-gray-600">
               Showing {filteredProducts.length} result
               {filteredProducts.length === 1 ? "" : "s"}
@@ -135,6 +158,15 @@ export default function ProductListingPage() {
             </div>
           )}
         </div>
+      </div>
+      <div className="mt-8">
+        {pagination && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
     </div>
   );
