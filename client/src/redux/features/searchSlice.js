@@ -5,10 +5,10 @@ const API_BASE_URL = import.meta.env.VITE_USERS_API_BASE_URL;
 
 export const searchProducts = createAsyncThunk(
   "search/searchProducts",
-  async (searchTerm, { rejectWithValue }) => {
+  async ({ searchTerm, page = 1, limit = 20 }, { rejectWithValue }) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/search/products`, {
-        params: { query: searchTerm },
+        params: { query: searchTerm, page, limit },
       });
       return response.data;
     } catch (error) {
@@ -19,9 +19,11 @@ export const searchProducts = createAsyncThunk(
 
 export const getAllProducts = createAsyncThunk(
   "search/getAllProducts",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 20 } = {}, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/products`);
+      const response = await axios.get(`${API_BASE_URL}/api/products/all`, {
+        params: { limit, page },
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -53,11 +55,16 @@ const searchSlice = createSlice({
     results: [],
     suggestions: {
       products: [],
-      categories: [],
     },
     loading: false,
     error: null,
     recentSearches: JSON.parse(localStorage.getItem("recentSearches") || "[]"),
+    pagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalProducts: 0,
+      hasMore: false,
+    },
   },
   reducers: {
     setSearchTerm: (state, action) => {
@@ -88,9 +95,24 @@ const searchSlice = createSlice({
       })
       .addCase(searchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.results = action.payload;
+        state.results = action.payload.products;
+        state.pagination = action.payload.pagination;
       })
       .addCase(searchProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(getAllProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getAllProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.results = action.payload.products;
+        state.pagination = action.payload.pagination;
+        state.searchTerm = "";
+      })
+      .addCase(getAllProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -103,19 +125,6 @@ const searchSlice = createSlice({
         state.suggestions = action.payload;
       })
       .addCase(getSearchSuggestions.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      .addCase(getAllProducts.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(getAllProducts.fulfilled, (state, action) => {
-        state.loading = false;
-        state.results = action.payload;
-        state.searchTerm = "";
-      })
-      .addCase(getAllProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
-import { 
-  searchProducts, 
-  setSearchTerm, 
+import {
+  searchProducts,
+  setSearchTerm,
   addRecentSearch,
-  getSearchSuggestions 
+  getSearchSuggestions,
 } from "@/redux/features/searchSlice";
 import useDebounce from "@/hooks/useDebounce";
 
@@ -17,19 +17,16 @@ export default function SearchBar({ placeholder }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef(null);
 
-  const { 
-    searchTerm, 
-    results, 
-    suggestions,
-    loading,
-    recentSearches 
-  } = useSelector(state => state.search);
-  
+  const { searchTerm, results, suggestions, loading, recentSearches } =
+    useSelector((state) => state.search);
+
   const debouncedSearch = useDebounce(searchTerm, 300);
-  
+
   useEffect(() => {
     if (debouncedSearch.trim()) {
-      dispatch(searchProducts(debouncedSearch));
+      dispatch(
+        searchProducts({ searchTerm: debouncedSearch, page: 1, limit: 20 })
+      );
       dispatch(getSearchSuggestions(debouncedSearch));
     }
   }, [debouncedSearch, dispatch]);
@@ -49,11 +46,11 @@ export default function SearchBar({ placeholder }) {
 
   const handleSearch = (term) => {
     dispatch(addRecentSearch(term));
-    navigate("/home/products", { 
-      state: { 
+    navigate("/home/products", {
+      state: {
         searchTerm: term,
-        products: results
-      } 
+        products: results,
+      },
     });
     setShowSuggestions(false);
   };
@@ -77,7 +74,7 @@ export default function SearchBar({ placeholder }) {
             <IoClose className="w-5 h-5" />
           </button>
         )}
-        <button 
+        <button
           onClick={() => handleSearch(searchTerm)}
           className="absolute right-1 text-white bg-black rounded-full p-2"
         >
@@ -102,9 +99,11 @@ export default function SearchBar({ placeholder }) {
                       onClick={() => handleSearch(product.name)}
                       className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                     >
-                      <div className="font-medium text-black">{product.name}</div>
+                      <div className="font-medium text-black">
+                        {product.name}
+                      </div>
                       <div className="text-sm text-gray-500">
-                        in {product.category?.name || 'Uncategorized'}
+                        in {product.category?.name || "Uncategorized"}
                       </div>
                     </div>
                   ))}
@@ -119,18 +118,20 @@ export default function SearchBar({ placeholder }) {
                   {suggestions.categories.map((category) => (
                     <div
                       key={category._id}
-                      onClick={() => handleSearch(category._id?.name || '')}
+                      onClick={() => handleSearch(category._id?.name || "")}
                       className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-black"
                     >
                       <div className="flex items-center justify-between">
-                        <span>{category._id?.name || 'Unknown Category'}</span>
-                        <span className="text-sm text-gray-500">{category.count} products</span>
+                        <span>{category._id?.name || "Unknown Category"}</span>
+                        <span className="text-sm text-gray-500">
+                          {category.count} products
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-              
+
               {recentSearches.length > 0 && (
                 <div className="p-2 border-t">
                   <h3 className="text-sm font-semibold text-gray-500 px-3 py-2">

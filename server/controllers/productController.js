@@ -6,10 +6,10 @@ const getAllProducts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-
+    
     const totalProducts = await Product.countDocuments({ isListed: true });
     const totalPages = Math.ceil(totalProducts / limit);
-
+    
     const products = await Product.find({ isListed: true })
       .populate("category", "name")
       .populate("subCategory", "name")
@@ -17,7 +17,7 @@ const getAllProducts = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-
+    
     res.status(200).json({
       success: true,
       products,

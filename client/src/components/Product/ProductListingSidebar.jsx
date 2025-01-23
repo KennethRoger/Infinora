@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllProducts } from "@/redux/features/searchSlice";
+import { useLocation } from "react-router-dom";
 
 export default function ProductListingSidebar({
   filters,
@@ -21,10 +22,12 @@ export default function ProductListingSidebar({
   sortBy,
   setSortBy,
 }) {
+  const location = useLocation();
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.search);
   const [priceRange, setPriceRange] = useState(filters.priceRange);
   const defaultPriceRange = [0, 10000];
+  console.log("location.state.products:", location.state.products);
 
   const handleMinPriceChange = (value) => {
     const [newMin] = value;
@@ -91,8 +94,20 @@ export default function ProductListingSidebar({
   };
 
   const handleViewAllProducts = async () => {
-    resetFilters();
-    await dispatch(getAllProducts());
+    try {
+      
+      resetFilters();
+      setFilters({
+        priceRange: [0, 10000],
+        categories: [],
+        rating: 0,
+        availability: "all",
+      });
+      setSortBy("default");
+      const result = await dispatch(getAllProducts({ page: 1, limit: 20 }));
+    } catch (error) {
+      console.error("Error fetching all products:", error);
+    }
   };
 
   const activeFilterCount = [
@@ -228,7 +243,7 @@ export default function ProductListingSidebar({
         </div>
       </div>
 
-      <div>
+      {/* <div>
         <h3 className="text-lg font-semibold mb-3">Rating</h3>
         <Select value={filters.rating} onValueChange={handleRatingChange}>
           <SelectTrigger>
@@ -258,7 +273,7 @@ export default function ProductListingSidebar({
             <SelectItem value="out-of-stock">Out of Stock</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </div> */}
 
       {activeFilterCount > 0 && (
         <Button variant="outline" className="w-full" onClick={resetFilters}>
