@@ -50,7 +50,6 @@ export default function CategoryDropdown() {
           onMouseLeave={handleMouseLeave}
         >
           <Link
-            to={`/category/${category.slug}`}
             className="px-6 py-3 hover:bg-gray-50 text-gray-700 flex justify-between items-center group-hover:text-blue-600 transition-colors duration-150"
           >
             <div className="flex items-center space-x-3">

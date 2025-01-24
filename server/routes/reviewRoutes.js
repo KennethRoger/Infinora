@@ -7,8 +7,9 @@ const {
   deleteReview,
   getProductReviewStats
 } = require("../controllers/reviewController");
+const { authorizeUser } = require("../middlewares/authenticate");
 
-router.post("/", createReview);
+router.post("/", authorizeUser(["user", "vendor", "admin"]), createReview);
 router.get("/product/:productId", getProductReviews);
 router.get("/stats/:productId", getProductReviewStats);
 router.put("/:reviewId", updateReview);

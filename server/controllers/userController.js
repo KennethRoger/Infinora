@@ -507,7 +507,11 @@ const getAllVendors = async (req, res) => {
     const vendors = await User.find({ isVerified: true, role: "vendor" })
       .skip(skip)
       .limit(limit);
-    const verifiedUsers = await User.find({ isVerified: true, vendorStatus: "pending",  role: "user" });
+    const verifiedUsers = await User.find({
+      isVerified: true,
+      vendorStatus: "pending",
+      role: "user",
+    });
 
     res.status(200).json({
       success: true,

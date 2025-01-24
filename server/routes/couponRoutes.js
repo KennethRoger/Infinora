@@ -4,26 +4,27 @@ const {
   getVendorCoupons,
   updateCouponStatus,
   applyCoupon,
-  removeCoupon
+  removeCoupon,
 } = require("../controllers/couponController");
+const { authorizeUser } = require("../middlewares/authenticate");
 
 const router = express.Router();
 
 router
   .route("/")
-  .post(createCoupon)
-  .get(getVendorCoupons);
+  .post(authorizeUser(["user", "vendor", "admin"]), createCoupon)
+  .get(authorizeUser(["user", "vendor", "admin"]), getVendorCoupons);
 
 router
   .route("/:id/status")
-  .patch(updateCouponStatus);
+  .patch(authorizeUser(["user", "vendor", "admin"]), updateCouponStatus);
 
 router
   .route("/apply")
-  .post(applyCoupon);
+  .post(authorizeUser(["user", "vendor", "admin"]), applyCoupon);
 
 router
   .route("/remove")
-  .post(removeCoupon);
+  .post(authorizeUser(["user", "vendor", "admin"]), removeCoupon);
 
 module.exports = router;

@@ -325,11 +325,12 @@ export default function UserOrderDashboard() {
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <SearchBarAdmin
+        {/* <SearchBarAdmin
           placeholder="Search orders..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        /> */}
+        <div></div>
         <div className="flex gap-2">
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-[180px]">
