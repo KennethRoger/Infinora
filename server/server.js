@@ -31,7 +31,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const sectionRoutes = require("./routes/sectionRoutes");
 
 const corsOptions = {
-  origin: "https://infinora.vercel.app/",
+  origin: "https://infinora.vercel.app",
   credentials: true,
 };
 
