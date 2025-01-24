@@ -65,17 +65,16 @@ const searchSlice = createSlice({
       totalProducts: 0,
       hasMore: false,
     },
+    isViewingAll: false,
   },
   reducers: {
     setSearchTerm: (state, action) => {
       state.searchTerm = action.payload;
     },
     addRecentSearch: (state, action) => {
-      if (!state.recentSearches.includes(action.payload)) {
-        state.recentSearches = [
-          action.payload,
-          ...state.recentSearches.slice(0, 2),
-        ];
+      const term = action.payload;
+      if (!state.recentSearches.includes(term)) {
+        state.recentSearches = [term, ...state.recentSearches].slice(0, 5);
         localStorage.setItem(
           "recentSearches",
           JSON.stringify(state.recentSearches)
@@ -85,6 +84,12 @@ const searchSlice = createSlice({
     clearRecentSearches: (state) => {
       state.recentSearches = [];
       localStorage.removeItem("recentSearches");
+    },
+    setSearchTermAndResults: (state, action) => {
+      const { term, results, pagination } = action.payload;
+      state.searchTerm = term;
+      state.results = results;
+      state.pagination = pagination;
     },
   },
   extraReducers: (builder) => {
@@ -97,6 +102,7 @@ const searchSlice = createSlice({
         state.loading = false;
         state.results = action.payload.products;
         state.pagination = action.payload.pagination;
+        state.isViewingAll = false;
       })
       .addCase(searchProducts.rejected, (state, action) => {
         state.loading = false;
@@ -111,6 +117,7 @@ const searchSlice = createSlice({
         state.results = action.payload.products;
         state.pagination = action.payload.pagination;
         state.searchTerm = "";
+        state.isViewingAll = true;
       })
       .addCase(getAllProducts.rejected, (state, action) => {
         state.loading = false;
@@ -131,6 +138,10 @@ const searchSlice = createSlice({
   },
 });
 
-export const { setSearchTerm, addRecentSearch, clearRecentSearches } =
-  searchSlice.actions;
+export const {
+  setSearchTerm,
+  addRecentSearch,
+  clearRecentSearches,
+  setSearchTermAndResults,
+} = searchSlice.actions;
 export default searchSlice.reducer;

@@ -8,6 +8,7 @@ import {
   setSearchTerm,
   addRecentSearch,
   getSearchSuggestions,
+  setSearchTermAndResults,
 } from "@/redux/features/searchSlice";
 import useDebounce from "@/hooks/useDebounce";
 
@@ -24,9 +25,6 @@ export default function SearchBar({ placeholder }) {
 
   useEffect(() => {
     if (debouncedSearch.trim()) {
-      dispatch(
-        searchProducts({ searchTerm: debouncedSearch, page: 1, limit: 20 })
-      );
       dispatch(getSearchSuggestions(debouncedSearch));
     }
   }, [debouncedSearch, dispatch]);
@@ -44,12 +42,24 @@ export default function SearchBar({ placeholder }) {
     };
   }, []);
 
-  const handleSearch = (term) => {
+  const handleSearch = async (term) => {
     dispatch(addRecentSearch(term));
+    const searchResult = await dispatch(
+      searchProducts({ searchTerm: term, page: 1, limit: 20 })
+    );
+
+    dispatch(
+      setSearchTermAndResults({
+        term,
+        results: searchResult.payload.products,
+        pagination: searchResult.payload.pagination,
+      })
+    );
+
     navigate("/home/products", {
       state: {
         searchTerm: term,
-        products: results,
+        products: searchResult.payload.products,
       },
     });
     setShowSuggestions(false);
@@ -104,28 +114,6 @@ export default function SearchBar({ placeholder }) {
                       </div>
                       <div className="text-sm text-gray-500">
                         in {product.category?.name || "Uncategorized"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {searchTerm && suggestions.categories?.length > 0 && (
-                <div className="p-2 border-t">
-                  <h3 className="text-sm font-semibold text-gray-500 px-3 py-2">
-                    Categories
-                  </h3>
-                  {suggestions.categories.map((category) => (
-                    <div
-                      key={category._id}
-                      onClick={() => handleSearch(category._id?.name || "")}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-black"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{category._id?.name || "Unknown Category"}</span>
-                        <span className="text-sm text-gray-500">
-                          {category.count} products
-                        </span>
                       </div>
                     </div>
                   ))}

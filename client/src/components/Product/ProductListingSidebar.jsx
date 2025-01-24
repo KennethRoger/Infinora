@@ -14,7 +14,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllProducts } from "@/redux/features/searchSlice";
-import { useLocation } from "react-router-dom";
 
 export default function ProductListingSidebar({
   filters,
@@ -22,12 +21,11 @@ export default function ProductListingSidebar({
   sortBy,
   setSortBy,
 }) {
-  const location = useLocation();
+
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.search);
   const [priceRange, setPriceRange] = useState(filters.priceRange);
   const defaultPriceRange = [0, 10000];
-  console.log("location.state.products:", location.state.products);
 
   const handleMinPriceChange = (value) => {
     const [newMin] = value;

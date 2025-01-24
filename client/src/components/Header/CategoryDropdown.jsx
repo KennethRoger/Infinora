@@ -61,7 +61,6 @@ export default function CategoryDropdown() {
             )}
           </Link>
 
-          {/* Submenu for children */}
           {hoveredCategory === category._id &&
             category.children?.length > 0 && (
               <div
@@ -72,7 +71,6 @@ export default function CategoryDropdown() {
                 {category.children.map((child) => (
                   <Link
                     key={child._id}
-                    to={`/category/${child.slug}`}
                     className="block px-6 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600 transition-colors duration-150"
                   >
                     <div className="flex items-center justify-between">

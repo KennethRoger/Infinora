@@ -31,14 +31,17 @@ export default function ProductListingPage() {
     results: searchResults,
     searchTerm,
     pagination,
+    isViewingAll,
   } = useSelector((state) => state.search);
 
   useEffect(() => {
-    if (location.state?.products) {
+    if (isViewingAll) {
+      setProducts(searchResults);
+      setTitle("All Products");
+    } else if (location.state?.products) {
       setProducts(location.state.products);
       setTitle(location.state.title || "All Products");
     } else if (Array.isArray(searchResults)) {
-      console.log("product set to searchResults");
       setProducts(searchResults);
       if (searchTerm) {
         setTitle(`Search Results for "${searchTerm}"`);
@@ -46,11 +49,10 @@ export default function ProductListingPage() {
         setTitle("All Products");
       }
     }
-  }, [location.state, searchResults, searchTerm]);
+  }, [location.state, searchResults, searchTerm, isViewingAll]);
 
   const getFilteredProducts = () => {
     if (!Array.isArray(products)) {
-      console.log(products);
       return [];
     }
 
@@ -102,7 +104,6 @@ export default function ProductListingPage() {
   };
 
   const filteredProducts = getFilteredProducts();
-  console.log("Filtered products:", filteredProducts);
 
   const resetFilters = () => {
     setFilters({
@@ -121,7 +122,7 @@ export default function ProductListingPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container px-4 py-8 pt-[100px]">
       <div className="flex gap-6 min-h-screen">
         <div className="w-64 flex-shrink-0 sticky top-[80px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto">
           <ProductListingSidebar
