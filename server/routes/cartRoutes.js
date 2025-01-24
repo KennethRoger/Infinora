@@ -9,12 +9,13 @@ const {
   removeFromCart,
   clearCart,
 } = require("../controllers/cartController");
+const { authorizeUser } = require("../middlewares/authenticate");
 
-router.post("/add", addToCart);
-router.get("/get", getCart);
-router.post("/increment", incrementCartItem);
-router.post("/decrement", decrementCartItem);
-router.post("/remove", removeFromCart);
-router.delete("/clear", clearCart);
+router.post("/add", authorizeUser(["user", "vendor"]), addToCart);
+router.get("/get", authorizeUser(["user", "vendor"]), getCart);
+router.post("/increment", authorizeUser(["user", "vendor"]), incrementCartItem);
+router.post("/decrement", authorizeUser(["user", "vendor"]), decrementCartItem);
+router.post("/remove", authorizeUser(["user", "vendor"]), removeFromCart);
+router.delete("/clear", authorizeUser(["user", "vendor"]), clearCart);
 
 module.exports = router;

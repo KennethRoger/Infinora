@@ -62,6 +62,7 @@ const {
   editVendorProduct,
   getAVendorProducts,
 } = require("../controllers/vendorController");
+const { authorizeUser } = require("../middlewares/authenticate");
 
 const handleRegistrationUpload = (req, res, next) => {
   registrationUpload(req, res, (err) => {
@@ -111,9 +112,9 @@ const handleProductUpload = (req, res, next) => {
 };
 
 router.post("/verify", verifyVendor);
-router.post("/register", handleRegistrationUpload, registerVendorDetails);
-router.post("/product", handleProductUpload, addVendorProducts);
-router.put("/product/:productId", handleProductUpload, editVendorProduct);
+router.post("/register", authorizeUser(["user", "vendor", "admin"]), handleRegistrationUpload, registerVendorDetails);
+router.post("/product", authorizeUser(["vendor"]), handleProductUpload, addVendorProducts);
+router.put("/product/:productId", authorizeUser(["vendor", "admin"]), handleProductUpload, editVendorProduct);
 router.get("/products/:vendorId", getAVendorProducts);
 
 module.exports = router;

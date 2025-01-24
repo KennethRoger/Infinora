@@ -139,7 +139,7 @@ export default function CreatorEditProduct() {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [variantToDelete, setVariantToDelete] = useState(null);
-
+  console.log(productId)
   const {
     register,
     handleSubmit,

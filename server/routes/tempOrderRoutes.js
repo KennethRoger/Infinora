@@ -6,10 +6,11 @@ const {
   getUserTempOrders,
   deleteTempOrder
 } = require("../controllers/tempOrderController");
+const { authorizeUser } = require("../middlewares/authenticate");
 
-router.post("/", createTempOrder);
-router.get("/", getUserTempOrders);
-router.get("/:id", getTempOrderById);
-router.delete("/:id", deleteTempOrder);
+router.post("/", authorizeUser(["user", "vendor", "admin"]), createTempOrder);
+router.get("/", authorizeUser(["user", "vendor", "admin"]), getUserTempOrders);
+router.get("/:id", authorizeUser(["user", "vendor", "admin"]), getTempOrderById);
+router.delete("/:id", authorizeUser(["user", "vendor", "admin"]), deleteTempOrder);
 
 module.exports = router;
