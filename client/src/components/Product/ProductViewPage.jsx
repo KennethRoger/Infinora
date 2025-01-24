@@ -353,7 +353,7 @@ const ProductViewPage = () => {
               ))}
 
             <div className="flex gap-4">
-              <button
+              {/* <button
                 className="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 onClick={() => {
                   // Buy now functionality
@@ -365,7 +365,7 @@ const ProductViewPage = () => {
                 }
               >
                 Buy it now
-              </button>
+              </button> */}
               <button
                 className="flex-1 border border-orange-500 text-orange-500 py-3 rounded-lg hover:bg-orange-50 disabled:border-gray-300 disabled:text-gray-300 disabled:cursor-not-allowed"
                 onClick={handleAddToCart}
