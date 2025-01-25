@@ -14,10 +14,13 @@ export const getAdminSalesReport = async (
       params.vendorId = vendorId;
     }
 
-    const response = await axios.get("/api/metrics/admin/sales-report", {
-      params,
-      withCredentials: true,
-    });
+    const response = await axios.get(
+      `${API_BASE_URL}/api/metrics/admin/sales-report`,
+      {
+        params,
+        withCredentials: true,
+      }
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -27,7 +30,7 @@ export const getAdminSalesReport = async (
 export const getAdminRevenueMetrics = async (timeRange, startDate, endDate) => {
   try {
     const params = { timeRange };
-    if (timeRange === 'custom' && startDate && endDate) {
+    if (timeRange === "custom" && startDate && endDate) {
       params.startDate = startDate;
       params.endDate = endDate;
     }
@@ -41,17 +44,19 @@ export const getAdminRevenueMetrics = async (timeRange, startDate, endDate) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || {
-      success: false,
-      message: "Failed to fetch admin revenue metrics",
-    };
+    throw (
+      error.response?.data || {
+        success: false,
+        message: "Failed to fetch admin revenue metrics",
+      }
+    );
   }
 };
 
 export const getUserActivityMetrics = async (timeRange, startDate, endDate) => {
   try {
     const params = { timeRange };
-    if (timeRange === 'custom' && startDate && endDate) {
+    if (timeRange === "custom" && startDate && endDate) {
       params.startDate = startDate;
       params.endDate = endDate;
     }
@@ -65,9 +70,11 @@ export const getUserActivityMetrics = async (timeRange, startDate, endDate) => {
     );
     return response.data;
   } catch (error) {
-    throw error.response?.data || {
-      success: false,
-      message: "Failed to fetch user activity metrics",
-    };
+    throw (
+      error.response?.data || {
+        success: false,
+        message: "Failed to fetch user activity metrics",
+      }
+    );
   }
 };
