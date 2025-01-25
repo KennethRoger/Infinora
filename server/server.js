@@ -33,9 +33,15 @@ const sectionRoutes = require("./routes/sectionRoutes");
 const corsOptions = {
   origin: "https://infinora.vercel.app",
   credentials: true,
+  // added
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["set-cookie"],
 };
 
 app.use(cors(corsOptions));
+// added
+app.set('trust proxy', 1); // trust first proxy, needed for secure cookies
 
 connectDB();
 
