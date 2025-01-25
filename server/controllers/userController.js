@@ -4,11 +4,11 @@ const { sendEmail } = require("../utils/emailService");
 const TempUser = require("../models/TempUser");
 const User = require("../models/User");
 const { generateToken, verifyToken } = require("../utils/tokenValidator");
-const { PerformanceNodeTiming } = require("perf_hooks");
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: true,
+  sameSite: 'None',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
