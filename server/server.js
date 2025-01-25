@@ -41,6 +41,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 // added
+app.options('*', cors(corsOptions));
 app.set('trust proxy', 1); // trust first proxy, needed for secure cookies
 
 connectDB();
