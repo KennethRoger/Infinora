@@ -4,7 +4,8 @@ export const findAddressById = async (data) => {
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/address/`,
-      data
+      data,
+      { withCredentials: true }
     );
     return response.data;
   } catch (error) {
@@ -15,10 +16,11 @@ export const findAddressById = async (data) => {
 
 export const addAddress = async (data) => {
   try {
-    console.log("Add address data: ", data)
+    console.log("Add address data: ", data);
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/address/add`,
-      data
+      data,
+      { withCredentials: true }
     );
     return response.data;
   } catch (error) {
@@ -31,7 +33,8 @@ export const editAddress = async (data) => {
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/address/edit`,
-      data
+      data,
+      { withCredentials: true }
     );
     return response.data;
   } catch (error) {
@@ -44,7 +47,8 @@ export const deleteAddress = async (data) => {
   try {
     const response = await axios.post(
       `${import.meta.env.VITE_USERS_API_BASE_URL}/api/address/delete`,
-      data
+      data,
+      { withCredentials: true }
     );
     return response.data;
   } catch (error) {

@@ -17,7 +17,9 @@ export const createReview = async (reviewData) => {
 export const getProductReviews = async (productId, page = 1, limit = 10) => {
   try {
     const response = await axios.get(
-      `${import.meta.env.VITE_USERS_API_BASE_URL}/api/review/product/${productId}?page=${page}&limit=${limit}`,
+      `${
+        import.meta.env.VITE_USERS_API_BASE_URL
+      }/api/review/product/${productId}?page=${page}&limit=${limit}`,
       { withCredentials: true }
     );
     return response.data;
@@ -56,7 +58,12 @@ export const deleteReview = async (reviewId) => {
 
 export const getProductReviewStats = async (productId) => {
   try {
-    const response = await axios.get(`/api/review/stats/${productId}`);
+    const response = await axios.get(
+      `${
+        import.meta.env.VITE_USERS_API_BASE_URL
+      }/api/review/stats/${productId}`,
+      { withCredentials: true }
+    );
     return response.data.stats;
   } catch (error) {
     throw error.response?.data?.message || "Failed to get review stats";
