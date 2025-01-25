@@ -47,16 +47,18 @@ const tempOrderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    appliedCoupons: [{
-      productId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-        required: true,
+    appliedCoupons: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        couponCode: String,
+        couponDiscount: Number,
+        variants: Object,
       },
-      couponCode: String,
-      couponDiscount: Number,
-      variants: Object,
-    }],
+    ],
     createdAt: {
       type: Date,
       default: Date.now,
@@ -67,6 +69,5 @@ const tempOrderSchema = new mongoose.Schema(
 );
 
 tempOrderSchema.index({ userId: 1, status: 1 });
-tempOrderSchema.index({ razorpayOrderId: 1 });
 
 module.exports = mongoose.model("TempOrder", tempOrderSchema);
