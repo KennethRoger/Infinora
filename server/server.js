@@ -9,7 +9,6 @@ const connectDB = require("./config/db");
 
 const multer = require("multer");
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -31,16 +30,14 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const sectionRoutes = require("./routes/sectionRoutes");
 
 const corsOptions = {
-  origin: "https://infinora.vercel.app",
+  origin: ["https://infinora.vercel.app", "http://localhost:5173"],
   credentials: true,
-  // added
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
   exposedHeaders: ["set-cookie"],
 };
 
 app.use(cors(corsOptions));
-// added
 app.options('*', cors(corsOptions));
 app.set('trust proxy', 1); // trust first proxy, needed for secure cookies
 
