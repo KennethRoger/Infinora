@@ -276,7 +276,6 @@ const getOrderById = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
-  console.log("reached");
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -487,7 +486,6 @@ const getVendorOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
-    console.log("reached");
     const token = req.cookies.token;
     if (!token) {
       return res.status(401).json({
@@ -497,7 +495,6 @@ const getAllOrders = async (req, res) => {
     }
 
     const decoded = verifyToken(token);
-    console.log(decoded);
     if (decoded.role !== "admin") {
       return res.status(403).json({
         success: false,

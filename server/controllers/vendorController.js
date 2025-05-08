@@ -33,7 +33,6 @@ const verifyVendor = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("Incorrect password");
       return res
         .status(400)
         .json({ success: false, message: "Incorrect password." });
@@ -56,11 +55,10 @@ const verifyVendor = async (req, res) => {
 const registerVendorDetails = async (req, res) => {
   try {
     const { name, speciality, bio, socialLink, about } = req.body;
-    console.log("Processing vendor details update...");
-    console.log(
-      "Files received:",
-      req.files ? Object.keys(req.files) : "No files"
-    );
+    // console.log(
+    //   "Files received:",
+    //   req.files ? Object.keys(req.files) : "No files"
+    // );
 
     let profileImagePath = null;
     if (req.files && req.files.profileImage) {
@@ -71,7 +69,6 @@ const registerVendorDetails = async (req, res) => {
         const dataURI =
           "data:" + req.files.profileImage[0].mimetype + ";base64," + b64;
 
-        console.log("Uploading profile image to Cloudinary...");
         const result = await cloudinary.uploader.upload(dataURI, {
           folder: "infinora/vendors/profile",
           width: 500,
@@ -80,7 +77,6 @@ const registerVendorDetails = async (req, res) => {
           quality: "auto",
         });
         profileImagePath = result.secure_url;
-        console.log("Profile image uploaded successfully");
       } catch (error) {
         console.error("Error uploading profile image:", error);
         throw new Error("Failed to upload profile image: " + error.message);
@@ -94,14 +90,12 @@ const registerVendorDetails = async (req, res) => {
         const dataURI =
           "data:" + req.files.idCard[0].mimetype + ";base64," + b64;
 
-        console.log("Uploading ID card to Cloudinary...");
         const result = await cloudinary.uploader.upload(dataURI, {
           folder: "infinora/vendors/id_proofs",
           format: "pdf",
           pages: true,
         });
         idProofPath = result.secure_url;
-        console.log("ID card uploaded successfully");
       } catch (error) {
         console.error("Error uploading ID card:", error);
         throw new Error("Failed to upload ID card: " + error.message);
@@ -124,7 +118,6 @@ const registerVendorDetails = async (req, res) => {
       });
     }
 
-    console.log("Updating user details in database...");
     const updatedUser = await User.findByIdAndUpdate(
       decoded.id,
       {
@@ -147,7 +140,6 @@ const registerVendorDetails = async (req, res) => {
       });
     }
 
-    console.log("Vendor details updated successfully");
     res.status(200).json({
       success: true,
       message: "Vendor details updated successfully",
@@ -164,7 +156,6 @@ const registerVendorDetails = async (req, res) => {
 };
 
 const addVendorProducts = async (req, res) => {
-  console.log("Product addition initiated");
   try {
     let {
       name,
@@ -407,7 +398,6 @@ const addVendorProducts = async (req, res) => {
 };
 
 const editVendorProduct = async (req, res) => {
-  console.log("Edit started")
   try {
     const {
       name,
@@ -427,7 +417,6 @@ const editVendorProduct = async (req, res) => {
       existingImages,
     } = req.body;
     const productId = req.params.productId;
-    console.log("Checing")
 
     const token = req.cookies.token;
     if (!token) {
@@ -622,9 +611,6 @@ const editVendorProduct = async (req, res) => {
       try {
         const publicId = imageUrl.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
-        console.log(
-          `Old image with public ID ${publicId} deleted from Cloudinary.`
-        );
       } catch (error) {
         console.error("Error deleting old image from Cloudinary:", error);
       }

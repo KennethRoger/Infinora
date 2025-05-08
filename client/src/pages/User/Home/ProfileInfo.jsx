@@ -63,7 +63,7 @@ export default function ProfileInfo() {
       if (response.success) {
         toast.success("Password changed successfully");
         setChangePassClicked(false);
-        reset()
+        reset();
       } else {
         toast.error(
           response.message || "Failed to change the password. Try again later!"
@@ -106,7 +106,6 @@ export default function ProfileInfo() {
       try {
         startLoading();
         const response = await updateProfile(formData);
-        console.log(response);
         if (response && response.success) {
           setIsEditing(false);
           toast.success("User updated successfully");
@@ -187,7 +186,9 @@ export default function ProfileInfo() {
         {/* Profile Information Card */}
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Profile Information</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Profile Information
+            </h1>
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
@@ -209,7 +210,10 @@ export default function ProfileInfo() {
             <div className="space-y-6">
               {/* Name Field */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Name
                 </label>
                 <input
@@ -222,13 +226,18 @@ export default function ProfileInfo() {
                   defaultValue={user?.name}
                 />
                 {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.name.message}
+                  </p>
                 )}
               </div>
 
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email
                 </label>
                 <input
@@ -240,20 +249,26 @@ export default function ProfileInfo() {
                   {...register("email", {
                     required: "Email is required",
                     pattern: {
-                      value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+                      value:
+                        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
                       message: "Invalid email address",
                     },
                   })}
                   defaultValue={user?.email}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.email.message}
+                  </p>
                 )}
               </div>
 
               {/* Phone Number Field */}
               <div>
-                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="phoneNumber"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Phone Number
                 </label>
                 <input
@@ -272,7 +287,9 @@ export default function ProfileInfo() {
                   defaultValue={user?.phoneNumber}
                 />
                 {errors.phoneNumber && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phoneNumber.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.phoneNumber.message}
+                  </p>
                 )}
               </div>
 
@@ -305,7 +322,9 @@ export default function ProfileInfo() {
               className="space-y-6"
               onSubmit={handleSubmit(onChangePassSubmit)}
             >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Change Password</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Change Password
+              </h2>
 
               {/* Old Password */}
               <div>
@@ -315,7 +334,9 @@ export default function ProfileInfo() {
                 <input
                   type="password"
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                    errors.oldPassword ? "border-red-500 focus:ring-red-500" : "focus:ring-indigo-500"
+                    errors.oldPassword
+                      ? "border-red-500 focus:ring-red-500"
+                      : "focus:ring-indigo-500"
                   }`}
                   {...register("oldPassword", {
                     required: "Current password is required",
@@ -336,13 +357,17 @@ export default function ProfileInfo() {
                 <input
                   type="password"
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                    errors.newPassword ? "border-red-500 focus:ring-red-500" : "focus:ring-indigo-500"
+                    errors.newPassword
+                      ? "border-red-500 focus:ring-red-500"
+                      : "focus:ring-indigo-500"
                   }`}
                   {...register("newPassword", {
                     required: "New password is required",
                     pattern: {
-                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                      message: "Password must contain at least 8 characters, including uppercase, lowercase, number, and special character",
+                      value:
+                        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                      message:
+                        "Password must contain at least 8 characters, including uppercase, lowercase, number, and special character",
                     },
                   })}
                   onChange={validateConfirmPassword}
@@ -399,14 +424,14 @@ export default function ProfileInfo() {
           ) : (
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Password Settings</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Password Settings
+                </h2>
                 <p className="text-gray-600">
                   Keep your account secure by regularly updating your password
                 </p>
               </div>
-              <ButtonPrimary
-                onClick={() => setChangePassClicked(true)}
-              >
+              <ButtonPrimary onClick={() => setChangePassClicked(true)}>
                 Change Password
               </ButtonPrimary>
             </div>
@@ -416,7 +441,9 @@ export default function ProfileInfo() {
         {/* OTP Modal */}
         <Modal isOpen={isModalOpen}>
           <div className="p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Verify Your Email</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Verify Your Email
+            </h2>
             <p className="text-gray-600 mb-8">
               Please enter the verification code sent to your email
             </p>

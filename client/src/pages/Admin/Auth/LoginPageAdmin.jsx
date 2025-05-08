@@ -10,7 +10,6 @@ export default function LoginPageAdmin() {
   const handleLogin = async (data) => {
     try {
       const response = await adminLogin(data);
-      console.log("Admin login response:", response);
       
       if (response && response.data) {
         navigate("/admin/dashboard");

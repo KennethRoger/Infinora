@@ -15,15 +15,12 @@ const createReview = async (req, res) => {
     const decoded = verifyToken(token);
     const userId = decoded.id;
     const { productId, orderId, rating, title, review } = req.body;
-    console.log(req.body)
-
     const order = await Order.findOne({
       _id: orderId,
       user: userId,
       status: "delivered",
       product: productId,
     });
-    console.log(order)
 
     if (!order) {
       return res.status(400).json({

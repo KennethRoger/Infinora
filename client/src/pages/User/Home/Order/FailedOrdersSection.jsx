@@ -103,7 +103,6 @@ export default function FailedOrdersSection() {
       };
 
       const handlePaymentFailed = async function (response) {
-        console.log("Payment failed event triggered", response);
         window.paymentFailed = true;
         toast.error("Payment failed. Please try again.");
         razorpayInstance.off("payment.failed", handlePaymentFailed);

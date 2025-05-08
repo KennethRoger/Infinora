@@ -27,7 +27,6 @@ export default function OTPVerificationPage() {
       otp,
       tempUserId,
     };
-    console.log("Request Data:", requestData);
 
     try {
       const response = await verifyOTP(requestData);
@@ -57,7 +56,6 @@ export default function OTPVerificationPage() {
     try {
       const response = await resendOTP(resendReqData);
       if (response.success) {
-        console.log("OTP resent successfully");
       } else if (response.expired) {
         navigate("/register");
       } else {

@@ -149,7 +149,6 @@ export default function CreatorListPage() {
             `${import.meta.env.VITE_USERS_API_BASE_URL}/api/auth/block`,
             { id: creator._id, role: creator.role }
           );
-          console.log("Response: ", response);
           if (response.data.success) {
             toast.success(
               creator.isBlocked

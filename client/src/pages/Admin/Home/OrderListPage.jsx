@@ -18,7 +18,6 @@ export default function OrderListPage() {
 
   useEffect(() => {
     dispatch(fetchAllOrders());
-    console.log(orders);
   }, [dispatch]);
 
   const handlePageChange = (page) => {
@@ -45,13 +44,11 @@ export default function OrderListPage() {
       setSelectedOrder(null);
       dispatch(fetchAllOrders());
     } catch (error) {
-      console.log(error);
       toast.error(error.message || "Failed to complete order");
     }
   };
 
   const tableActions = (order) => {
-    console.log(order);
     return (
       <div className="flex justify-center gap-2">
         <>

@@ -385,7 +385,6 @@ export default function CreatorAddProduct() {
           formData.append("images", file);
         }
       });
-      console.log("FormData: ", formData);
 
       startLoading();
       const response = await axios.post("/api/vendor/product", formData, {

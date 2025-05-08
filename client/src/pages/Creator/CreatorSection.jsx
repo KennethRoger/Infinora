@@ -98,7 +98,6 @@ export default function CreatorSection() {
 
   const handleStartAsCreator = () => {
     if (loading) return;
-    console.log("Checking")
     if (!user) {
       navigate("/login");
       return;

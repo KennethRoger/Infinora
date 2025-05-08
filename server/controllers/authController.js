@@ -62,10 +62,8 @@ const blockUserOrVendor = async (req, res) => {
       { isBlocked: !user.isBlocked },
       { new: true }
     );
-    console.log(updatedUser);
 
     if (!updatedUser) {
-      console.log(updatedUser);
       return res.status(500).json({
         message: "An error occurred while updating the user's blocked status.",
       });

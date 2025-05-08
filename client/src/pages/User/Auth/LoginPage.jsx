@@ -18,8 +18,6 @@ function LoginPage() {
       startLoading();
       const { user, message } = await login(data);
 
-      console.log("Login response:", user, message);
-
       if (user) {
         const { id, email, role } = user;
         navigate("/home", { state: { id, role } });

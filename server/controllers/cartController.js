@@ -460,7 +460,6 @@ const decrementCartItem = async (req, res) => {
 };
 
 const clearCart = async (req, res) => {
-  console.log("reached")
   try {
     const token = req.cookies.token;
 

@@ -38,9 +38,7 @@ export default function NewPasswordPage() {
         ...email,
         password: data.newPassword,
       };
-      console.log(totalData);
       const response = await changeToNewPassword(totalData);
-      console.log(response)
       if (response.success) {
         toast.success("Password successfully reset!");
         navigate("/login");

@@ -55,7 +55,6 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     try {
       const response = await confirmOtp({ otp, ...otpData });
-      console.log({ otp, ...otpData });
       if (response.success) {
         toast.success("OTP verified! Proceed to reset your password.");
         setIsModalOpen(false);

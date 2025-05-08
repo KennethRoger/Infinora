@@ -10,7 +10,6 @@ export default function EditAddress({ addressData, onSuccess }) {
   const navigate = useNavigate();
 
   const addressId = addressData || location.state?.addressId;
-  console.log("Current addressId:", addressId);
 
   const {
     register,
@@ -51,19 +50,15 @@ export default function EditAddress({ addressData, onSuccess }) {
     const fetchAddress = async () => {
       try {
         if (!addressId) {
-          console.log("No address ID available");
           return;
         }
 
-        console.log("Fetching address for ID:", addressId);
         const response = await findAddressById({ addressId });
-        console.log("Fetch response:", response);
 
         if (response.success) {
           const addressData = response.data;
           Object.keys(addressData).forEach((key) => {
             if (addressData[key] !== null && addressData[key] !== undefined) {
-              console.log(`Setting ${key}:`, addressData[key]);
               setValue(key, addressData[key]);
             }
           });

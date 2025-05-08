@@ -107,7 +107,6 @@ const getUserTempOrders = async (req, res) => {
 
     const decoded = verifyToken(token);
     const userId = decoded.id;
-    console.log(userId);
 
     const tempOrders = await TempOrder.find({
       userId,

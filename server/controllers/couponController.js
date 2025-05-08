@@ -100,7 +100,6 @@ const updateCouponStatus = async (req, res) => {
     const decoded = verifyToken(token);
     const vendorId = decoded.id;
     const { isActive } = req.body;
-    console.log("reached, ", isActive, req.params.id);
 
     const coupon = await Coupon.findOneAndUpdate(
       { _id: req.params.id, vendorId },
@@ -240,7 +239,6 @@ const applyCoupon = async (req, res) => {
 
 const removeCoupon = async (req, res) => {
   try {
-    console.log("Reached controller")
     const { couponCode, productId } = req.body;
     const token = req.cookies.token;
 
